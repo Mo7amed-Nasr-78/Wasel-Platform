@@ -1,0 +1,261 @@
+generator client {
+    provider = "prisma-client-js"
+    // output = "../src/generated/prisma"
+}
+
+datasource db {
+    provider = "mysql"
+    url = env("DATABASE_URL")
+}
+
+// Models enums
+enum Role {
+  ADMIN
+  MANUFACTURER
+  CARRIER_COMPANY
+  INDEPENDENT_CARRIER
+}
+
+enum ShipmentStatus {
+  PENDING
+  IN_TRANSIT
+  DELAYED
+  DELIVERED
+  CANCELLED
+}
+
+enum OfferStatus {
+  PENDING
+  ACCEPT
+  REJECT
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  RELEASED
+  CANCELLED
+}
+
+enum AttachmentType {
+  File
+  Image
+}
+
+enum BudegtType {
+  OPEN_BUDGET
+  LIMITED_BUDGET
+}
+
+enum PaymentType {
+  ON_DELIVER
+  BANK_TRNASFER
+}
+
+// Database models
+model Profile {
+  id                 String   @id @default(uuid())
+  username           String   @unique
+  first_name         String?
+  last_name          String?
+  picture            String?
+  bio                String? @db.LongText
+  gender             String?
+  phone              String?
+  dateOfBirth        String?
+  age                Int?
+  commercialRegister String?
+  carCount           Int?
+  role               Role
+  isActive           Boolean  @default(false)
+  verify             Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Relations
+  otp               Otp?
+  offers            Offer[]
+  shipments         Shipment[]
+  notifications     Notification[]
+  trucks            Truck[]
+  addresses         Address[]
+  invoicesAsClient  Invoice[]      @relation("CompanyInvoices")
+  invoicesAsCarrier Invoice[]      @relation("CarrierInvoices")
+  userId            String         @unique
+  user              User           @relation(fields: [userId], references: [id])
+}
+
+model User {
+  id            String          @id @default(uuid())
+  email         String          @unique
+  password      String
+  profile       Profile?
+  authProviders authProviders[]
+}
+
+model Shipment {
+  id String @id @default(uuid())
+  shipmentId String @unique
+  // Locations' points
+  origin      String
+  destination String
+
+  // Map coordinates
+  origin_lat      Float
+  origin_lng      Float
+  destination_lat Float
+  destination_lng Float
+
+  shipmentType    String
+  packaging String
+  goodsType String
+  description String @db.LongText
+  offerCount  Int
+  weight      Float?
+  length      Float?
+  width       Float?
+  height      Float?
+  stacking    Boolean
+  status ShipmentStatus @default(PENDING)
+
+  pickupAt   String
+  deliveryAt String
+
+  // Additional Options
+  urgent Boolean?
+  additionalInsurance Boolean?
+  twoDrivers Boolean?
+  noFriday Boolean?
+
+  // Payment
+  budgetType BudegtType @default(OPEN_BUDGET)
+  suggestedBudget Float?
+  paymentType PaymentType @default(BANK_TRNASFER)
+
+  createAt  DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  attachments ShipmentAttachment[]
+  offers    Offer[]
+  invoice   Invoice?
+  profileId String
+  profile   Profile  @relation(fields: [profileId], references: [id])
+}
+
+model ShipmentAttachment {
+  id String @id @default(uuid())
+
+  attachmentType AttachmentType
+  url String @db.LongText
+
+  createAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  shipmentId String
+  shipment Shipment @relation(fields: [shipmentId], references: [id])
+}
+
+model Offer {
+  id        String      @id @default(uuid())
+  price     Float
+  proposal  String
+  status    OfferStatus @default(PENDING)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  // Relations
+  profileId  String
+  shipmentId String
+  profile    Profile  @relation(fields: [profileId], references: [id])
+  shipment   Shipment @relation(fields: [shipmentId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  content   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id])
+}
+
+model Otp {
+  id        String   @id @default(uuid())
+  otp       String   @default("")
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  profileId String  @unique
+  profile   Profile @relation(fields: [profileId], references: [id])
+}
+
+model authProviders {
+  id                String    @id @default(uuid())
+  provider          String
+  providerAccountId String    @unique
+  accessToken       String
+  refreshToken      String
+  expiresAt         DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+model Truck {
+  id           String   @id @default(uuid())
+  truckLicense String
+  truckFront   String
+  truckType    String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id])
+}
+
+model Address {
+  id      String @id @default(uuid())
+  city    String
+  state   String
+  country String
+
+  // Relations
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id])
+}
+
+model Invoice {
+  id         String   @id @default(uuid())
+  shipmentId String   @unique
+  shipment   Shipment @relation(fields: [shipmentId], references: [id])
+
+  companyId String
+  company   Profile @relation("CompanyInvoices", fields: [companyId], references: [id])
+
+  carrierId String
+  carrier   Profile @relation("CarrierInvoices", fields: [carrierId], references: [id])
+
+  amount        Float
+  platformFee   Float
+  carrierAmount Float
+
+  status        InvoiceStatus @default(PENDING)
+  paymentMethod String?
+
+  issuedAt   DateTime  @default(now())
+  paidAt     DateTime?
+  releasedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

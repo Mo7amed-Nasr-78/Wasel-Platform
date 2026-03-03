@@ -1,0 +1,19 @@
+{
+    "sign in": "تسجيل الدخول",
+    "Log in to your account to browse all the latest updates": "قم بتسجيل الدخول إلي حسابك الخاص بك لتصفح كل جديد",
+    "Account not found": "الحساب غير موجود",
+    "Failed to send OTP": "فشل إرسال الرمز",
+    "Otp has been sent successfully": "تم إرسال رمز OTP بنجاح",
+    "Username is available": "إسم المستخدم متوفر",
+    "Username is already in use": "إسم المستخدم مُستخدم بالفعل",
+    "Email already in use": "الإيميل مُستخدم بالفعل",
+    "Account created successfully": "تم إنشاء الحساب بنجاح",
+    "Incorrect password": "كلمة المرور غير صحيحة",
+    "logged in successfully": "تم تسجيل الدخول بنجاح",
+    "logged out successfully": "تم تسجيل الخروج بنجاح",
+    "Network Error": "تم إنقطاع الإتصال بالإنترنت، حاول مرة أخري",
+    "No shipments found": "لا توجد حمولات متوفرة",
+    "add new shipment": "إضافة حمولة جديدة",
+    "rows view": "عرض الصفوف",
+    "card view": "عرض الكروت"
+}

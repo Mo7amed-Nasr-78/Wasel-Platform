@@ -67,7 +67,12 @@ function App() {
 
   useEffect(() => {
 		i18n.changeLanguage("ar");
-    refresh();
+
+    const authPages = ["/account", "/signin", "/signup", "/forgetpassword", "/verification", "/resetpassword"];
+    const currentPath = window.location.pathname;
+    if (!authPages.includes(currentPath)) {
+      refresh();
+    }
 	}, []);
 
 	return (
@@ -81,7 +86,7 @@ function App() {
           <Route path="/signup" element={<Signup />}></Route>
 					<Route path="/forgetpassword" element={<ForgetPassword />}></Route>
 					<Route path="/resetpassword" element={<ResetPassword />}></Route>
-					<Route path="/otp" element={<OneTimePassword />}></Route>
+					<Route path="/verification" element={<OneTimePassword />}></Route>
           {/* Pages */}
           <Route path="/newShipment" element={<NewShipment />} />
           <Route path="/profile/:username" element={<Profile />}></Route>

@@ -15,5 +15,8 @@
     "No shipments found": "لا توجد حمولات متوفرة",
     "add new shipment": "إضافة حمولة جديدة",
     "rows view": "عرض الصفوف",
-    "card view": "عرض الكروت"
+    "card view": "عرض الكروت",
+    "Please try again later": "من فضلك جرب في وقتاً لاحق",
+    "Invalid or expired OTP": "رمز تحقيق غير صالح حاول مرة أخري",
+    "Invalid OTP": "رمز تحقيق غير صالح"
 }

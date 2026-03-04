@@ -51,14 +51,14 @@ function Signin() {
 			return;
 		}
 
-		if (password.length < 8) {
-			addNotification(
-				"كلمة مرور غير صالحة",
-				"warning",
-				5000
-			);
-			return;
-		}
+		// if (password.length < 8) {
+		// 	addNotification(
+		// 		"كلمة مرور غير صالحة",
+		// 		"warning",
+		// 		5000
+		// 	);
+		// 	return;
+		// }
 
 		try {
 			const { user, accessToken } = await axios.post(
@@ -91,19 +91,12 @@ function Signin() {
 			setAccessToken(accessToken);
 			navigate('/shipments')
 		} catch (err) {
-			if (err.response) {
-				addNotification(
-					t(err.response.data.message),
-					'error',
-					5000
-				);
-			} else {
-				addNotification(
-					t(err.message),
-					'error',
-					5000
-				);
-			}
+			const axiosMeg = axios.isAxiosError(err)? err.response?.data?.message : "شئ ما خطا";
+			addNotification(
+				t(axiosMeg),
+				'error',
+				5000
+			);
 		} finally {
 			setForm({
 				email: '',

@@ -16,7 +16,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '@/utils/AxiosInstance';
 import type { Shipment } from '@/utils/Interfaces';
-import { ar_months }  from '@/data/data';
+import { ar_months }  from '@/shared/data/data';
 import Main from '@/components/Main';
 import Loader from '@/components/Loader';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';

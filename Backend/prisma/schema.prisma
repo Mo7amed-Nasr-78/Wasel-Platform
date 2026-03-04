@@ -89,6 +89,10 @@ model User {
   id            String          @id @default(uuid())
   email         String          @unique
   password      String
+
+  createAt  DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   profile       Profile?
   authProviders authProviders[]
 }

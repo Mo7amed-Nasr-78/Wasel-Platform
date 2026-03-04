@@ -1,20 +1,20 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { UserModule } from './user/user.module';
+import { UserModule } from './modules/user/user.module';
 import { JwtModule } from '@nestjs/jwt';
-import { AuthModule } from './auth/auth.module';
-import { AuthGuard } from './guards/jwtAuthGuard';
-import { ShipmentsModule } from './shipments/shipments.module';
-import { OffersModule } from './offers/offers.module';
-import { AddressController } from './address/address.controller';
-import { AddressService } from './address/address.service';
-import { AddressModule } from './address/address.module';
-import { InvoiceModule } from './invoice/invoice.module';
-import { TruckModule } from './truck/truck.module';
-import { PrismaModule } from './prisma/prisma.module';
-import { R2Controller } from './r2/r2.controller';
-import { R2Service } from './r2/r2.service';
+import { AuthModule } from './modules/auth/auth.module';
+import { AuthGuard } from './common/guards/jwtAuthGuard';
+import { ShipmentsModule } from './modules/shipments/shipments.module';
+import { OffersModule } from './modules/offers/offers.module';
+import { AddressController } from './modules/address/address.controller';
+import { AddressService } from './modules/address/address.service';
+import { AddressModule } from './modules/address/address.module';
+import { InvoiceModule } from './modules/invoice/invoice.module';
+import { TruckModule } from './modules/truck/truck.module';
+import { PrismaModule } from './database/prisma/prisma.module';
+import { R2Controller } from './shared/services/r2/r2.controller';
+import { R2Service } from './shared/services/r2/r2.service';
 
 @Module({
   imports: [

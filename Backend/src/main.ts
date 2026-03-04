@@ -3,7 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 // import session = require('express-session');
 import * as cookieParser from "cookie-parser";
-// import { AllExceptionFilter } from './filters/http-exception.filter';
+import { PrismaExceptions } from './common/filters/prisma-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -32,7 +32,7 @@ async function bootstrap() {
     // cookieParser()
   // ),
   app.use(cookieParser());
-  // app.useGlobalFilters(new AllExceptionFilter());
+  // app.useGlobalFilters(new PrismaExceptions());
 
   await app.listen(process.env.PORT ?? 3000);
 }

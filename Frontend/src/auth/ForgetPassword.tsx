@@ -38,7 +38,7 @@ function ForgetPassword() {
 
         try {
             setIsLoading(true);
-            const { data: { message, resetToken } } = await axios.post(
+            const { data: { message } } = await axios.post(
                 `${import.meta.env.VITE_BACKEND_URL}/auth/forget-password`,
                 {
                     email
@@ -50,7 +50,8 @@ function ForgetPassword() {
 				5000
 			);
 
-            navigate(`/otp?e=${resetToken}`);
+            window.sessionStorage.setItem("email", email);
+            navigate(`/verification`);
         } catch (err) {
             const errorMessage = axios.isAxiosError(err) ? err.response?.data?.message : "حدث خطأ ما";
             addNotification(

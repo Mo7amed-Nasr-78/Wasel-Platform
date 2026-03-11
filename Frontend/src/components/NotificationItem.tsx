@@ -2,7 +2,10 @@ import {
     PiX,
     PiCheck,
     PiExclamationMark,
-    PiInfo
+    PiInfo,
+    PiCheckCircle,
+    PiWarningCircle,
+    PiXCircle,
 } from 'react-icons/pi';
 import type { Notification } from './NotificationContext';
 
@@ -18,17 +21,17 @@ function NotificationItem({ notification, onClose }: Props) {
         success: {
             border: 'border-b-2 border-(--green-color)',
             iconStyle: 'text-(--green-color)',
-            icon: <PiCheck />,
+            icon: <PiCheckCircle />,
         },
         error: {
             border: 'border-b-2 border-(--red-color)',
             iconStyle: 'text-(--red-color)',
-            icon: <PiX />
+            icon: <PiXCircle />
         },
         warning: {
             border: 'border-b-2 border-(--yellow-color)',
             iconStyle: 'text-(--yellow-color)',
-            icon: <PiExclamationMark />,
+            icon: <PiWarningCircle />,
         },
         info: {
             border: 'border-b-2 border-(--blue-color)',
@@ -38,7 +41,7 @@ function NotificationItem({ notification, onClose }: Props) {
     }
 
     return (
-    <div className={`${notifyCustmization[type].border} relative w-full flex items-start justify-between -right-full rounded-sm p-3 gap-2 bg-(--secondary-color) shadow-sm shadow-balck/10 notify-animate`}>
+    <div onClick={onClose} className={`${notifyCustmization[type].border} relative w-full flex items-start justify-between -right-full rounded-sm p-3 gap-2 bg-(--secondary-color) shadow-sm shadow-balck/10 notify-animate duration-300 hover:scale-95 cursor-pointer`}>
             <div className="flex items-start gap-1">
                 <div className={`${notifyCustmization[type].iconStyle} flex items-center justify-center rounded-full`}>
                     <span className='text-2xl'>
@@ -47,7 +50,7 @@ function NotificationItem({ notification, onClose }: Props) {
                 </div>
                 <h3 className="font-main text-base font-light text-(--secondary-text)">{ message }</h3>
             </div>
-            <PiX onClick={onClose} className='text-lg text-(--red-color) cursor-pointer'/>
+            {/* <PiX onClick={onClose} className='text-lg text-(--red-color) cursor-pointer'/> */}
             {/* <div className='min-w-8 h-8 flex items-center justify-center rounded-full hover:bg-(--red-color)/10'>
             </div> */}
         </div>

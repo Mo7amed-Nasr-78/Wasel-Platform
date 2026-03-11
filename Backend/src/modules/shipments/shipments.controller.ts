@@ -12,6 +12,7 @@ import {
   UseInterceptors,
   UploadedFiles,
   UploadedFile,
+  Query,
 } from '@nestjs/common';
 import { ShipmentsService } from './shipments.service';
 import { CreateShipmentDto } from './dto/create-shipment.dto';
@@ -34,21 +35,27 @@ export class ShipmentsController {
   }
 
   @Get(':id')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(['MANUFACTURER', 'ADMIN'])
+  // @UseGuards(AuthGuard, RolesGuard)
+  // @Roles(['MANUFACTURER', 'ADMIN'])
   getShipment(@Param('id') shipmentId: string) {
     return this.shipmentsService.getShipment(shipmentId);
   }
 
   @Get()
   // @Roles(['ADMIN'])
-  getShipments() {
-    return this.shipmentsService.getShipments();
+  getShipments(@Query() query: { 
+    search: string,
+    type: string, 
+    minWeight: number | undefined, 
+    maxWeight: number | undefined, 
+    urgent: boolean
+  }) {
+    return this.shipmentsService.getShipments(query);
   }
 
   @Post('create')
-  @UseGuards(AuthGuard, RolesGuard)
   @Roles(['MANUFACTURER', 'ADMIN'])
+  @UseGuards(AuthGuard, RolesGuard)
   @UseInterceptors(
     FileFieldsInterceptor(
       [

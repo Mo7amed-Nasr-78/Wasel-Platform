@@ -3,6 +3,7 @@ import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
 import { SigninDto } from './dto/signin.dto';
 import { OtpVerificationDto } from './dto/verify-otp.dto';
+import { usernameVerify } from './dto/username-verify';
 import { Request, Response } from 'express';
 
 @Controller('auth')
@@ -69,7 +70,7 @@ export class AuthController {
   }
 
   @Post('username-verify')
-  usernameVerify(@Body('username') username: string) {
+  usernameVerify(@Body() { username }: usernameVerify) {
     return this.authService.usernameVerify(username);
   }
 

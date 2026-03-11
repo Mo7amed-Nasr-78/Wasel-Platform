@@ -19,25 +19,26 @@ import {
 } from "react-icons/pi";
 import { useNavigate } from "react-router-dom";
 import { useNotification } from "@/components/NotificationContext";
-import type { Shipment } from "@/utils/Interfaces";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import api from "@/utils/AxiosInstance";
+import type { Shipment } from "@/shared/interfaces/Interfaces";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import Main from "@/components/Main";
+import { 
+    Select,
+    SelectContent, 
+    SelectGroup, 
+    SelectItem, 
+    SelectLabel, 
+    SelectTrigger, 
+    SelectValue 
+} from "@/components/ui/select";
+import { useCreateShipment } from "@/api/hooks/shipments/useCreateShipment";
+import { useTranslation } from "react-i18next";
+import axios from "axios";
 
 
 
 function NewShipment() {
-
-    const { 
-        user,
-        isLoading,
-        setIsLoading
-    } = useProps();
-    const navigate = useNavigate();
-    const { addNotification } = useNotification();
-    const spansRef = useRef<HTMLSpanElement[]>([]);
 
     const newShipmentObject: Shipment = {
         origin: '',
@@ -56,6 +57,24 @@ function NewShipment() {
         budgetType: "",
         paymentType: "",
     }
+
+    const { 
+        user,
+    } = useProps();
+    const navigate = useNavigate();
+    const { addNotification } = useNotification();
+    const { t } = useTranslation();
+    const spansRef = useRef<HTMLSpanElement[]>([]);
+    const {
+        // mutateAsync,
+        data,
+        mutate, 
+        isPending, 
+        isError, 
+        error,
+        isSuccess,
+    } = useCreateShipment();
+
 
     // Components' states
     const [ newShipment, setNewShipment ] = useState<Shipment>(newShipmentObject);
@@ -183,28 +202,30 @@ function NewShipment() {
                 return;
             }
         };
+
         formData.set('data', JSON.stringify(newShipment));
 
-        try {
-            setIsLoading(true);
-            const { data } = await api.post(
-                `/shipments/create`,
-                formData
-            );
+        mutate(formData);
 
+        if (isSuccess) {
+            console.log(data);
             addNotification(
-                data.message,
+                t(data.data?.message),
                 "success",
                 5000
             );
-        } catch (err) {
-            console.log(err);
-        } finally {
-            setIsLoading(false);
-            // e.target.reset();
-        }
+        };
 
+        if (isError) {
+            const axiosMeg = axios.isAxiosError(error)? error.response?.data.message : 'حدث خطأ ما';
+            addNotification(
+                t(axiosMeg),
+                "error",
+                5000,
+            );
+        }
     }
+
 
     return (
         <Main>
@@ -670,10 +691,10 @@ function NewShipment() {
                                 </div>
                             </div>
 
-                            <Button className="w-64 h-13" size={'xl'} disabled={isLoading? true: false}>
+                            <Button className="w-64 h-13" size={'xl'} disabled={isPending? true: false}>
                                 {
-                                    isLoading?
-                                        <Spinner className={`${isLoading? 'block': 'hidden'}`}/>
+                                    isPending?
+                                        <Spinner className={`${isPending? 'block': 'hidden'}`}/>
                                     :
                                         <span className="font-main font-medium text-lg text-(--secondary-color) capitalize">رفع الحمولة الآن</span>
                                 }

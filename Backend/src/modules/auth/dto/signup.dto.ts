@@ -11,16 +11,15 @@ import {
 export class SignupDto {
   @IsString()
   @MinLength(8)
-  @Matches(/^[a-zA-Z1-9].*/)
+  @Matches(/^[a-zA-Z0-9][a-zA-Z0-9_-]*[a-zA-Z0-9-_]$/, {
+      message: "Invalid username use letters & { -, _ }"
+  })
   username: string;
 
   @IsEmail()
   email: string;
 
   @IsString()
-  @MinLength(8, {
-    message: 'Password length must be at least 8',
-  })
   password: string;
 
   @IsNotEmpty()

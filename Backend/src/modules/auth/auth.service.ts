@@ -5,6 +5,7 @@ import * as bcrypt from 'bcrypt';
 import { SendMail } from '@/common/utils/Nodemailer';
 import { OtpGenerator } from '@/common/utils/OtpGenerator';
 import { SignupDto } from './dto/signup.dto';
+import { usernameVerify } from './dto/username-verify';
 
 @Injectable()
 export class AuthService {
@@ -441,7 +442,7 @@ export class AuthService {
     };
   }
 
-  async usernameVerify(username: string) {
+  async usernameVerify(username) {
     const usernameExsiting = await this.prisma.profile.findUnique({
       where: {
         username,

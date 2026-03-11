@@ -17,6 +17,10 @@ export class ShipmentsService {
       where: {
         id: shipmentId,
       },
+      include: {
+        profile: true,
+        attachments: true,
+      }
     });
 
     if (!shipment) {
@@ -26,11 +30,37 @@ export class ShipmentsService {
     return shipment;
   }
 
-  async getShipments(): Promise<{
+  async getShipments(query): Promise<{
     total: number;
     shipments: Shipment[];
   }> {
+
+    const { type, minWeight, maxWeight, urgent, search } = query;
+
     const shipments = await this.prisma.shipment.findMany({
+      where: {
+        ...(type? { shipmentType: type } : {}),
+        ...(urgent? { urgent: true } : {}),
+        ...(!isNaN(Number(minWeight)) && !isNaN(Number(maxWeight))? {
+          AND: [
+            { weight: { gt: Number(minWeight) } },
+            { weight: { lte: Number(maxWeight) } },
+          ]
+        } : {}),
+        ...(search? {
+          OR: [
+            {
+              origin: {
+                contains: search
+              }, 
+            }, {
+              destination: {
+                contains: search
+              }
+            }
+          ]
+        }: {}),
+      },
       include: {
         attachments: {
           select: {
@@ -106,8 +136,6 @@ export class ShipmentsService {
 
     const shipmentId =
       'load#' + (Math.floor(Math.random() * 1000000000) + 1000000000);
-    console.log(shipmentId);
-    return;
 
     const {
       origin,
@@ -138,6 +166,7 @@ export class ShipmentsService {
 
     const newShipment = await this.prisma.shipment.create({
       data: {
+        shipmentId,
         origin,
         origin_lat: origin_lat ? origin_lat : 0,
         origin_lng: origin_lng ? origin_lng : 0,

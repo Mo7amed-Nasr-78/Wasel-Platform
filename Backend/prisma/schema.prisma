@@ -119,7 +119,7 @@ model Shipment {
   length      Float?
   width       Float?
   height      Float?
-  stacking    Boolean
+  stacking    Boolean?
   status ShipmentStatus @default(PENDING)
 
   pickupAt   String

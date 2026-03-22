@@ -1,0 +1,16 @@
+{
+    "تسجيل الدخول": "sign in",
+    "تسجيل الخروح": "sign out",
+    "إنشاء حساب جديد": "sign up",
+    "قم بتسجيل الدخول إلي حسابك الخاص بك لتصفح كل جديد": "Log in to your account to browse all the latest updates",
+    "الإيميل مُستخدم بالفعل": "Email already in use",
+    "Account created successfully": "تم إنشاء الحساب بنجاح",
+    "Incorrect password": "كلمة المرور غير صحيحة",
+    "logged in successfully": "تم تسجيل الدخول بنجاح",
+    "logged out successfully": "تم تسجيل الخروج بنجاح",
+    "لا توجد حمولات متوفرة": "No shipments found",
+    "إضافة حمولة جديدة": "add new shipment",
+    "عرض الصفوف": "rows view",
+    "عرض الكروت": "card view",
+    "من فضلك جرب في وقتاً لاحق": "Please try again later"
+}

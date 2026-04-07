@@ -22,6 +22,78 @@ export class OffersService {
     return offer;
   }
 
+  async getRecentOffers(req) {
+    const userId = req.user.sub as string;
+    const role = req.user.role as string;
+
+    console.log("Role: " + role); 
+
+    if (role == "ADMIN") {
+      const recentTenOffers = await this.prisma.offer.findMany({
+        orderBy: {
+          createdAt:  "desc"
+        },
+        take: 10
+      });
+
+      return recentTenOffers;
+    }
+
+    if (role === "MANUFACTURER") {
+      const recentTenOffers = await this.prisma.offer.findMany({
+        where: {  
+          shipment: {
+            profile: {
+              userId
+            }
+          }
+        },
+        select: {
+          id: true,
+          price: true,
+          proposal: true,
+          status: true,
+          createdAt: true,
+          updatedAt: true,
+          profile: {
+            select: {
+              id: true,
+              first_name: true,
+              last_name: true,
+              picture: true,
+              username: true,
+            }
+          },
+          shipment: {
+            select: {
+              origin: true,
+              destination: true,
+              distance: true,
+              ETA: true,
+              profile: {
+                select: {
+                  id: true,
+                  first_name: true,
+                  last_name: true,
+                  picture: true,
+                  username: true,
+                }
+              },
+            }
+          }
+        },
+        orderBy: {
+          createdAt:  "desc"
+        },
+        take: 10,
+      });
+
+      return recentTenOffers;
+    }
+
+    throw new HttpException("No offers found", HttpStatus.NO_CONTENT);
+  }
+
   async getOffers(): Promise<Offer[]> {
     const offers = await this.prisma.offer.findMany({
       include: {
@@ -125,7 +197,8 @@ export class OffersService {
 
     const acceptedOffer = await this.prisma.offer.update({
       where: {
-        id: offerId
+        id: offerId,
+        status: "PENDING"
       },
       data: {
         status: "ACCEPTED"
@@ -168,7 +241,8 @@ export class OffersService {
 
     const updatedOffer = await this.prisma.offer.update({
       where: {
-        id: offerId
+        id: offerId,
+        status: "PENDING"
       }, 
       data: {
         status: "REJECTED"

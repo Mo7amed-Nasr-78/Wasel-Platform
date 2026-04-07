@@ -23,6 +23,7 @@ enum ShipmentStatus {
   DELAYED
   DELIVERED
   CANCELLED
+  SUSPENDED
 }
 
 enum OfferStatus {
@@ -72,6 +73,8 @@ model Profile {
   verify             Boolean  @default(false)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+  balance Float? @default(0)
+  totalSpent Float? @default(0) 
 
   // Relations
   otp               Otp?
@@ -122,9 +125,11 @@ model Shipment {
   height      Float?
   stacking    Boolean?
   status ShipmentStatus @default(PENDING)
+  ETA String?
+  distance String?
 
-  pickupAt   String
-  deliveryAt String
+  pickupAt   DateTime
+  deliveryAt DateTime
 
   // Additional Options
   urgent Boolean?
@@ -169,7 +174,7 @@ model ShipmentAttachment {
 model Offer {
   id        String      @id @default(uuid())
   price     Float
-  proposal  String
+  proposal  String @db.LongText
   status    OfferStatus @default(PENDING)
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt

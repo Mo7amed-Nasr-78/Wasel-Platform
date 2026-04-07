@@ -2,8 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { shipmentsService } from "@/api/services/shipments.service";
 import type { ShipmentFilter } from "@/shared/interfaces/Interfaces";
 
-export function useShipments(query: ShipmentFilter) {
-	const queryParams = Object.fromEntries(
+export function useShipments(query?: ShipmentFilter) {
+	const queryParams = query && Object.fromEntries(
 		Object.entries(query).filter(([, value]) => Boolean(value)),
 	);
 

@@ -12,7 +12,14 @@ export class DashboardService {
 
         let res = {};
 
-        const total  = await this.prismaService.shipment.count({
+        const profile = await this.prismaService.profile.findUnique({
+            where: {
+                userId
+            }
+        })
+
+
+        const shipments  = await this.prismaService.shipment.count({
             where: {
                 profile: {
                     userId
@@ -36,9 +43,11 @@ export class DashboardService {
                 }
             });
 
-            res["total"] = total;
+            res["shipments"] = shipments;
             res["activeShipments"] = activeShipments;
-            res["compoletedShipments"] = compoletedShipments;
+            res["completedShipments"] = compoletedShipments;
+            res["balance"] = profile.balance;
+            res["totalSpent"] = profile.totalSpent;
             return res;
         }
     }

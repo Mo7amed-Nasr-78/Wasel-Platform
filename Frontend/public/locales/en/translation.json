@@ -4,13 +4,20 @@
     "إنشاء حساب جديد": "sign up",
     "قم بتسجيل الدخول إلي حسابك الخاص بك لتصفح كل جديد": "Log in to your account to browse all the latest updates",
     "الإيميل مُستخدم بالفعل": "Email already in use",
-    "Account created successfully": "تم إنشاء الحساب بنجاح",
-    "Incorrect password": "كلمة المرور غير صحيحة",
-    "logged in successfully": "تم تسجيل الدخول بنجاح",
-    "logged out successfully": "تم تسجيل الخروج بنجاح",
+    "تم إنشاء الحساب بنجاح": "Account created successfully",
+    "كلمة المرور غير صحيحة": "Incorrect password",
+    "تم تسجيل الدخول بنجاح": "Logged in successfully",
+    "تم تسجيل الخروج بنجاح": "Logged out successfully",
+    "تم رفع الحمولة بنجاح": "Shipment posted successfully",
     "لا توجد حمولات متوفرة": "No shipments found",
     "إضافة حمولة جديدة": "add new shipment",
     "عرض الصفوف": "rows view",
     "عرض الكروت": "card view",
-    "من فضلك جرب في وقتاً لاحق": "Please try again later"
-}
+    "من فضلك جرب في وقتاً لاحق": "Please try again later",
+    "إختار تاريخ الإنطلاق": "Pick a pickup date",
+    "إختار تاريخ الوصول": "Pick a deliver date",
+    "الرصيد": "balance",
+    "ليس لديك صلاحية": "Unauthorized",
+    "تم إرسال عرض وقيد انتظار الرد": "You've already sent your offer and PENDING",
+    "تم إرسال عرض بنجاح": "Your offer sent successfully"
+}   

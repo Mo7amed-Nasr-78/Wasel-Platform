@@ -10,7 +10,7 @@ function Footer() {
         <footer className="m-5 bg-(--primary-text) rounded-30">
             <div className="w-full container mx-auto px-4 py-18">
                 <div className="w-full flex items-center justify-start mb-8">
-                        <img src="/logo.svg" alt="logo" className="h-14" />
+                        <img src="/assets/logo.svg" alt="logo" className="h-14" />
                 </div>
                 <div className="w-full flex items-start justify-between">
                     <div className="w-1/2 flex flex-col">

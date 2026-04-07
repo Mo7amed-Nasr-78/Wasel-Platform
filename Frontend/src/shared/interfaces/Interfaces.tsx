@@ -18,6 +18,10 @@ export interface Shipment {
     pickupAt: Date | undefined,
     deliveryAt: Date | undefined,
     description: string,
+    ETA?: string,
+    distance?: string,
+    status?: "PENDING" | "IN_PROGRESS" | "IN_TRANSIT" | "DELAYED" | "DELIVERED" | "CANCELLED";
+    offersCount?: number,
 
     urgent?: boolean,
     additionalInsurance?: boolean,
@@ -36,11 +40,12 @@ export interface Shipment {
     }];
 
     profile?: {
+        userId: string,
         first_name: string,
         last_name: string
     }
 
-    acceptedOffer: {
+    acceptedOffer?: {
         id: string,
         price: number,
         proposal: string,
@@ -56,11 +61,11 @@ export interface Shipment {
     }
 }
 
-export interface Offer {
+export interface OfferResponse {
 	id: string;
-	price: number;
+	price: number | string;
 	proposal: string;
-	status: "PENDING" | "IN_PROGRESS" | "IN_TRANSIT" | "DELAYED" | "DELIVERED" | "CANCELLED";
+	status: "PENDING" | "ACCEPTED" | "REJECTED";
 	createdAt: string;
 	profileId: string;
 	profile: {
@@ -82,7 +87,7 @@ export interface Offer {
 		packaging: string;
 		goodsType: string;
 		description: string;
-		status: string;
+		status: "PENDING" | "IN_PROGRESS" | "IN_TRANSIT" | "DELAYED" | "DELIVERED" | "CANCELLED";
 		pickupAt: string;
 		deliveryAt: string;
 		urgent: boolean;
@@ -125,7 +130,7 @@ export interface ShipmentFilter {
 }
 
 export interface Offer {
-    price: number,
+    price: number | string,
     proposal: string
 }
 
@@ -141,4 +146,11 @@ export interface ShipmentAttachment {
     updatedAt: string
 }
 
-
+// Dashboard
+export interface StatsResponse {
+    shipments: number,
+    activeShipment: number,
+    completedShipments: number,
+    balance: string,
+    totalSpent: string
+}

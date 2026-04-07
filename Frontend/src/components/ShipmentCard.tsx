@@ -46,7 +46,7 @@ function ShipmentCard({ shipment }: { shipment: Shipment }) {
                         { dayjs(shipment.pickupAt).format("DD MMM") }
                     </h5>
                 </div>
-                <img src="/arrow.svg" alt="icon" className="mt-2.5 h-4"/>
+                <img src="/assets/arrow.svg" alt="icon" className="mt-2.5 h-4"/>
                 <div className="flex flex-col items-center justify-center">
                     <h4 className="font-main font-medium text-xl text-(--primary-text)">{ shipment.destination.split("-")[0].split(" ")[0] }</h4>
                     <h5 className="font-main font-medium text-base text-(--secondary-text)/75">

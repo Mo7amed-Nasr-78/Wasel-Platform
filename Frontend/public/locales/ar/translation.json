@@ -11,6 +11,7 @@
     "Incorrect password": "كلمة المرور غير صحيحة",
     "logged in successfully": "تم تسجيل الدخول بنجاح",
     "Logged out successfully": "تم تسجيل الخروج بنجاح",
+    "Shipment posted successfully": "تم رفع الحمولة بنجاح",
     "Network Error": "تم إنقطاع الإتصال بالإنترنت، حاول مرة أخري",
     "No shipments found": "لا توجد حمولات متوفرة",
     "add new shipment": "إضافة حمولة جديدة",
@@ -25,5 +26,7 @@
     "Avg Delivery Time": "متوسط التوصيل",
     "Pick a pickup date": "إختار تاريخ الإنطلاق",
     "Pick a deliver date": "إختار تاريخ الوصول",
-    "balance": "الرصيد"
+    "balance": "الرصيد",
+    "You've already sent your offer and PENDING": "تم إرسال عرض وقيد انتظار الرد",
+    "Your offer sent successfully": "تم إرسال عرض بنجاح"
 }

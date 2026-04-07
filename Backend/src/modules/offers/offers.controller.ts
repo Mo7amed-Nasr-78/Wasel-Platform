@@ -22,11 +22,11 @@ import { Roles } from '@/common/decorators/roles.decorator';
 @UseGuards(AuthGuard, RolesGuard)
 export class OffersController {
   constructor(private readonly offersService: OffersService) {}
-  @Get(':id')
-  @Roles(['MANUFACTURER', 'CARRIER_COMPANY', 'INDEPENDENT_CARRIER', 'ADMIN'])
-  getOffer(@Param('id') offerId: string, @Request() req) {
-    const profileId = req.user.profileID;
-    return this.offersService.getOffer(profileId, offerId);
+
+  @Get("recent")
+  @Roles(['MANUFACTURER', 'ADMIN'])
+  getRecentOffers(@Request() req) {
+    return this.offersService.getRecentOffers(req);
   }
 
   @Get()
@@ -34,6 +34,14 @@ export class OffersController {
   getOffers() {
     return this.offersService.getOffers();
   }
+
+  @Get(':id')
+  @Roles(['MANUFACTURER', 'CARRIER_COMPANY', 'INDEPENDENT_CARRIER', 'ADMIN'])
+  getOffer(@Param('id') offerId: string, @Request() req) {
+    const profileId = req.user.profileID;
+    return this.offersService.getOffer(profileId, offerId);
+  }
+
 
   @Post(':shipmentId')
   @Roles(['ADMIN', 'CARRIER_COMPANY', "INDEPENDENT_CARRIER"])

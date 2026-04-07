@@ -23,6 +23,7 @@ enum ShipmentStatus {
   DELAYED
   DELIVERED
   CANCELLED
+  SUSPENDED
 }
 
 enum OfferStatus {
@@ -124,6 +125,8 @@ model Shipment {
   height      Float?
   stacking    Boolean?
   status ShipmentStatus @default(PENDING)
+  ETA String?
+  distance String?
 
   pickupAt   DateTime
   deliveryAt DateTime

@@ -8,7 +8,7 @@ function Header({ hideItems = false }: { hideItems?: boolean }) {
             <div className={`${!hideItems? 'justify-between': 'justify-center'} container mx-auto flex items-center`}>
                 <Link to={{ pathname: "/" }}>
                     <div className="h-14">
-                        <img src="/logo.svg" alt="logo" className="w-full h-full"/>
+                        <img src="/assets/logo.svg" alt="logo" className="w-full h-full"/>
                     </div>
                 </Link>
                 {

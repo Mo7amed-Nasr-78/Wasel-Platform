@@ -29,11 +29,13 @@ import DashShipmentOffers from "./pages/dashboard/DashShipmentOffers";
 import HasAccess from "./components/HasAccess";
 import { useRefresh } from "./api/hooks/auth/useRefresh";
 import { useMe } from "./api/hooks/auth/useMe";
+import DashShipmentEdit from "./pages/dashboard/DashShipmentEdit";
 
 function App() {
 	const { i18n, t } = useTranslation();
 	const { setUser } = useProps();
 	const { addNotification } = useNotification();
+
 	const {
 		data: refreshRes,
 		mutate: refresh,
@@ -77,6 +79,13 @@ function App() {
 			const axiosMsg = isAxiosError(refreshError)
 				? refreshError.response?.data?.message
 				: "حدث خطأ ما";
+			const axiosStatus = isAxiosError(refreshError)
+				? refreshError.status
+				: 501;
+
+			if (axiosStatus === 401) {
+				window.location.href = "/signin";
+			}
 
 			addNotification(t(axiosMsg), "error", 5000);
 		}
@@ -167,6 +176,10 @@ function App() {
 						<Route
 							path="shipments/:shipmentId"
 							element={<DashShipmentOffers />}
+						/>
+						<Route
+							path="shipments/:shipmentId/edit"
+							element={<DashShipmentEdit />}
 						/>
 						{/* <Route path="analytics" element={<DashAnalytics />} />
 						<Route path="settings" element={<DashSettings />} /> */}

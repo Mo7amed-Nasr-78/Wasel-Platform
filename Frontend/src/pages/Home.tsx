@@ -53,7 +53,7 @@ function Home() {
 							</div>
 						</div>
 						<div className="w-4/5 lg:w-1/2">
-							<img src="/main.png" alt="image" className="h-full ms-auto"/>
+							<img src="/assets/main.png" alt="image" className="h-full ms-auto"/>
 						</div>
 						<div className="absolute bottom-6 right-0 flex items-center gap-6">
 							<div className="w-12 h-12 flex items-center justify-center rounded-full border border-(--primary-color) text-(--primary-color) duration-300 ease-in-out hover:bg-(--primary-color) hover:text-(--secondary-color) cursor-pointer">
@@ -77,22 +77,22 @@ function Home() {
 					<div className="w-full h-40 flex items-center bg-(--primary-color)/10 rounded-3xl px-10">
 						<div className="overflow-hidden">
 							<div className="flex items-center gap-16 ribbon-animate">
-								<img src="/logo1.png" alt="logo" className="h-12 min-w-fit"/>
-								<img src="/logo2.png" alt="logo" className="h-12 min-w-fit"/>
-								<img src="/logo3.png" alt="logo" className="h-12 min-w-fit"/>
-								<img src="/logo4.png" alt="logo" className="h-12 min-w-fit"/>
-								<img src="/logo5.png" alt="logo" className="h-12 min-w-fit"/>
-								<img src="/logo6.png" alt="logo" className="h-12 min-w-fit"/>
-								<img src="/logo7.png" alt="logo" className="h-12 min-w-fit"/>
-								<img src="/logo8.png" alt="logo" className="h-12 min-w-fit"/>
-								<img src="/logo9.png" alt="logo" className="h-12 min-w-fit"/>
-								<img src="/logo10.png" alt="logo" className="h-12 min-w-fit"/>
-								<img src="/logo11.png" alt="logo" className="h-12 min-w-fit"/>
-								<img src="/logo12.png" alt="logo" className="h-12 min-w-fit"/>
-								<img src="/logo13.png" alt="logo" className="h-12 min-w-fit"/>
-								<img src="/logo14.png" alt="logo" className="h-12 min-w-fit"/>
-								<img src="/logo15.png" alt="logo" className="h-12 min-w-fit"/>
-								<img src="/logo16.png" alt="logo" className="h-12 min-w-fit"/>
+								<img src="/assets/logo1.png" alt="logo" className="h-12 min-w-fit"/>
+								<img src="/assets/logo2.png" alt="logo" className="h-12 min-w-fit"/>
+								<img src="/assets/logo3.png" alt="logo" className="h-12 min-w-fit"/>
+								<img src="/assets/logo4.png" alt="logo" className="h-12 min-w-fit"/>
+								<img src="/assets/logo5.png" alt="logo" className="h-12 min-w-fit"/>
+								<img src="/assets/logo6.png" alt="logo" className="h-12 min-w-fit"/>
+								<img src="/assets/logo7.png" alt="logo" className="h-12 min-w-fit"/>
+								<img src="/assets/logo8.png" alt="logo" className="h-12 min-w-fit"/>
+								<img src="/assets/logo9.png" alt="logo" className="h-12 min-w-fit"/>
+								<img src="/assets/logo10.png" alt="logo" className="h-12 min-w-fit"/>
+								<img src="/assets/logo11.png" alt="logo" className="h-12 min-w-fit"/>
+								<img src="/assets/logo12.png" alt="logo" className="h-12 min-w-fit"/>
+								<img src="/assets/logo13.png" alt="logo" className="h-12 min-w-fit"/>
+								<img src="/assets/logo14.png" alt="logo" className="h-12 min-w-fit"/>
+								<img src="/assets/logo15.png" alt="logo" className="h-12 min-w-fit"/>
+								<img src="/assets/logo16.png" alt="logo" className="h-12 min-w-fit"/>
 							</div>
 						</div>
 					</div>
@@ -104,7 +104,7 @@ function Home() {
 					<h3 className="font-main font-medium text-xl text-(--primary-text) text-center mb-14">نعتمد على الجودة والكفاءة لتحقيق رضا عملائنا.</h3>
 					<div className="flex items-center">
 						<div className="w-1/2">
-							<img src="/sec2.png" alt="image" className="w-4/5"/>
+							<img src="/assets/sec2.png" alt="image" className="w-4/5"/>
 						</div>
 						<div className="w-1/2 flex flex-col gap-8">
 							<div className="w-full flex items-center flex-start gap-4">
@@ -150,21 +150,21 @@ function Home() {
 					<div className="flex items-center gap-6">
 						<div className="w-full shadow-lg shadow-black/6 rounded-20 p-6 bg-(--primary-color) duration-300">
 							<div className="w-18 h-18 flex items-center justify-center rounded-full bg-(--secondary-color)/10 mb-14 text-(--primary-color)">
-								<img src="/post.svg" alt="icon" className="h-10" />
+								<img src="/assets/post.svg" alt="icon" className="h-10" />
 							</div>
 							<h3 className="font-main font-semibold text-3xl text-(--secondary-color) mb-2 duration-300 group-hover:text-(--primary-text)">ارفع حمولتك</h3>
 							<p className="xxl:w-11/12 font-main font-light text-lg text-(--secondary-color) duration-300 group-hover:text-(--primary-text)">حدد تفاصيل حمولتك (الوزن، الحجم، نقطة الانطلاق، الوجهة) وارفع طلبك على المنصة بكل سهولة.</p>
 						</div>
 						<div className="w-full shadow-lg shadow-black/6 rounded-20 p-6 bg-(--secondary-color) duration-300">
 							<div className="w-18 h-18 flex items-center justify-center rounded-full bg-(--primary-color)/10 mb-14">
-								<img src="/choose.svg" alt="icon" className="h-10" />
+								<img src="/assets/choose.svg" alt="icon" className="h-10" />
 							</div>
 							<h3 className="font-main font-semibold text-3xl text-(--primary-text)  mb-2">اختر العرض</h3>
 							<p className="xxl:w-11/12 font-main font-light text-lg text-(--primary-text) ">تصفح العروض المقدمة من شركات الشحن والأفراد الناقلين، واختر العرض الذي يناسب ميزانيتك واحتياجاتك.</p>
 						</div>
 						<div className="w-full shadow-lg shadow-black/6 rounded-20 p-6 bg-(--secondary-color) duration-300">
 							<div className="w-18 h-18 flex items-center justify-center rounded-full bg-(--primary-color)/10 mb-14">
-								<img src="/deliver.svg" alt="icon" className="h-7" />
+								<img src="/assets/deliver.svg" alt="icon" className="h-7" />
 							</div>
 							<h3 className="font-main font-semibold text-3xl text-(--primary-text) mb-2">وصل حمولتك</h3>
 							<p className="xxl:w-11/12 font-main font-light text-lg text-(--primary-text)">بعد اختيار العرض المناسب، نضمن لك متابعة حمولتك خطوة بخطوة حتى وصولها إلى الوجهة المحددة.</p>
@@ -194,7 +194,7 @@ function Home() {
 							</div>
 						</div>
 						<div className="w-3/5">
-							<img src="/who.png" alt="image" className="w-full"/>
+							<img src="/assets/who.png" alt="image" className="w-full"/>
 						</div>
 					</div>
 				</div>
@@ -206,10 +206,10 @@ function Home() {
 					<div className="relative">
 						<div className="relative flex items-center justify-between gap-7 overflow-x-scroll scrollbar-hidden py-10">
 							<div className="review-card">
-								<img src="/quote.top.png" alt="icon" className="h-8 absolute top-5 left-5" />
-								<img src="/quote.down.png" alt="icon" className="h-8 absolute bottom-5 right-5" />
+								<img src="/assets/quote.top.png" alt="icon" className="h-8 absolute top-5 left-5" />
+								<img src="/assets/quote.down.png" alt="icon" className="h-8 absolute bottom-5 right-5" />
 								<div className="w-24 h-24 rounded-full border-2 border-(--primary-color) overflow-hidden mb-3">
-									<img src="/person_1.png" alt="picture" className="h-full"/>
+									<img src="/assets/person_1.png" alt="picture" className="h-full"/>
 								</div>
 								<h2 className="font-main font-semibold text-2xl text-(--primary-text) capitalize text-center">أحمد السعيد</h2>
 								<h3 className="font-main font-light text-lg text-(--primary-text) text-center mb-4">صاحب شركة شحن محلي</h3>
@@ -223,10 +223,10 @@ function Home() {
 								</div>
 							</div>
 							<div className="review-card">
-								<img src="/quote.top.png" alt="icon" className="h-8 absolute top-5 left-5" />
-								<img src="/quote.down.png" alt="icon" className="h-8 absolute bottom-5 right-5" />
+								<img src="/assets/quote.top.png" alt="icon" className="h-8 absolute top-5 left-5" />
+								<img src="/assets/quote.down.png" alt="icon" className="h-8 absolute bottom-5 right-5" />
 								<div className="w-24 h-24 rounded-full border-2 border-(--primary-color) overflow-hidden mb-3">
-									<img src="/person_2.png" alt="picture" className="h-full"/>
+									<img src="/assets/person_1.png" alt="picture" className="h-full"/>
 								</div>
 								<h2 className="font-main font-semibold text-2xl text-(--primary-text) capitalize text-center">أحمد السعيد</h2>
 								<h3 className="font-main font-light text-lg text-(--primary-text) text-center mb-4">صاحب شركة شحن محلي</h3>
@@ -240,10 +240,10 @@ function Home() {
 								</div>
 							</div>
 							<div className="review-card">
-								<img src="/quote.top.png" alt="icon" className="h-8 absolute top-5 left-5" />
-								<img src="/quote.down.png" alt="icon" className="h-8 absolute bottom-5 right-5" />
+								<img src="/assets/quote.top.png" alt="icon" className="h-8 absolute top-5 left-5" />
+								<img src="/assets/quote.down.png" alt="icon" className="h-8 absolute bottom-5 right-5" />
 								<div className="w-24 h-24 rounded-full border-2 border-(--primary-color) overflow-hidden mb-3">
-									<img src="/person_1.png" alt="picture" className="h-full"/>
+									<img src="/assets/person_1.png" alt="picture" className="h-full"/>
 								</div>
 								<h2 className="font-main font-semibold text-2xl text-(--primary-text) capitalize text-center">أحمد السعيد</h2>
 								<h3 className="font-main font-light text-lg text-(--primary-text) text-center mb-4">صاحب شركة شحن محلي</h3>
@@ -257,10 +257,10 @@ function Home() {
 								</div>
 							</div>
 							<div className="review-card">
-								<img src="/quote.top.png" alt="icon" className="h-8 absolute top-5 left-5" />
-								<img src="/quote.down.png" alt="icon" className="h-8 absolute bottom-5 right-5" />
+								<img src="/assets/quote.top.png" alt="icon" className="h-8 absolute top-5 left-5" />
+								<img src="/assets/quote.down.png" alt="icon" className="h-8 absolute bottom-5 right-5" />
 								<div className="w-24 h-24 rounded-full border-2 border-(--primary-color) overflow-hidden mb-3">
-									<img src="/person_2.png" alt="picture" className="h-full"/>
+									<img src="/assets/person_2.png" alt="picture" className="h-full"/>
 								</div>
 								<h2 className="font-main font-semibold text-2xl text-(--primary-text) capitalize text-center">أحمد السعيد</h2>
 								<h3 className="font-main font-light text-lg text-(--primary-text) text-center mb-4">صاحب شركة شحن محلي</h3>
@@ -285,7 +285,7 @@ function Home() {
 			</section>
 			<section>
 				<div className="container mx-auto px-4 sm:px-0 mb-24">
-					<div className="relative w-full h-120 flex items-center justify-between rounded-30 p-16 bg-linear-to-r from-[#3374FF] to-[#2451B2] overflow-hidden before:absolute before:left-0 before:top-0 before:h-full before:w-1/2 before:bg-[url(/banner.png)] before:bg-no-repeat before:bg-left before:z-30">
+					<div className="relative w-full h-120 flex items-center justify-between rounded-30 p-16 bg-linear-to-r from-[#3374FF] to-[#2451B2] overflow-hidden before:absolute before:left-0 before:top-0 before:h-full before:w-1/2 before:bg-[url(/assets/banner.png)] before:bg-no-repeat before:bg-left before:z-30">
 						<div className="w-1/2 h-full flex flex-col justify-between">
 							<div className="flex flex-col">
 								<h2 className="font-main font-bold text-6xl text-(--secondary-color) capitalize mb-6">تابع أحدث أخبار النقل</h2>

@@ -30,6 +30,7 @@ import dayjs from "dayjs";
 import "dayjs/locale/ar";
 import { PiCaretLeft, PiCaretRight, PiWarningCircle } from "react-icons/pi";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 dayjs.locale("ar");
 
@@ -43,6 +44,7 @@ export function ShipmentsDataTable({
 	isLoading,
 }: ShipmentsDataTableProps) {
 	const [sorting, setSorting] = useState<TanstackSortingState>([]);
+	const { t } = useTranslation();
 
 	const columns: ColumnDef<Shipment>[] = [
 		{
@@ -170,11 +172,29 @@ export function ShipmentsDataTable({
 			),
 		},
 		{
-			accessorKey: "username",
-			header: "الناقل",
+			accessorKey: "distance",
+			header: "المسافة",
 			cell: ({ row }: CellContext<Shipment, unknown>) => (
 				<span className="font-main font-medium text-(--primary-color)">
-					{row.getValue("username")}
+					{row.getValue("distance")}
+				</span>
+			),
+		},
+		{
+			accessorKey: "ETA",
+			header: "الوقت",
+			cell: ({ row }: CellContext<Shipment, unknown>) => (
+				<span className="font-main font-medium text-(--primary-color)">
+					{row.getValue("ETA")}
+				</span>
+			),
+		},	
+		{
+			accessorKey: "suggestedBudget",
+			header: "الميزانية",
+			cell: ({ row }: CellContext<Shipment, unknown>) => (
+				<span className="font-main font-medium text-(--primary-color)">
+					{row.getValue("suggestedBudget") + " ج.م"}
 				</span>
 			),
 		},

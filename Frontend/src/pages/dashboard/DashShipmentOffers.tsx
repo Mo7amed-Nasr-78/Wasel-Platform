@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useShipmentOffers } from "@/api/hooks/shipments/useShipmentOffers";
 import DashHeader from "./components/DashHeader";
 import Loader from "@/components/Loader";
@@ -14,12 +14,14 @@ import {
 	PiXCircle,
 	PiClock,
 	PiMapPin,
+	PiPencilLine
 } from "react-icons/pi";
 dayjs.locale("ar");
-import type { Offer } from "@/shared/interfaces/Interfaces";
+import type { OfferResponse } from "@/shared/interfaces/Interfaces";
 import { useRejectOffer } from "@/api/hooks/offers/useRejectOffer";
 import { Spinner } from "@/components/ui/spinner";
 import { useAcceptOffer } from "@/api/hooks/offers/useAcceptOffer";
+import { useShipment } from "@/api/hooks/shipments/useShipment";
 
 
 
@@ -31,13 +33,14 @@ export default function DashShipmentOffers() {
 		error,
 		isError,
 	} = useShipmentOffers(shipmentId || "");
+	const { data: s } = useShipment(shipmentId)
 	const { addNotification } = useNotification();
 	const { t } = useTranslation();
 
-	const offers: Offer[] = Array.isArray(response?.data)
+	const offers: OfferResponse[] = Array.isArray(response?.data)
 		? response.data
 		: [];
-	const shipment = offers[0]?.shipment;
+	const shipment = s?.data;
 
 	useEffect(() => {
 		if (isError) {
@@ -77,15 +80,23 @@ export default function DashShipmentOffers() {
 	return (
 		<section className="w-full h-full">
 			<DashHeader title={"تفاصيل الحمولة"} />
-			<div className="h-[calc(100%-52px)] overflow-y-auto">
+			<div className="h-[calc(100%-52px)] overflow-y-auto scrollbar-hidden">
 				<div className="max-w-7xl mx-auto space-y-6">
 					{/* Shipment Details Card */}
 					<div className="bg-(--secondary-color) border border-(--tertiary-color) rounded-xl p-6">
-						<div className="flex items-center gap-2 mb-6">
+						<div className="flex items-center justify-between gap-2 mb-6">
 							{/* <PiTruck className="text-2xl text-(--primary-color)" /> */}
 							<h2 className="font-main text-2xl font-bold text-(--primary-text)">
 								{shipment.shipmentId}
 							</h2>
+							<Link to={{ pathname: `/dashboard/shipments/${shipment.id}/edit` }}>
+								<Button variant="outline" size="sm" >
+									<PiPencilLine />
+									<span>
+										تعديل
+									</span>
+								</Button>
+							</Link>
 						</div>
 
 						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -291,12 +302,12 @@ export default function DashShipmentOffers() {
 }
 
 interface OfferCardProps {
-	offer: Offer;
+	offer: OfferResponse;
 }
 
 function OfferCard({ offer }: OfferCardProps) {
 	const getStatusColor = (
-		status: string,
+		status: string | undefined,
 	): { bg: string; text: string; icon: React.ReactNode } => {
 		switch (status) {
 			case "PENDING":
@@ -398,9 +409,6 @@ function OfferCard({ offer }: OfferCardProps) {
 		isAcceptSuccess,
 		isAcceptError,
 		acceptError,
-		addNotification,
-		rejectOffer,
-		t,
 	]);
 
     const handleRejectOffer = (offerId: string) => {

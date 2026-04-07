@@ -33,17 +33,19 @@ import "dayjs/locale/ar";
 import { useCreateOffer } from "@/api/hooks/offers/useCreateOffer";
 import { Spinner } from "@/components/ui/spinner";
 import ShipmentMap from "@/components/ShipmentMap";
+import { useProps } from "@/components/PropsProvider";
 dayjs.locale("ar");
 
 function Shipment() {
 	const offerInitial: Offer = {
-		price: 0,
+		price: '',
 		proposal: "",
 	};
 
 	const { id: shipmentId } = useParams();
 	const { t } = useTranslation();
 	const { addNotification } = useNotification();
+	const { user } = useProps();
 
 	// Shipment states
 	const [offer, setOffer] = useState<Offer>(offerInitial);
@@ -89,7 +91,8 @@ function Shipment() {
 		}
 
 		if (isOfferSuccess) {
-			addNotification(t(newOffer.data.message), "error", 5000);
+			addNotification(t(newOffer.data.message), "success", 5000);
+			setOffer(offerInitial)
 		}
 	}, [
 		isOfferSuccess,
@@ -211,110 +214,117 @@ function Shipment() {
 									</Link>
 								</div>
 							</div>
-							<div className="w-full p-4 rounded-2xl bg-(--secondary-color)">
-								{shipment.suggestedBudget && (
-									<>
-										<h2 className="font-main text-lg text-(--secondary-text) font-normal capitalize mb-2">
-											الميزانية
-											المقترحة من
-											الشاحن
-										</h2>
-										<h3 className="font-main text-3xl text-(--primary-text) font-bold capitalize mb-2">
-											{
-												shipment.suggestedBudget
-											}
-											<span className="text-sm font-light text-(--secondary-text)">
-												- جنية
-												مصري
+
+							{
+								profile?.id !== user?.id && (
+									<div className="w-full p-4 rounded-2xl bg-(--secondary-color)">
+										{shipment.suggestedBudget && (
+											<>
+												<h2 className="font-main text-lg text-(--secondary-text) font-normal capitalize mb-2">
+													الميزانية
+													المقترحة من
+													الشاحن
+												</h2>
+												<h3 className="font-main text-3xl text-(--primary-text) font-bold capitalize mb-2">
+													{
+														shipment.suggestedBudget
+													}
+													<span className="text-sm font-light text-(--secondary-text)">
+														- جنية
+														مصري
+													</span>
+												</h3>
+											</>
+										)}
+										{shipment.paymentType !==
+											"ON_DELIVER" && (
+											<h3 className="font-main text-sm text-green-400 font-light capitalize mb-3">
+												الدفع عند الإستلام
+												متاح
+											</h3>
+										)}
+
+										<label
+											htmlFor="price"
+											className="flex flex-col gap-1 mb-4"
+										>
+											<span className="font-main text-base text-(--primary-text) font-medium">
+												عرض السعر الخاص بك
 											</span>
-										</h3>
-									</>
-								)}
-								{shipment.paymentType !==
-									"ON_DELIVER" && (
-									<h3 className="font-main text-sm text-green-400 font-light capitalize mb-3">
-										الدفع عند الإستلام
-										متاح
-									</h3>
-								)}
-
-								<label
-									htmlFor="price"
-									className="flex flex-col gap-1 mb-4"
-								>
-									<span className="font-main text-base text-(--primary-text) font-medium">
-										عرض السعر الخاص بك
-									</span>
-									<input
-										type="number"
-										onChange={(e) => {
-											setOffer({
-												...offer,
-												[e
-													.target
-													.name]:
-													Number(
-														e
+											<input
+												type="number"
+												onChange={(e) => {
+													setOffer({
+														...offer,
+														[e
 															.target
-															.value,
-													),
-											});
-										}}
-										name="price"
-										id="price"
-										placeholder="0.00"
-										className="h-12 bg-(--tertiary-color)/25 font-main text-lg font-medium text-(--primary-text) rounded-xl px-3 focus:outline-0"
-									/>
-								</label>
+															.name]:
+															Number(
+																e
+																	.target
+																	.value,
+															),
+													});
+												}}
+												name="price"
+												id="price"
+												value={offer.price}
+												placeholder="0.00"
+												className="h-12 bg-(--tertiary-color)/25 font-main text-lg font-medium text-(--primary-text) rounded-xl px-3 focus:outline-0"
+											/>
+										</label>
 
-								<label
-									htmlFor="notes"
-									className="flex flex-col gap-1 mb-6"
-								>
-									<span className="font-main text-base text-(--primary-text) font-medium">
-										ملاحظات ( اختياري )
-									</span>
-									<textarea
-										onChange={(e) => {
-											setOffer({
-												...offer,
-												[e
-													.target
-													.name]:
-													e
-														.target
-														.value,
-											});
-										}}
-										name="notes"
-										id="notes"
-										placeholder="اكتب تفاصيل إضافية لعرضك..."
-										className="font-main bg-(--tertiary-color)/25 placeholder:text-base text-base font-medium text-(--primary-text) rounded-xl p-3 focus:outline-0"
-									/>
-								</label>
+										<label
+											htmlFor="proposal"
+											className="flex flex-col gap-1 mb-6"
+										>
+											<span className="font-main text-base text-(--primary-text) font-medium">
+												ملاحظات ( اختياري )
+											</span>
+											<textarea
+												onChange={(e) => {
+													setOffer({
+														...offer,
+														[e
+															.target
+															.name]:
+															e
+																.target
+																.value,
+													});
+												}}
+												name="proposal"
+												id="proposal"
+												value={offer.proposal}
+												placeholder="اكتب تفاصيل إضافية لعرضك..."
+												className="font-main bg-(--tertiary-color)/25 placeholder:text-base text-base font-medium text-(--primary-text) rounded-xl p-3 focus:outline-0"
+											/>
+										</label>
 
-								<Button
-									onClick={handleClick}
-									disabled={isOfferPending}
-									size={"lg"}
-									className="w-full text-sm rounded-20 mb-3"
-								>
-									{!isOfferPending ? (
-										<span>
-											{t(
-												"إرسال العرض",
+										<Button
+											onClick={handleClick}
+											disabled={isOfferPending}
+											size={"lg"}
+											className="w-full text-sm rounded-20 mb-3"
+										>
+											{!isOfferPending ? (
+												<span>
+													{t(
+														"إرسال العرض",
+													)}
+												</span>
+											) : (
+												<Spinner />
 											)}
-										</span>
-									) : (
-										<Spinner />
-									)}
-								</Button>
+										</Button>
 
-								<h5 className="font-main text-xs font-medium text-(--secondary-text) text-center">
-									بإرسالك عرضك انت توافق علي
-									شروط الخدمة
-								</h5>
-							</div>
+										<h5 className="font-main text-xs font-medium text-(--secondary-text) text-center">
+											بإرسالك عرضك انت توافق علي
+											شروط الخدمة
+										</h5>
+									</div>
+								)
+							}
 						</div>
 					</div>
 
@@ -359,8 +369,7 @@ function Shipment() {
 									</div>
 									<div className="flex flex-col items-center z-3 gap-2 mt-3">
 										<span className="font-main text-sm text-(--primary-text) capitalize font-medium py-2 px-3 rounded-full bg-[#E7E7E7]">
-											300 كم . 4.5
-											ساعات
+											{ shipment.ETA } - { shipment.distance }
 										</span>
 										<PiTruckTrailer className="text-3xl text-(--secondary-text)" />
 									</div>
@@ -544,9 +553,11 @@ function Shipment() {
 								</p>
 							</div>
 							<div className="flex flex-col gap-2">
-								<h2 className="font-main font-semibold text-2xl text-(--primary-text) capitalize">
-									متطلبات إضافية
-								</h2>
+								{shipment.noFriday || shipment.twoDrivers || shipment.stacking || shipment.additionalInsurance && (
+									<h2 className="font-main font-semibold text-2xl text-(--primary-text) capitalize">
+										متطلبات إضافية
+									</h2>
+								)}
 								<div className="w-full px-6 grid grid-cols-12 gap-2">
 									{shipment.noFriday && (
 										<div className="col-span-6 flex items-center gap-2">

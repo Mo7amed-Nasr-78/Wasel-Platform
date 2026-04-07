@@ -70,6 +70,14 @@ export class CreateShipmentDto {
   @IsString()
   deliveryAt: string
 
+  @IsNotEmpty()
+  @IsString()
+  ETA: string
+
+  @IsNotEmpty()
+  @IsString()
+  distance: string
+
   @IsOptional()
   @IsBoolean()
   urgent: boolean

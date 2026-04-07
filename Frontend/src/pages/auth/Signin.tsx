@@ -180,21 +180,21 @@ function Signin() {
 						<div className="w-full flex items-center justify-center gap-3">
 							<button className="w-13 h-13 rounded-full flex items-center justify-center gap-2 border border-(--primary-text) duration-300 ease-in-out hover:scale-95 hover:bg-(--primary-color)/10 hover:border-(--primary-color) cursor-pointer">
 								<img
-									src="/facebook.svg"
+									src="/assets/facebook.svg"
 									alt="facebook icon"
 									className="h-6"
 								/>
 							</button>
 							<button className="w-13 h-13 rounded-full flex items-center justify-center gap-2 border border-(--primary-text) duration-300 ease-in-out hover:scale-95 hover:bg-(--primary-color)/10 hover:border-(--primary-color) cursor-pointer">
 								<img
-									src="/google.svg"
+									src="/assets/google.svg"
 									alt="facebook icon"
 									className="h-6"
 								/>
 							</button>
 							<button className="w-13 h-13 rounded-full flex items-center justify-center gap-2 border border-(--primary-text) duration-300 ease-in-out hover:scale-95 hover:bg-(--primary-color)/10 hover:border-(--primary-color) cursor-pointer">
 								<img
-									src="/microsoft.svg"
+									src="/assets/microsoft.svg"
 									alt="facebook icon"
 									className="h-5"
 								/>

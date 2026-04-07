@@ -99,7 +99,7 @@ export class AuthService {
         role: user.profile.role,
       },
       {
-        expiresIn: '15m',
+        expiresIn: '1h',
       },
     );
 
@@ -148,7 +148,7 @@ export class AuthService {
           role: user.profile.role,
         },
         {
-          expiresIn: '15m',
+          expiresIn: '1h',
         },
       );
 

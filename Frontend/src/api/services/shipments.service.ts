@@ -5,8 +5,8 @@ class ShipmentsService {
 		return privateHttpClient.get(`/shipments/${id}`);
 	}
 
-	getShipments(query: Record<string, unknown>) {
-		const params = new URLSearchParams(
+	getShipments(query?: Record<string, unknown>) {
+		const params = query && new URLSearchParams(
 			Object.entries(query).map(([key, value]) => [
 				key,
 				String(value),
@@ -16,11 +16,15 @@ class ShipmentsService {
 	}
 
 	getShipmentOffers(shipmentId: string) {
-		return privateHttpClient.get(`/shipments/${shipmentId}/offers`)
+		return privateHttpClient.get(`/shipments/${shipmentId}/offers`);
 	}
 
 	createShipment(data: Record<string, unknown>) {
 		return privateHttpClient.post("/shipments/create", data);
+	}
+
+	updateShipment(id: string | undefined, data: Record<string, unknown>) {
+		return privateHttpClient.put(`/shipments/${id}`, data);
 	}
 }
 

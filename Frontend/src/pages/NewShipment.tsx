@@ -180,11 +180,54 @@ function NewShipment() {
 		}
 	};
 
+	// Calculate distance and ETA using OSRM API
+	const calculateDistanceAndETA = async (	
+		originLat: number,
+		originLng: number,
+		destinationLat: number,
+		destinationLng: number,
+	): Promise<{ distance: string; eta: string } | null> => {
+		try {
+			const response = await fetch(
+				`https://router.project-osrm.org/route/v1/driving/${originLng},${originLat};${destinationLng},${destinationLat}?overview=false`,
+			);
+			const data = await response.json();
+
+			if (data.routes && data.routes.length > 0) {
+				const route = data.routes[0];
+				const distanceKm = (route.distance / 1000).toFixed(2);
+				const durationSeconds = route.duration;
+
+				// Convert duration to human-readable format
+				const hours = Math.floor(durationSeconds / 3600);
+				const minutes = Math.floor(
+					(durationSeconds % 3600) / 60,
+				);
+				const eta =
+					hours > 0
+						? `${hours}h ${minutes}m`
+						: `${minutes}m`;
+
+
+				// setNewShipment({ ...newShipment, ETA: eta, distance: distance })
+				return {
+					distance: `${distanceKm} km`,
+					eta: eta,
+				};
+			}
+			return null;
+		} catch (error) {
+			console.error("Error calculating distance:", error);
+			return null;
+		}
+	};
+
 	const handleSubmit = async (
 		e: FormEvent<HTMLFormElement | HTMLInputElement>,
 	) => {
 		e.preventDefault();
 		console.log(newShipment);
+		// return;
 		if (shipmentImgs.length < 3) {
 			addNotification("لا يمكنك رفع أقل من 3 صور", "warning", 5000);
 			return;
@@ -204,7 +247,7 @@ function NewShipment() {
 			formData.append("shipmentDocs", shipmentDoc);
 		}
 
-		for (const value of Object.values(newShipment)) {
+		for (const value of Object.values(newShipmentObject)) {
 			if (typeof value !== "boolean" && !value) {
 				addNotification(
 					`من فضلك أدخل تفاصيل الحمولة كاملة أولاً`,
@@ -591,148 +634,146 @@ function NewShipment() {
 										مسار الرحلة
 									</h3>
 								</div>
-                                <div className="w-full flex items-center gap-5 mb-3">
-                                    <label
-                                        htmlFor="pickup-date"
-                                        className="w-full flex flex-col gap-1"
-                                    >
-                                        <span className="font-main font-normal text-lg text-(--secondary-text)">
-                                            تاريخ
-                                            الإنطلاق
-                                        </span>
-                                        {/* <div className="w-full h-12 flex items-center justify-between px-3 rounded-10 border border-(--tertiary-color)">
+								<div className="w-full flex items-center gap-5 mb-3">
+									<label
+										htmlFor="pickup-date"
+										className="w-full flex flex-col gap-1"
+									>
+										<span className="font-main font-normal text-lg text-(--secondary-text)">
+											تاريخ الإنطلاق
+										</span>
+										{/* <div className="w-full h-12 flex items-center justify-between px-3 rounded-10 border border-(--tertiary-color)">
                                             <input type="date" onChange={(e) => setNewShipment({ ...newShipment, pickupAt: e.target.value })} id="pickup-date" placeholder="يوم/شهر/سنة" className="w-full h-full font-main font-medium placeholder:text-base text-lg text-(--primary-text) focus:outline-none" />
                                         </div> */}
-                                        <Popover>
-                                            <PopoverTrigger
-                                                asChild
-                                            >
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    data-empty={
-                                                        !newShipment.pickupAt
-                                                    }
-                                                    className="w-full h-12 font-main flex items-center justify-between px-3 rounded-10 border border-(--tertiary-color) bg-transparent hover:bg-transparent data-[empty=true]:text-muted-foreground"
-                                                >
-                                                    {newShipment.pickupAt ? (
-                                                        dayjs(
-                                                            newShipment.pickupAt,
-                                                        ).format(
-                                                            "DD MMMM YYYY",
-                                                        )
-                                                    ) : (
-                                                        <span className="text-base text-(--primary-text)/50">
-                                                            {t(
-                                                                "Pick a pickup date",
-                                                            )}
-                                                        </span>
-                                                    )}
-                                                    {/* <ChevronDownIcon /> */}
-                                                </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent
-                                                className="w-auto p-0 z-[9999]"
-                                                align="end"
-                                            >
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={
-                                                        newShipment.pickupAt
-                                                    }
-                                                    onSelect={(
-                                                        date,
-                                                    ) => {
-                                                        setNewShipment(
-                                                            (
-                                                                prev,
-                                                            ) => {
-                                                                return {
-                                                                    ...prev,
-                                                                    pickupAt: date,
-                                                                };
-                                                            },
-                                                        );
-                                                    }}
-                                                    locale={
-                                                        ar
-                                                    }
-                                                    dir="rtl"
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
-                                    </label>
-                                    <label
-                                        htmlFor="dest-date"
-                                        className="w-full flex flex-col gap-1"
-                                    >
-                                        <span className="font-main font-normal text-lg text-(--secondary-text)">
-                                            تاريخ
-                                            الوصول
-                                        </span>
-                                        <Popover>
-                                            <PopoverTrigger
-                                                asChild
-                                            >
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    data-empty={
-                                                        !newShipment.deliveryAt
-                                                    }
-                                                    className="w-full h-12 font-main flex items-center justify-between px-3 rounded-10 border border-(--tertiary-color) bg-transparent hover:bg-transparent data-[empty=true]:text-muted-foreground"
-                                                >
-                                                    {newShipment.deliveryAt ? (
-                                                        dayjs(
-                                                            newShipment.deliveryAt,
-                                                        ).format(
-                                                            "DD MMMM YYYY",
-                                                        )
-                                                    ) : (
-                                                        <span className="text-base text-(--primary-text)/50">
-                                                            {t(
-                                                                "Pick a deliver date",
-                                                            )}
-                                                        </span>
-                                                    )}
-                                                </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent
-                                                className="w-auto p-0 z-[9999]"
-                                                align="end"
-                                                dir="rtl"
-                                            >
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={
-                                                        newShipment.deliveryAt
-                                                    }
-                                                    onSelect={(
-                                                        date,
-                                                    ) => {
-                                                        setNewShipment(
-                                                            (
-                                                                prev,
-                                                            ) => {
-                                                                return {
-                                                                    ...prev,
-                                                                    deliveryAt:
-                                                                        date,
-                                                                };
-                                                            },
-                                                        );
-                                                    }}
-                                                    locale={
-                                                        ar
-                                                    }
-                                                    dir="rtl"
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
-                                    </label>
-                                </div>
+										<Popover>
+											<PopoverTrigger
+												asChild
+											>
+												<Button
+													type="button"
+													variant="outline"
+													data-empty={
+														!newShipment.pickupAt
+													}
+													className="w-full h-12 font-main flex items-center justify-between px-3 rounded-10 border border-(--tertiary-color) bg-transparent hover:bg-transparent data-[empty=true]:text-muted-foreground"
+												>
+													{newShipment.pickupAt ? (
+														dayjs(
+															newShipment.pickupAt,
+														).format(
+															"DD MMMM YYYY",
+														)
+													) : (
+														<span className="text-base text-(--primary-text)/50">
+															{t(
+																"Pick a pickup date",
+															)}
+														</span>
+													)}
+													{/* <ChevronDownIcon /> */}
+												</Button>
+											</PopoverTrigger>
+											<PopoverContent
+												className="w-auto p-0 z-50"
+												align="end"
+											>
+												<Calendar
+													mode="single"
+													selected={
+														newShipment.pickupAt
+													}
+													onSelect={(
+														date,
+													) => {
+														setNewShipment(
+															(
+																prev,
+															) => {
+																return {
+																	...prev,
+																	pickupAt: date,
+																};
+															},
+														);
+													}}
+													locale={
+														ar
+													}
+													dir="rtl"
+												/>
+											</PopoverContent>
+										</Popover>
+									</label>
+									<label
+										htmlFor="dest-date"
+										className="w-full flex flex-col gap-1"
+									>
+										<span className="font-main font-normal text-lg text-(--secondary-text)">
+											تاريخ الوصول
+										</span>
+										<Popover>
+											<PopoverTrigger
+												asChild
+											>
+												<Button
+													type="button"
+													variant="outline"
+													data-empty={
+														!newShipment.deliveryAt
+													}
+													className="w-full h-12 font-main flex items-center justify-between px-3 rounded-10 border border-(--tertiary-color) bg-transparent hover:bg-transparent data-[empty=true]:text-muted-foreground"
+												>
+													{newShipment.deliveryAt ? (
+														dayjs(
+															newShipment.deliveryAt,
+														).format(
+															"DD MMMM YYYY",
+														)
+													) : (
+														<span className="text-base text-(--primary-text)/50">
+															{t(
+																"Pick a deliver date",
+															)}
+														</span>
+													)}
+												</Button>
+											</PopoverTrigger>
+											<PopoverContent
+												className="w-auto p-0 z-50"
+												align="end"
+												dir="rtl"
+											>
+												<Calendar
+													mode="single"
+													selected={
+														newShipment.deliveryAt
+													}
+													onSelect={(
+														date,
+													) => {
+														setNewShipment(
+															(
+																prev,
+															) => {
+																return {
+																	...prev,
+																	deliveryAt:
+																		date,
+																};
+															},
+														);
+													}}
+													locale={
+														ar
+													}
+													dir="rtl"
+												/>
+											</PopoverContent>
+										</Popover>
+									</label>
+								</div>
 
-                                <div className="w-full mt-5">
+								<div className="w-full mt-5">
 									<LocationTracker
 										origin={
 											newShipment.origin
@@ -768,14 +809,50 @@ function NewShipment() {
 											setNewShipment(
 												(
 													prev,
-												) => ({
-													...prev,
-													origin: name,
-													origin_lat:
-														lat,
-													origin_lng:
-														lng,
-												}),
+												) => {
+													const updated =
+														{
+															...prev,
+															origin: name,
+															origin_lat:
+																lat,
+															origin_lng:
+																lng,
+														};
+
+													// Calculate distance and ETA if both locations are set
+													if (
+														updated.destination_lat &&
+														updated.destination_lng
+													) {
+														calculateDistanceAndETA(
+															lat,
+															lng,
+															updated.destination_lat,
+															updated.destination_lng,
+														).then(
+															(
+																result,
+															) => {
+																if (
+																	result
+																) {
+																	setNewShipment(
+																		(
+																			prev,
+																		) => ({
+																			...prev,
+																			distance: result.distance,
+																			ETA: result.eta,
+																		}),
+																	);
+																}
+															},
+														);
+													}
+
+													return updated;
+												},
 											);
 										}}
 										onDestinationSelect={(
@@ -786,15 +863,51 @@ function NewShipment() {
 											setNewShipment(
 												(
 													prev,
-												) => ({
-													...prev,
-													destination:
-														name,
-													destination_lat:
-														lat,
-													destination_lng:
-														lng,
-												}),
+												) => {
+													const updated =
+														{
+															...prev,
+															destination:
+																name,
+															destination_lat:
+																lat,
+															destination_lng:
+																lng,
+														};
+
+													// Calculate distance and ETA if both locations are set
+													if (
+														updated.origin_lat &&
+														updated.origin_lng
+													) {
+														calculateDistanceAndETA(
+															updated.origin_lat,
+															updated.origin_lng,
+															lat,
+															lng,
+														).then(
+															(
+																result,
+															) => {
+																if (
+																	result
+																) {
+																	setNewShipment(
+																		(
+																			prev,
+																		) => ({
+																			...prev,
+																			distance: result.distance,
+																			ETA: result.eta,
+																		}),
+																	);
+																}
+															},
+														);
+													}
+
+													return updated;
+												},
 											);
 										}}
 										onOriginReset={() => {
@@ -808,6 +921,8 @@ function NewShipment() {
 														undefined,
 													origin_lng:
 														undefined,
+													distance: undefined,
+													ETA: undefined,
 												}),
 											);
 										}}
@@ -823,11 +938,53 @@ function NewShipment() {
 														undefined,
 													destination_lng:
 														undefined,
+													distance: undefined,
+													ETA: undefined,
 												}),
 											);
 										}}
 									/>
 								</div>
+
+								{/* Distance and ETA Display */}
+								{newShipment.distance &&
+									newShipment.ETA && (
+										<div className="w-full rounded-20 bg-(--secondary-color) my-5">
+											<div className="flex items-center gap-3 mb-4">
+												<div className="w-8 h-8 flex items-center justify-center rounded-full bg-(--primary-color)/10 text-(--primary-color)">
+													<PiInfo className="text-lg" />
+												</div>
+												<h3 className="font-main font-medium text-2xl text-(--primary-text)">
+													تفاصيل
+													المسافة
+												</h3>
+											</div>
+											<div className="grid grid-cols-2 gap-4">
+												<div className="p-4 bg-(--tertiary-color)/5 rounded-10 border border-(--tertiary-color)">
+													<p className="font-main text-sm text-(--secondary-text) mb-2">
+														المسافة
+														الكلية
+													</p>
+													<p className="font-main font-bold text-xl text-(--primary-text)">
+														{
+															newShipment.distance
+														}
+													</p>
+												</div>
+												<div className="p-4 bg-(--tertiary-color)/5 rounded-10 border border-(--tertiary-color)">
+													<p className="font-main text-sm text-(--secondary-text) mb-2">
+														الوقت
+														المتوقع
+													</p>
+													<p className="font-main font-bold text-xl text-(--primary-text)">
+														{
+															newShipment.ETA
+														}
+													</p>
+												</div>
+											</div>
+										</div>
+									)}
 							</div>
 
 							<div className="flex items-stretch gap-5">

@@ -174,6 +174,8 @@ export class ShipmentsService {
       budgetType,
       paymentType,
       suggestedBudget,
+      ETA,
+      distance
     } = data;
 
     const newShipment = await this.prisma.shipment.create({
@@ -204,6 +206,8 @@ export class ShipmentsService {
         paymentType,
         suggestedBudget,
         offerCount: 0,
+        ETA,
+        distance,
         profile: {
           connect: {
             id: userProfile.id,

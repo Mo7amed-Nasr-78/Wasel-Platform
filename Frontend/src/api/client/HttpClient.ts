@@ -2,138 +2,167 @@ import axios from "axios";
 
 // Private
 class PrivateHttpClient {
+	private instance;
+	public accessToken: string | null = null;
+	public accessTokenExp: number = 0;
+	public refreshPromise: Promise<string> | null = null;
+	public logoutCallback?: () => void;
+	// private accessToken
 
-    private instance;
-    public accessToken: string | null = null;
-    public accessTokenExp: number = 0;
-    public refreshPromise = null;
-    // private accessToken
+	constructor() {
+		this.instance = axios.create({
+			baseURL: import.meta.env.VITE_BACKEND_URL,
+			withCredentials: true,
+		});
 
-    constructor() {
-        this.instance = axios.create({
-            baseURL: import.meta.env.VITE_BACKEND_URL,
-            withCredentials: true
-        });
+		this.setupInterceptors();
+	}
 
-        this.setupInterceptors();
-    }
+	setLogoutCallback(callback: () => void) {
+		this.logoutCallback = callback;
+	}
 
-    setAccessToken(token: string) {
-        this.accessToken = token;
+	setAccessToken(token: string) {
+		this.accessToken = token;
 
-        try {
-            const { exp }: { exp: number } = JSON.parse(atob(this.accessToken.split('.')[1]));
-            this.accessTokenExp = exp;
-        } catch (err) {
-            console.log(err);
-            this.accessTokenExp = 0;
-        }
-    }
+		try {
+			const { exp }: { exp: number } = JSON.parse(
+				atob(this.accessToken.split(".")[1]),
+			);
+			this.accessTokenExp = exp;
+		} catch (err) {
+			console.log(err);
+			this.accessTokenExp = 0;
+		}
+	}
 
-    private isExpired() {
-        return Date.now() >= this.accessTokenExp - 10000
-    }
+	private isExpired() {
+		return Date.now() >= this.accessTokenExp - 10000;
+	}
 
-    private async refreshAccessToken() {
-        if (!this.refreshPromise) {
-            this.refreshPromise = await axios.post(
-                `${import.meta.env.VITE_BACKEND_URL}/auth/refresh`,
-                {},
-                {
-                    withCredentials: true
-                }
-            ).then((res) => {
-                this.setAccessToken(res.data);
-                return res.data;
-            }).finally(() => {
-                this.refreshPromise = null;
-            })
-        }
+	private async refreshAccessToken() {
+		if (this.refreshPromise) return this.refreshPromise;
 
-        return this.refreshPromise;
-    }
+		let attempts = 0;
+		const maxAttempts = 3;
+		const baseDelay = 1000; // 1 second
 
-    private setupInterceptors() {
-        // On Req
-        this.instance.interceptors.request.use(
-            async (config) => {
-                if (this.accessToken && this.isExpired()) {
-                    await this.refreshAccessToken();
-                }
+		while (attempts < maxAttempts) {
+			try {
+				this.refreshPromise = axios
+					.post(
+						`${import.meta.env.VITE_BACKEND_URL}/auth/refresh`,
+						{},
+						{
+							withCredentials: true,
+						},
+					)
+					.then((res) => {
+						this.setAccessToken(res.data);
+						return res.data;
+					});
+				return await this.refreshPromise;
+			} catch (error) {
+				attempts++;
+				if (attempts >= maxAttempts) {
+					this.logoutCallback?.();
+					throw error;
+				}
+				const delay = baseDelay * Math.pow(2, attempts - 1);
+				await new Promise((resolve) =>
+					setTimeout(resolve, delay), 
+				);
+			} finally {
+				this.refreshPromise = null;
+			}
+		}
+	}
 
-                if (this.accessToken) {
-                    config.headers.Authorization = `Bearer ${this.accessToken}`
-                }
+	private setupInterceptors() {
+		// On Req
+		this.instance.interceptors.request.use(
+			async (config) => {
+				if (this.accessToken && this.isExpired()) {
+					try {
+						await this.refreshAccessToken();
+					} catch (error) {
+						this.logoutCallback?.();
+						throw error;
+					}
+				}
 
-                return config;
-            }, 
-            (err) => err
-        );
+				if (this.accessToken) {
+					config.headers.Authorization = `Bearer ${this.accessToken}`;
+				}
 
-        // On Res
-        this.instance.interceptors.response.use(
-            (res) => res,
-            async (err) => {
-                const original = err.config;
+				return config;
+			},
+			(err) => err,
+		);
 
-                if (err.response?.status === 401 && !original._retry) {
-                    original._retry = true;
+		// On Res
+		this.instance.interceptors.response.use(
+			(res) => res,
+			async (err) => {
+				const original = err.config;
 
-                    try {
-                        await this.refreshAccessToken();
-                        original.headers.Authorization = `Bearer ${this.accessToken}`
-                        this.instance(original);
-                    } catch (err) {
-                        console.log("Failed to refresh, Logging out...");
-                        return Promise.reject(err);
-                    }
-                }
+				if (err.response?.status === 401 && !original._retry) {
+					original._retry = true;
 
-                return Promise.reject(err);
-            }
-        )
-    }
+					try {
+						await this.refreshAccessToken();
+						original.headers.Authorization = `Bearer ${this.accessToken}`;
+						return this.instance(original);
+					} catch (refreshErr) {
+						console.log(
+							"Failed to refresh, Logging out...",
+						);
+						this.logoutCallback?.();
+						return Promise.reject(refreshErr);
+					}
+				}
 
-    // Request actions
-    get(url: string) {
-        return this.instance.get(url);
-    }
+				return Promise.reject(err);
+			},
+		);
+	}
 
-    post(url: string, data?: Record<string, unknown>) {
-        return this.instance.post(url, data);
-    }
+	// Request actions
+	get(url: string) {
+		return this.instance.get(url);
+	}
 
-    put(url: string, data: Record<string, unknown>) {
-        return this.instance.put(url, data);
-    }
+	post(url: string, data?: Record<string, unknown>) {
+		return this.instance.post(url, data);
+	}
 
-    delete(url: string) {
-        return this.instance.delete(url);
-    }
+	put(url: string, data: Record<string, unknown>) {
+		return this.instance.put(url, data);
+	}
 
+	delete(url: string) {
+		return this.instance.delete(url);
+	}
 }
 export const privateHttpClient = new PrivateHttpClient();
 
-
 // Public
 class PublicHttpClient {
+	private instance;
 
-    private instance;
+	constructor() {
+		this.instance = axios.create({
+			baseURL: import.meta.env.VITE_BACKEND_URL,
+			withCredentials: true,
+		});
+	}
 
-    constructor() {
-        this.instance = axios.create({
-            baseURL: import.meta.env.VITE_BACKEND_URL,
-            withCredentials: true
-        })
-    }
+	get(url: string) {
+		return this.instance.get(url);
+	}
 
-    get(url: string) {
-        return this.instance.get(url);
-    }
-
-    post(url: string, data?: Record<string, unknown>) {
-        return this.instance.post(url, data);
-    }
-
+	post(url: string, data?: Record<string, unknown>) {
+		return this.instance.post(url, data);
+	}
 }
 export const publicHttpClient = new PublicHttpClient();

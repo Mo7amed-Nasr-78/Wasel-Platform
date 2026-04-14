@@ -29,16 +29,16 @@ function DashHome() {
 				</div>
 
 				{/* Second Row - 2 equal columns */}
-				<div className="grid grid-cols-12 gap-8 mb-4">
+				<div className="grid grid-cols-12 gap-8">
 					{/* Tracking Preview (6/12) */}
 					<div className="col-span-12 lg:col-span-6">
 						<TrackingPreview />
 					</div>
 
 					{/* Activity Timeline (6/12) */}
-					<div className="col-span-12 lg:col-span-6">
+					{/* <div className="col-span-12 lg:col-span-6">
 						<ActivityTimeline />
-					</div>
+					</div> */}
 				</div>
 
 				{/* Footer spacer */}

@@ -69,7 +69,7 @@ function ActiveShipments() {
 					</p>
 				</div>
 			) : (
-				<div className="h-full overflow-x-auto">
+				<div className="min-h-46 overflow-x-auto">
 					<Table>
 						<TableHeader>
 							<TableRow className="border-b border-(--tertiary-color)/20 hover:bg-transparent">
@@ -173,7 +173,7 @@ function ActiveShipments() {
 
 			<div className="flex items-center justify-center pt-4">
 				<Link to={{ pathname: "/dashboard/shipments" }}>
-					<Button variant="outline" className="h-11">
+					<Button variant="outline" className="h-11 text-base">
 						عرض جميع الشحنات
 					</Button>
 				</Link>

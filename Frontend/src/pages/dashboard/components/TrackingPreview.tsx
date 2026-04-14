@@ -30,16 +30,13 @@ function TrackingPreview() {
 	return (
 		<div className="w-full bg-(--secondary-color) rounded-20 p-6 border border-(--tertiary-color)/20">
 			<div className="mb-6">
-				<h2 className="font-main text-2xl font-bold text-(--primary-text)">
+				<h2 className="font-main text-xl font-bold text-(--primary-text)">
 					تتبع الشحنات
 				</h2>
-				<p className="font-main text-sm text-(--tertiary-color) mt-1">
-					معاينة لآخر شحناتك النشطة
-				</p>
 			</div>
 
 			{/* Map Placeholder */}
-			<div className="w-full h-64 bg-linear-to-br from-(--primary-color)/10 to-(--tertiary-color)/10 rounded-15 border border-(--tertiary-color)/20 flex items-center justify-center mb-6 overflow-hidden relative">
+			<div className="w-full h-64 bg-linear-to-br from-(--primary-color)/10 to-(--tertiary-color)/10 rounded-10 border border-(--tertiary-color)/20 flex items-center justify-center mb-6 overflow-hidden relative">
 				{/* Animated background */}
 				<div className="absolute inset-0 opacity-50">
 					<svg

@@ -45,7 +45,9 @@ function DashSidebar({ closeSidebar, setCloseSidebar }: { closeSidebar: boolean,
             <div className="w-full h-full overflow-hidden">
                 <div className="w-full h-full flex flex-col items-start p-5 gap-3">
                     <div className="w-full flex items-start border-b border-(--secondary-text) pb-2">
-                        <img src="/assets/logo.svg" alt="logo" className="w-22"/>
+                        <Link to={{ pathname: "/" }}>
+                            <img src="/assets/logo.svg" alt="logo" className="w-22"/>
+                        </Link>
                     </div>
                     <div className="w-full h-full flex flex-col justify-between">
                         <ul className="w-full flex flex-col gap-2">

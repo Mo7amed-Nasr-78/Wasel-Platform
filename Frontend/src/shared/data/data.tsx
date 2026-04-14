@@ -8,7 +8,8 @@ import {
     PiHouse,
     PiShippingContainer,
     PiTicket,
-    PiGear
+    PiGear,
+    PiPath
 } from "react-icons/pi";
 
 export const ar_months = {
@@ -127,15 +128,21 @@ export const sidebarItems = [
         hasAccess: ["admin", "manufacturer", "carrier_company", "independent_carrier"]
     },
     {
+        name: "التتبعات",
+        icon: PiPath,
+        path: "tracking",
+        hasAccess: ["admin", "manufacturer", "carrier_company", "independent_carrier"]
+    },
+    {
         name: "العروض",
         icon: PiTicket,
         path: "offers",
-        hasAccess: ["admin", ""]
+        hasAccess: ["admin", "manufacturer", "carrier_company", "independent_carrier"]
     },
     {
         name: "الإعدادت",
         icon: PiGear,
         path: "",
-        hasAccess: ["admin", ""]
+        hasAccess: ["admin", "manufacturer", "carrier_company", "independent_carrier"]
     },
 ];

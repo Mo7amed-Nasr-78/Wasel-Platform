@@ -2,7 +2,8 @@ import { Link } from "react-router-dom";
 import { 
     PiSignIn, 
     PiBellLight,
-	PiAppWindow
+	PiAppWindow,
+	PiHeart
 } 
 from "react-icons/pi";
 import api from "@/utils/AxiosInstance";
@@ -63,7 +64,7 @@ function UserProfile() {
 			) : (
 				<div className="flex items-center gap-2">
 					<div className="w-12 h-12 flex items-center justify-center border border-(--primary-color) rounded-full text-(--primary-color) cursor-pointer duration-300 ease-in-out hover:scale-90">
-						<PiBellLight className="text-2xl" />
+						<PiHeart className="text-2xl" />
 					</div>
 					<DropdownMenu dir="rtl">
 						<DropdownMenuTrigger asChild>

@@ -30,11 +30,22 @@ import HasAccess from "./components/HasAccess";
 import { useRefresh } from "./api/hooks/auth/useRefresh";
 import { useMe } from "./api/hooks/auth/useMe";
 import DashShipmentEdit from "./pages/dashboard/DashShipmentEdit";
+import { useSignout } from "./api/hooks/auth/useSignout";
 
 function App() {
 	const { i18n, t } = useTranslation();
 	const { setUser } = useProps();
 	const { addNotification } = useNotification();
+
+	// set signout into httpClient
+	const { 
+		data: signoutResponse, 
+		mutate: signout, 
+		isSuccess: isSignoutSuccess,
+		isError: isSignoutError,
+		error: signoutError
+	} = useSignout();
+	privateHttpClient.setLogoutCallback(signout);
 
 	const {
 		data: refreshRes,
@@ -43,6 +54,7 @@ function App() {
 		error: refreshError,
 		isSuccess: isRefreshSuccess,
 	} = useRefresh();
+
 	const {
 		data: user,
 		mutate: currentUser,
@@ -75,20 +87,9 @@ function App() {
 			currentUser();
 		}
 
-		if (isRefreshError) {
-			const axiosMsg = isAxiosError(refreshError)
-				? refreshError.response?.data?.message
-				: "حدث خطأ ما";
-			const axiosStatus = isAxiosError(refreshError)
-				? refreshError.status
-				: 501;
-
-			if (axiosStatus === 401) {
-				window.location.href = "/signin";
-			}
-
-			addNotification(t(axiosMsg), "error", 5000);
-		}
+		// if (isRefreshError) {
+		// 	signout();
+		// }
 	}, [isRefreshSuccess, isRefreshError, refreshError]);
 
 	useEffect(() => {
@@ -104,6 +105,39 @@ function App() {
 			addNotification(t(axiosMsg), "error", 5000);
 		}
 	}, [isUserSuccess, isUserError, userError]);
+
+	useEffect(() => {
+		if (isSignoutSuccess) {
+			// Clearup local state
+			setUser(null);
+			privateHttpClient.accessToken = null;
+			privateHttpClient.accessTokenExp = 0;
+
+			// Show notification
+			addNotification(
+				t(signoutResponse.data.message),
+				"success",
+				5000
+			);
+
+			// Redirect
+			window.location.href = "/signin"
+		}
+
+		if (isSignoutError) {
+			const axiosMsg = isAxiosError(signoutError)
+				? signoutError.response?.data?.message
+				: "حدث خطأ في تسجيل الخروج";
+			
+			// Still clear state and redirect as fallback
+			setUser(null);
+			privateHttpClient.accessToken = null;
+			privateHttpClient.accessTokenExp = 0;
+			window.location.href = "/signin";
+			
+			addNotification(t(axiosMsg), "error", 5000);
+		}
+	}, [isSignoutSuccess, isSignoutError, signoutError])
 
 	return (
 		<BrowserRouter>

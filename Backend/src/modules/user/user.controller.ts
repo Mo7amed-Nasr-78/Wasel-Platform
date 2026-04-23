@@ -16,9 +16,8 @@ export class UserController {
   @Get('/offers')
   @UseGuards(AuthGuard)
   getUserOffers(@Req() req) {
-    const username = req.user.username as string;
-    console.log(username);
-    return this.userService.getUserOffers(username);
+    const { sub, role } = req.user;
+    return this.userService.getUserOffers(sub, role);
   }
 
   @Get('/invoices')

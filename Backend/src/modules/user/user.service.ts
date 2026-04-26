@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from '@/database/prisma/prisma.service';
-import { Invoice, Offer, Profile, Shipment } from '@prisma/client';
+import { Invoice, Offer, Profile, Role, Shipment } from '@prisma/client';
 
 @Injectable()
 export class UserService {
@@ -55,22 +55,55 @@ export class UserService {
     return shipments;
   }
 
-  async getUserOffers(username: string): Promise<Offer[] | HttpException> {
-    const profile = await this.prisma.profile.findUnique({
-      where: {
-        username,
-      },
-      select: {
-        offers: true,
-      },
-    });
+  async getUserOffers(userId: string, role: Role): Promise<Offer[] | HttpException> {
+    // "ADMIN" | "MANUFACTURER" | "CARRIER_COMPANY" | "INDEPENDENT_CARRIER"
+    let res = [];
 
-    const { offers } = profile;
-    if (offers.length < 1) {
-      throw new HttpException('Offers not found', HttpStatus.NOT_FOUND);
+    if (["CARRIER_COMPANY", "INDEPENDENT_CARRIER"].includes(role)) {
+      const offers = await this.prisma.offer.findMany({
+        where: {
+          profile: {
+            userId
+          }
+        }
+      });
+
+      if (offers.length < 1) {
+        throw new HttpException('Offers not found', HttpStatus.NO_CONTENT);
+      }
+
+      res = offers;
     }
 
-    return offers;
+    if(role.includes("MANUFACTURER")) {
+      const offers = await this.prisma.offer.findMany({
+        where: {
+          shipment: {
+            profile: {
+              userId
+            }
+          }
+        }
+      });
+
+      if (offers.length < 1) {
+        throw new HttpException('Offers not found', HttpStatus.NO_CONTENT);
+      }
+
+      res = offers;
+    }
+
+    if (role.includes("ADMIN")) {
+      const offers = await this.prisma.offer.findMany({});
+
+      if (offers.length < 1) {
+        throw new HttpException('Offers not found', HttpStatus.NO_CONTENT);
+      }
+
+      res = offers;
+    }
+
+    return res;
   }
 
   async getUserInvoices(username: string, role: string): Promise<Invoice[]> {

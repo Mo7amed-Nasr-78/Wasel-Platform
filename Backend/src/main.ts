@@ -1,7 +1,6 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-// import session = require('express-session');
 import * as cookieParser from "cookie-parser";
 import { PrismaExceptions } from './common/filters/prisma-exception.filter';
 

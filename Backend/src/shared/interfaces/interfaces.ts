@@ -4,7 +4,7 @@ export interface ShipmentAttachments {
 }
 
 export interface TruckAttachments {
-    truck_license_front: Express.Multer.File,
-    truck_license_back: Express.Multer.File,
-    truck_front: Express.Multer.File,
+    truck_license_front: Express.Multer.File[],
+    truck_license_back: Express.Multer.File[],
+    truck_front: Express.Multer.File[],
 }

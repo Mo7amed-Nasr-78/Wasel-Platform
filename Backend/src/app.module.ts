@@ -21,6 +21,7 @@ import { NotificationsService } from './modules/notifications/notifications.serv
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { WalletModule } from './modules/wallet';
 import { TrucksModule } from './modules/trucks/trucks.module';
+import { DriversModule } from './modules/drivers/drivers.module';
 
 @Module({
   imports: [
@@ -40,7 +41,8 @@ import { TrucksModule } from './modules/trucks/trucks.module';
     DashboardModule,
     NotificationsModule,
     WalletModule,
-    TrucksModule
+    TrucksModule,
+    DriversModule,
   ],
   controllers: [AppController, AddressController, R2Controller, DashboardController],
   providers: [AppService, AuthGuard, AddressService, R2Service, DashboardService, NotificationsService],

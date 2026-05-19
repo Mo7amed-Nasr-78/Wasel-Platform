@@ -20,7 +20,9 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { AddTruckDto } from './dto/addTruckDto';
 import { UpdateTruckDto } from './dto/updateTruckDto';
 import { TruckAttachments } from '@/shared/interfaces/interfaces';
+import { Roles } from '@/common/decorators/roles.decorator';
 
+@Roles(['CARRIER_COMPANY'])
 @Controller('trucks')
 export class TrucksController {
   constructor(private readonly trucksService: TrucksService) {}

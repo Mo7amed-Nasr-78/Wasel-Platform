@@ -14,6 +14,21 @@ export class TrucksService {
     private readonly r2: R2Service,
   ) {}
 
+  // Helper method
+  private getR2KeyFromUrl(url: string): string {
+    try {
+      const pathname = new URL(url).pathname;
+      // console.log(pathname.replace(/^\/+/, ''));
+      return pathname.replace(/^\/+/, '');
+    } catch (err) {
+      throw new HttpException(
+        'Invalid R2 file URL',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // Service methods
   async getTruck(id: string): Promise<Truck> {
     const truck = await this.prisma.truck.findUnique({
       where: {
@@ -108,20 +123,6 @@ export class TrucksService {
     };
   }
 
-  private getR2KeyFromUrl(url: string): string {
-    try {
-      const pathname = new URL(url).pathname;
-      console.log(pathname);
-      console.log(pathname.replace(/^\/+/, ''));
-      return pathname.replace(/^\/+/, '');
-    } catch (err) {
-      throw new HttpException(
-        'Invalid R2 file URL',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
   async deleteTruck(user, truckId): Promise<Truck> {
     const { sub } = user;
 
@@ -191,33 +192,24 @@ export class TrucksService {
       truckAttachments || {};
 
     if (truck_license_front && truck_license_front.length > 0) {
-      const ext_front = path.extname(truck_license_front[0].originalname);
-      const new_url = await this.r2.uploadFile(
+      await this.r2.uploadFile(
         truck_license_front[0],
-        `users/${sub}/trucks/${Date.now()}-${truck_license_front[0].fieldname}${ext_front}`,
+        this.getR2KeyFromUrl(truck.truck_license_front)
       );
-      await this.r2.deleteFile(this.getR2KeyFromUrl(truck.truck_license_front));
-      updateData.truck_license_front = new_url;
     }
 
     if (truck_license_back && truck_license_back.length > 0) {
-      const ext_back = path.extname(truck_license_back[0].originalname);
-      const new_url = await this.r2.uploadFile(
+      await this.r2.uploadFile(
         truck_license_back[0],
-        `users/${sub}/trucks/${Date.now()}-${truck_license_back[0].fieldname}${ext_back}`,
+        this.getR2KeyFromUrl(truck.truck_license_back)
       );
-      await this.r2.deleteFile(this.getR2KeyFromUrl(truck.truck_license_back));
-      updateData.truck_license_back = new_url;
     }
 
     if (truck_front && truck_front.length > 0) {
-      const ext_truck = path.extname(truck_front[0].originalname);
-      const new_url = await this.r2.uploadFile(
+      await this.r2.uploadFile(
         truck_front[0],
-        `users/${sub}/trucks/${Date.now()}-${truck_front[0].fieldname}${ext_truck}`,
+        this.getR2KeyFromUrl(truck.truck_front)
       );
-      await this.r2.deleteFile(this.getR2KeyFromUrl(truck.truck_front));
-      updateData.truck_front = new_url;
     }
 
     const updatedTruck = await this.prisma.truck.update({

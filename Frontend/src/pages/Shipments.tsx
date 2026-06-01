@@ -176,7 +176,7 @@ function Shipments() {
                                             })
                                         :
                                             <div className="col-span-12 w-full h-full flex items-center justify-center">
-                                                <h3 className='font-main text-2xl text-(--primary-color) capitalize'>No shipments found</h3>
+                                                <h3 className='font-main text-2xl text-(--primary-color) capitalize'>{ t('No shipments found') }</h3>
                                             </div>
                                 }
 

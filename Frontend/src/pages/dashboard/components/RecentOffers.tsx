@@ -1,94 +1,64 @@
 import { Button } from "@/components/ui/button";
-import { PiStar, PiCheckCircle, PiXCircle, PiChatDots } from "react-icons/pi";
+import { 
+	// PiStar, 
+	PiCheckCircle, 
+	PiXCircle, 
+	PiChatDots,
+} from "react-icons/pi";
 import { useRecentOffer } from "@/api/hooks/offers/useRecentOffer";
 import { Link } from "react-router-dom";
 import { useAcceptOffer } from "@/api/hooks/offers/useAcceptOffer";
 import { useRejectOffer } from "@/api/hooks/offers/useRejectOffer";
-import { useTranslation } from "react-i18next";
 import { Spinner } from "@/components/ui/spinner";
-import { useEffect, useState } from "react";
-import { useNotification } from "@/components/NotificationContext";
-import { isAxiosError } from "axios";
-
+import { useProps } from "@/components/PropsProvider";
 
 function RecentOffers() {
-	const [ offerId, setOfferId ] = useState<string>();
-	const { t } = useTranslation();
-	const { addNotification } = useNotification();
+	const { user } = useProps();
 	const { data } = useRecentOffer();
 	const recentOffers = data?.data;
 
-	const { mutate: acceptOffer, isPending: isAcceptPending, isSuccess: isAcceptSuccess, isError: isAcceptError, error: acceptError } = useAcceptOffer(offerId || "");
-	const { mutate: rejectOffer, isPending: isRejectPending, isSuccess: isRejectSuccess, isError: isRejectError, error: rejectError } = useRejectOffer(offerId || "");
+	// const isIndependentCarrier = user?.role === "INDEPENDENT_CARRIER";
+	const isCarrierCompany = user?.role === "CARRIER_COMPANY";
+	const isManufacturer = user?.role === "MANUFACTURER";
+
+	const { mutate: acceptOffer, isPending: isRejectPending } = useAcceptOffer();
+	const { mutate: rejectOffer, isPending: isAcceptPending } = useRejectOffer();
 	
 	const handleOfferAction = (action: string, offerId: string) => {
 		if (action === "reject") {
 			if (!offerId) return;
-			setOfferId(offerId);
-			rejectOffer();
+			rejectOffer(offerId);
 		}
 		
 		if (action === "accept") {
 			if (!offerId) return;
-			setOfferId(offerId);
-			acceptOffer();
+			acceptOffer(offerId);
 		}
 	}
 
-	useEffect(() => {
-		if (isRejectError) {
-			const axiosMsg = isAxiosError(rejectError)? rejectError.response?.data.message : "حدث خطأ ما";
-			addNotification(
-				t(axiosMsg),
-				"error",
-				5000
-			);
-			setOfferId("");
-		}
-
-		if (isRejectSuccess) {
-			addNotification(
-				t("تم رفض العرض بنجاح"),
-				"success",
-				5000
-			);
-			setOfferId("");
-		}
-
-		if (isAcceptSuccess) {
-			addNotification(
-				t("تم قبول العرض بنجاح"),
-				"success",
-				5000
-			);
-			setOfferId("");
-		}
-	}, [
-		isAcceptSuccess, isRejectSuccess, isAcceptError, isRejectError
-	])
-
-	const renderStars = (rating: number) => {
-		return (
-			<div className="flex items-center gap-1">
-				{[1, 2, 3, 4, 5].map((i) => (
-					<PiStar
-						key={i}
-						className={`text-sm ${
-							i <= Math.floor(rating)
-								? "fill-yellow-500 text-yellow-500"
-								: "text-gray-300"
-						}`}
-					/>
-				))}
-			</div>
-		);
-	};
+	// const renderStars = (rating: number) => {
+	// 	return (
+	// 		<div className="flex items-center gap-1">
+	// 			{[1, 2, 3, 4, 5].map((i) => (
+	// 				<PiStar
+	// 					key={i}
+	// 					className={`text-sm ${
+	// 						i <= Math.floor(rating)
+	// 							? "fill-yellow-500 text-yellow-500"
+	// 							: "text-gray-300"
+	// 					}`}
+	// 				/>
+	// 			))}
+	// 		</div>
+	// 	);
+	// };
 
 	return (
 		<div className="w-full h-full bg-(--secondary-color) rounded-20 p-6 border border-(--tertiary-color)/20">
 			<div className="flex items-center justify-between mb-6">
 				<h2 className="text-xl font-bold text-(--primary-text)">
-					آخر العروض المستلمة
+					{ isManufacturer && ("آخر العروض المستلمة") }
+					{ isCarrierCompany && ("آخر عروضك") }
 				</h2>
 				<span className="text-sm text-(--tertiary-color)">
 					{recentOffers?.length} عرض
@@ -109,7 +79,7 @@ function RecentOffers() {
 					{recentOffers?.map((offer) => (
 						<div
 							key={offer.id}
-							className={`p-3 rounded-xl border transition-all border border-(--primary-color)/25 bg-(--primary-color)/4`}
+							className={`p-3 rounded-xl transition-all border border-(--primary-color)/25 bg-(--primary-color)/4`}
 						>
 							<div className="flex flex-col items-start justify-between gap-4">
 								<div className="flex-1 min-w-0">

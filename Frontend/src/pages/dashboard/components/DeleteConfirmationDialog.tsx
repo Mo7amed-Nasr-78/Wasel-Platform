@@ -5,8 +5,8 @@ import {
 	DialogHeader,
 	DialogTitle,
 	DialogFooter,
-} from "./ui/dialog";
-import { Button } from "./ui/button";
+} from "../../../components/ui/dialog";
+import { Button } from "../../../components/ui/button";
 import { AlertCircle } from "lucide-react";
 
 interface DeleteConfirmationDialogProps {
@@ -28,7 +28,10 @@ function DeleteConfirmationDialog({
 }: DeleteConfirmationDialogProps) {
 	return (
 		<Dialog open={isOpen} onOpenChange={onClose}>
-			<DialogContent className="max-w-sm" dir="rtl">
+			<DialogContent
+				className="max-w-sm [&>button]:left-4 [&>button]:right-auto"
+				dir="rtl"
+			>
 				<DialogHeader>
 					<div className="flex items-center gap-3 mb-0">
 						<div className="bg-red-100 rounded-full p-3">

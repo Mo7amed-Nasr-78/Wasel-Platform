@@ -18,6 +18,14 @@ class DriversService {
 		});
 	}
 
+	updateDriver(driverId: string, data) {
+		return privateHttpClient.put(`/drivers/${driverId}`, data, {
+			headers: {
+				"Content-Type": "multipart/form-data",
+			},
+		})
+	}
+
     deleteDriver(driverId: string) {
         return privateHttpClient.delete(`/drivers/${driverId}`)
     }

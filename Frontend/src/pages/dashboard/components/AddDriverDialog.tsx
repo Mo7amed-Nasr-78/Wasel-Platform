@@ -6,11 +6,11 @@ import {
 	DialogDescription,
 	DialogHeader,
 	DialogTitle,
-} from "./ui/dialog";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import Loader from "./Loader";
-import FileUploadField from "./FileUploadField";
+} from "../../../components/ui/dialog";
+import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
+import Loader from "../../../components/Loader";
+import FileUploadField from "../../../components/FileUploadField";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { createDriverSchema } from "@/shared/validation/schemas";
@@ -89,7 +89,9 @@ function AddDriverDialog({ isOpen, onClose }: AddDriverDialogProps) {
 
 		try {
 			// Validate using Yup schema
-			await createDriverSchema.validate(dataToValidate, { abortEarly: false });
+			await createDriverSchema.validate(dataToValidate, {
+				abortEarly: false,
+			});
 
 			// Create FormData for multipart request
 			const formDataToSend = new FormData();
@@ -124,7 +126,7 @@ function AddDriverDialog({ isOpen, onClose }: AddDriverDialogProps) {
 					formErrors[err.path] = err.message;
 				});
 				setErrors(formErrors);
-				
+
 				// Show first error as toast
 				const firstErrorMessage = Object.values(formErrors)[0];
 				if (firstErrorMessage) {
@@ -160,13 +162,15 @@ function AddDriverDialog({ isOpen, onClose }: AddDriverDialogProps) {
 
 	return (
 		<Dialog open={isOpen} onOpenChange={handleClose}>
-            <DialogContent
-                className="max-h-[90vh] overflow-y-auto max-w-2xl text-right"
-                dir="rtl"
-            >
+			<DialogContent
+				className="max-h-[90vh] overflow-y-auto max-w-2xl [&>button]:left-4 [&>button]:right-auto"
+				dir="rtl"
+			>
 				<DialogHeader>
-					<DialogTitle>إضافة سائق جديد</DialogTitle>
-					<DialogDescription>
+					<DialogTitle className="text-(--primary-text) text-right">
+						إضافة سائق جديد
+					</DialogTitle>
+					<DialogDescription className="text-(--primary-text) text-right">
 						يرجى ملء جميع الحقول والمستندات المطلوبة
 					</DialogDescription>
 				</DialogHeader>
@@ -194,86 +198,120 @@ function AddDriverDialog({ isOpen, onClose }: AddDriverDialogProps) {
 									}
 									placeholder="الاسم الأول"
 									disabled={isPending}
-                                    className={errors.first_name ? "border-red-500" : ""}
-                                />
-                                {errors.first_name && (
-                                    <p className="text-xs text-red-500 mt-1">{errors.first_name}</p>
-                                )}
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium mb-2 block">
-                                    الاسم الأخير
-                                </label>
-                                <Input
-                                    type="text"
-                                    name="last_name"
-                                    value={formData.last_name}
-                                    onChange={
-                                        handleInputChange
-                                    }
-                                    placeholder="الاسم الأخير"
-                                    disabled={isPending}
-                                    className={errors.last_name ? "border-red-500" : ""}
-                                />
-                                {errors.last_name && (
-                                    <p className="text-xs text-red-500 mt-1">{errors.last_name}</p>
-                                )}
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium mb-2 block">
-                                    رقم الهوية
-                                </label>
-                                <Input
-                                    type="text"
-                                    name="national_id"
-                                    value={
-                                        formData.national_id
-                                    }
-                                    onChange={
-                                        handleInputChange
-                                    }
-                                    placeholder="رقم الهوية"
-                                    disabled={isPending}
-                                    className={errors.national_id ? "border-red-500" : ""}
-                                />
-                                {errors.national_id && (
-                                    <p className="text-xs text-red-500 mt-1">{errors.national_id}</p>
-                                )}
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium mb-2 block">
-                                    رقم الهاتف
-                                </label>
-                                <Input
-                                    type="tel"
-                                    name="phone"
-                                    value={formData.phone}
-                                    onChange={handleInputChange}
-                                    placeholder="رقم الهاتف"
-                                    disabled={isPending}
-                                    className={errors.phone ? "border-red-500" : ""}
-                                />
-                                {errors.phone && (
-                                    <p className="text-xs text-red-500 mt-1">{errors.phone}</p>
-                                )}
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium mb-2 block">
-                                    العمر
-                                </label>
-                                <Input
-                                    type="number"
-                                    name="age"
-                                    value={formData.age}
-                                    onChange={handleInputChange}
-                                    placeholder="العمر"
-                                    disabled={isPending}
-                                    className={errors.age ? "border-red-500" : ""}
-                                />
-                                {errors.age && (
-                                    <p className="text-xs text-red-500 mt-1">{errors.age}</p>
-                                )}
-                            </div>
+									className={
+										errors.first_name
+											? "border-red-500"
+											: ""
+									}
+								/>
+								{errors.first_name && (
+									<p className="text-xs text-red-500 mt-1">
+										{errors.first_name}
+									</p>
+								)}
+							</div>
+							<div>
+								<label className="text-sm font-medium mb-2 block">
+									الاسم الأخير
+								</label>
+								<Input
+									type="text"
+									name="last_name"
+									value={formData.last_name}
+									onChange={
+										handleInputChange
+									}
+									placeholder="الاسم الأخير"
+									disabled={isPending}
+									className={
+										errors.last_name
+											? "border-red-500"
+											: ""
+									}
+								/>
+								{errors.last_name && (
+									<p className="text-xs text-red-500 mt-1">
+										{errors.last_name}
+									</p>
+								)}
+							</div>
+							<div>
+								<label className="text-sm font-medium mb-2 block">
+									رقم الهوية
+								</label>
+								<Input
+									type="text"
+									name="national_id"
+									value={
+										formData.national_id
+									}
+									onChange={
+										handleInputChange
+									}
+									placeholder="رقم الهوية"
+									disabled={isPending}
+									className={
+										errors.national_id
+											? "border-red-500"
+											: ""
+									}
+								/>
+								{errors.national_id && (
+									<p className="text-xs text-red-500 mt-1">
+										{errors.national_id}
+									</p>
+								)}
+							</div>
+							<div>
+								<label className="text-sm font-medium mb-2 block">
+									رقم الهاتف
+								</label>
+								<Input
+									type="tel"
+									name="phone"
+									value={formData.phone}
+									onChange={
+										handleInputChange
+									}
+									placeholder="رقم الهاتف"
+									disabled={isPending}
+									className={
+										errors.phone
+											? "border-red-500"
+											: ""
+									}
+								/>
+								{errors.phone && (
+									<p className="text-xs text-red-500 mt-1">
+										{errors.phone}
+									</p>
+								)}
+							</div>
+							<div>
+								<label className="text-sm font-medium mb-2 block">
+									العمر
+								</label>
+								<Input
+									type="number"
+									name="age"
+									value={formData.age}
+									onChange={
+										handleInputChange
+									}
+									placeholder="العمر"
+									disabled={isPending}
+									className={
+										errors.age
+											? "border-red-500"
+											: ""
+									}
+								/>
+								{errors.age && (
+									<p className="text-xs text-red-500 mt-1">
+										{errors.age}
+									</p>
+								)}
+							</div>
 						</div>
 					</div>
 
@@ -288,9 +326,12 @@ function AddDriverDialog({ isOpen, onClose }: AddDriverDialogProps) {
 								onChange={handleFileChange}
 								disabled={isPending}
 								accept="image/*"
+								onClear={() => setFiles({ ...files, picture: null })}
 							/>
 							{errors.picture && (
-								<p className="text-xs text-red-500 mt-1">{errors.picture}</p>
+								<p className="text-xs text-red-500 mt-1">
+									{errors.picture}
+								</p>
 							)}
 						</div>
 
@@ -300,12 +341,19 @@ function AddDriverDialog({ isOpen, onClose }: AddDriverDialogProps) {
 									label="رخصة القيادة - أمامية"
 									name="license_front"
 									file={files.license_front}
-									onChange={handleFileChange}
+									onChange={
+										handleFileChange
+									}
 									disabled={isPending}
 									accept="image/*"
+									onClear={() => setFiles({ ...files, license_front: null })}
 								/>
 								{errors.license_front && (
-									<p className="text-xs text-red-500 mt-1">{errors.license_front}</p>
+									<p className="text-xs text-red-500 mt-1">
+										{
+											errors.license_front
+										}
+									</p>
 								)}
 							</div>
 							<div>
@@ -313,12 +361,19 @@ function AddDriverDialog({ isOpen, onClose }: AddDriverDialogProps) {
 									label="رخصة القيادة - خلفية"
 									name="license_back"
 									file={files.license_back}
-									onChange={handleFileChange}
+									onChange={
+										handleFileChange
+									}
 									disabled={isPending}
 									accept="image/*"
+									onClear={() => setFiles({ ...files, license_back: null })}
 								/>
 								{errors.license_back && (
-									<p className="text-xs text-red-500 mt-1">{errors.license_back}</p>
+									<p className="text-xs text-red-500 mt-1">
+										{
+											errors.license_back
+										}
+									</p>
 								)}
 							</div>
 						</div>
@@ -331,12 +386,19 @@ function AddDriverDialog({ isOpen, onClose }: AddDriverDialogProps) {
 									file={
 										files.national_id_card_front
 									}
-									onChange={handleFileChange}
+									onChange={
+										handleFileChange
+									}
 									disabled={isPending}
 									accept="image/*"
+									onClear={() => setFiles({ ...files, national_id_card_front: null })}
 								/>
 								{errors.national_id_card_front && (
-									<p className="text-xs text-red-500 mt-1">{errors.national_id_card_front}</p>
+									<p className="text-xs text-red-500 mt-1">
+										{
+											errors.national_id_card_front
+										}
+									</p>
 								)}
 							</div>
 							<div>
@@ -346,12 +408,19 @@ function AddDriverDialog({ isOpen, onClose }: AddDriverDialogProps) {
 									file={
 										files.national_id_card_back
 									}
-									onChange={handleFileChange}
+									onChange={
+										handleFileChange
+									}
 									disabled={isPending}
 									accept="image/*"
+									onClear={() => setFiles({ ...files, national_id_card_back: null })}
 								/>
 								{errors.national_id_card_back && (
-									<p className="text-xs text-red-500 mt-1">{errors.national_id_card_back}</p>
+									<p className="text-xs text-red-500 mt-1">
+										{
+											errors.national_id_card_back
+										}
+									</p>
 								)}
 							</div>
 						</div>

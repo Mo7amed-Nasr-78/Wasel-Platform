@@ -44,7 +44,6 @@ export function ShipmentsDataTable({
 	isLoading,
 }: ShipmentsDataTableProps) {
 	const [sorting, setSorting] = useState<TanstackSortingState>([]);
-	const { t } = useTranslation();
 
 	const columns: ColumnDef<Shipment>[] = [
 		{

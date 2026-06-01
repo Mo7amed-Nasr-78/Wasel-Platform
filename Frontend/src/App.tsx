@@ -33,6 +33,7 @@ import { useRefresh } from "./api/hooks/auth/useRefresh";
 import { useMe } from "./api/hooks/auth/useMe";
 import { useSignout } from "./api/hooks/auth/useSignout";
 import DashDrivers from "./pages/dashboard/DashDrivers";
+import DashTrucks from "./pages/dashboard/DashTrucks";
 
 function App() {
 	const { i18n, t } = useTranslation();
@@ -225,6 +226,10 @@ function App() {
 						<Route
 							path="drivers"
 							element={<DashDrivers />}
+						/>
+						<Route
+							path="trucks"
+							element={<DashTrucks />}
 						/>
 					</Route>
 					{/* Default */}

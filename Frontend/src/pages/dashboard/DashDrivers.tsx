@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useDrivers } from "@/api/hooks/drivers/useDrivers";
-import DriverCard from "@/components/DriverCard";
-import AddDriverDialog from "@/components/AddDriverDialog";
+import DriverCard from "@/pages/dashboard/components/DriverCard";
+import AddDriverDialog from "@/pages/dashboard/components/AddDriverDialog";
 import { Button } from "@/components/ui/button";
 import Loader from "@/components/Loader";
 import { Plus } from "lucide-react";
@@ -11,7 +11,14 @@ function DashDrivers() {
 	const { data: driversData, isLoading, error } = useDrivers();
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-	const drivers = driversData?.data || [];
+	const drivers = driversData?.data.drivers || [];
+	const meta = driversData?.data.meta || {
+		total: 0,
+		pending: 0,
+		available: 0,
+		inWork: 0,
+		inRest: 0,
+	};
 
 	if (isLoading) {
 		return (
@@ -35,26 +42,89 @@ function DashDrivers() {
 	}
 
 	return (
-        <div className="w-full h-full overflow-hidden flex flex-col">
-            <DashHeader title="السائقين"/>
-			{/* Header */}
-			<div className="flex items-center justify-between mb-4">
-				{/* <div>
-					<h1 className="text-3xl font-bold">السائقون</h1>
-					<p className="text-gray-600 mt-2">
-						إدارة السائقين والتحقق من بيانات المستندات
-					</p>
-				</div> */}
-                {drivers.length >= 1 && (
-                    <Button
-                        size={'lg'}
-                        onClick={() => setIsDialogOpen(true)}
-                        className="flex items-center gap-2 text-md"
-                    >
-                        <Plus className="w-5 h-5" />
-                        إضافة سائق جديد
-                    </Button>
-                ) }
+		<div className="w-full h-full overflow-hidden flex flex-col">
+			<DashHeader title="السائقين" />
+			{/* Header with Stats and Add Button */}
+			<div className="flex items-center justify-between mb-6 gap-4">
+				{/* Stats */}
+				<div className="flex items-center gap-6 flex-1">
+					{/* Total */}
+					<div className="flex flex-col items-start gap-1">
+						<div className="flex items-center gap-1.5">
+							{/* <div className="w-3 h-3 rounded-full bg-gray-500"></div> */}
+							<span className="text-lg font-semibold text-gray-800">
+								{meta.total}
+							</span>
+							<span className="text-sm text-gray-600">
+								إجمالي
+							</span>
+						</div>
+					</div>
+
+					{/* Pending */}
+					<div className="flex flex-col items-start gap-1">
+						<div className="flex items-center gap-1.5">
+							{/* <div className="w-3 h-3 rounded-full bg-yellow-500"></div> */}
+							<span className="text-lg font-semibold text-yellow-700">
+								{meta.pending}
+							</span>
+							<span className="text-sm text-gray-600">
+								قيد الانتظار
+							</span>
+						</div>
+					</div>
+
+					{/* Available */}
+					<div className="flex flex-col items-start gap-1">
+						<div className="flex items-center gap-1.5">
+							{/* <div className="w-2 h-2 rounded-full bg-green-500"></div> */}
+							<span className="text-lg font-semibold text-green-700">
+								{meta.available}
+							</span>
+							<span className="text-sm text-gray-600">
+								متاح
+							</span>
+						</div>
+					</div>
+
+					{/* In Work */}
+					<div className="flex flex-col items-start gap-1">
+						<div className="flex items-center gap-1.5">
+							<span className="text-lg font-semibold text-blue-700">
+								{meta.inWork}
+							</span>
+							{/* <div className="w-2 h-2 rounded-full bg-blue-500"></div> */}
+							<span className="text-sm text-gray-600">
+								في العمل
+							</span>
+						</div>
+					</div>
+
+					{/* In Rest */}
+					<div className="flex flex-col items-start gap-1">
+						<div className="flex items-center gap-1.5">
+							{/* <div className="w-2 h-2 rounded-full bg-orange-500"></div> */}
+							<span className="text-lg font-semibold text-orange-700">
+								{meta.inRest}
+							</span>
+							<span className="text-sm text-gray-600">
+								في الراحة
+							</span>
+						</div>
+					</div>
+				</div>
+
+				{/* Add Button */}
+				{drivers.length >= 1 && (
+					<Button
+						size={"lg"}
+						onClick={() => setIsDialogOpen(true)}
+						className="flex items-center gap-2 text-md whitespace-nowrap"
+					>
+						<Plus className="w-5 h-5" />
+						إضافة سائق جديد
+					</Button>
+				)}
 			</div>
 
 			{/* Drivers Grid */}

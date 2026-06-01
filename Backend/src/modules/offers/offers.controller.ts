@@ -24,7 +24,7 @@ export class OffersController {
   constructor(private readonly offersService: OffersService) {}
 
   @Get("recent")
-  @Roles(['MANUFACTURER', 'ADMIN'])
+  @Roles(['MANUFACTURER', 'ADMIN', 'CARRIER_COMPANY'])
   getRecentOffers(@Request() req) {
     return this.offersService.getRecentOffers(req);
   }

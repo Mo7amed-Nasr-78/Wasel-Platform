@@ -207,3 +207,19 @@ export interface CreateDriverForm {
 	national_id_card_front: File | null;
 	national_id_card_back: File | null;
 }
+
+// Truck
+export interface Truck {
+	id: string;
+	truck_num: string;
+	truck_license_front: string;
+	truck_license_back: string;
+	truck_front: string;
+	truck_type: string;
+	truck_model: string;
+	status: "ACTIVE" | "INACTIVE" | "MAINTENANCE";
+	verificationStatus: "PENDING" | "APPROVED" | "REJECTED";
+	createdAt: string;
+	updatedAt: string;
+	profileId: string;
+}

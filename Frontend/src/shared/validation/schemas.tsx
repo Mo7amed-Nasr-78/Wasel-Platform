@@ -62,3 +62,12 @@ export const createDriverSchema = yup.object({
 		.mixed()
 		.required("بطاقة الهوية - خلفية مطلوبة"),
 });
+
+export const createTruckSchema = yup.object({
+	truck_num: yup.string().required("رقم الشاحنة مطلوب"),
+	truck_type: yup.string().required("نوع الشاحنة مطلوب"),
+	truck_model: yup.string().required("موديل الشاحنة مطلوب"),
+	truck_license_front: yup.mixed().required("رخصة الشاحنة الأمامية مطلوبة"),
+	truck_license_back: yup.mixed().required("رخصة الشاحنة الخلفية مطلوبة"),
+	truck_front: yup.mixed().required("صورة الشاحنة مطلوبة"),
+});

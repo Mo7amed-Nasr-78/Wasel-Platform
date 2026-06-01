@@ -38,7 +38,18 @@ export class DriversService {
     return driver;
   }
 
-  async getDrivers(userId: string): Promise<Driver[]> {
+  async getDrivers(userId: string): Promise<{
+    status: HttpStatus,
+    message: string,
+    drivers: Driver[],
+    meta: {
+      total: number,
+      pending: number,
+      available: number,
+      inWork: number,
+      inRest: number
+    }
+  }> {
     const drivers = await this.prisma.driver.findMany({
       where: {
         profile: {
@@ -47,11 +58,46 @@ export class DriversService {
       },
     });
 
+    const pending = await this.prisma.driver.count({
+      where: {
+        status: 'PENDING'
+      }
+    });
+
+    const available = await this.prisma.driver.count({
+      where: {
+        status: 'AVAILABLE'
+      }
+    });
+
+    const inWork = await this.prisma.driver.count({
+      where: {
+        status: 'IN_WORK'
+      }
+    });
+
+    const inRest = await this.prisma.driver.count({
+      where: {
+        status: 'IN_REST'
+      }
+    });
+
     if (drivers.length < 1) {
       throw new HttpException('No drivers found', HttpStatus.NO_CONTENT);
     }
 
-    return drivers;
+    return {
+      status: 200,
+      message: "Drivers retrieved successfully",
+      drivers,
+      meta: {
+        total: drivers.length,
+        pending,
+        available,
+        inWork,
+        inRest
+      }
+    };
   }
 
   async createDriver(

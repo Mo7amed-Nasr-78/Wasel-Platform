@@ -136,8 +136,8 @@ class PrivateHttpClient {
 		return this.instance.post(url, data, config);
 	}
 
-	put(url: string, data: Record<string, unknown>) {
-		return this.instance.put(url, data);
+	put(url: string, data: Record<string, unknown>, config?: Record<string, unknown>) {
+		return this.instance.put(url, data, config);
 	}
 
 	delete(url: string) {

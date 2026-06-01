@@ -33,5 +33,7 @@
 	"Invalid email format": "بريد إلكتروني غير صالح",
 	"Email field is required": "حقل الإيميل مطلوب",
 	"Password field is required": "حقل كلمة المرور مطلوب",
-	"File too large": "حجم الملف كبير"
+	"File too large": "حجم الملف كبير",
+	"Driver has been updated successfully": "تم تحديث بيانات السائق بنجاح",
+	"Truck has been updated successfully": "تم تحديث بيانات الشاحنة بنجاح"
 }

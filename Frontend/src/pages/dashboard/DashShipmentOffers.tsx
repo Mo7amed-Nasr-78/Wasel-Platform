@@ -4,7 +4,7 @@ import DashHeader from "./components/DashHeader";
 import Loader from "@/components/Loader";
 import { useNotification } from "@/components/NotificationContext";
 import { useTranslation } from "react-i18next";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { isAxiosError } from "axios";
 import dayjs from "dayjs";
 import "dayjs/locale/ar";
@@ -358,81 +358,21 @@ function OfferCard({ offer }: OfferCardProps) {
 	};
 
 	const statusInfo = getStatusColor(offer.status);
-    const [ offerId, setOfferId ] = useState<string>("");
-    const { addNotification } = useNotification();
-    const { t } = useTranslation()
-
     const {
         mutate: rejectOffer,
         isPending: isRejectPending,
-        error: rejectError,
-        isError: isRejectError,
-        isSuccess: isRejectSuccess,
-    } = useRejectOffer(offerId);
-
+    } = useRejectOffer();
 	const {
 		mutate: acceptOffer,
 		isPending: isAcceptPending,
-		error: acceptError,
-		isError: isAcceptError,
-		isSuccess: isAcceptSuccess
-	} = useAcceptOffer(offerId)
-
-    useEffect(() => {
-		if (isRejectSuccess) {
-			addNotification(
-                t("تم رفض العرض بنجاح"),
-                "success", 
-                5000
-            );
-			setOfferId("");
-		}
-		
-		if (isAcceptSuccess) {
-			addNotification(
-                t("تم قبول العرض بنجاح"),
-                "success", 
-                5000
-            );
-			setOfferId("");
-		}
-
-		if (isRejectError) {
-			const axiosMsg = isAxiosError(rejectOffer)? rejectOffer.response?.data.message : "حدث خطأ ما";
-
-			addNotification(
-				t(axiosMsg),
-				"error",
-				5000
-			)
-		}
-
-		if (isAcceptError) {
-			const axiosMsg = isAxiosError(acceptError)? acceptError.response?.data.message : "حدث خطأ ما";
-
-			addNotification(
-				t(axiosMsg),
-				"error",
-				5000
-			)
-		}
-	}, [
-		isRejectSuccess, 
-		isRejectError, 
-		rejectError,
-		isAcceptSuccess,
-		isAcceptError,
-		acceptError,
-	]);
+	} = useAcceptOffer()
 
     const handleRejectOffer = (offerId: string) => {
-        setOfferId(offerId);
-        rejectOffer();
+        rejectOffer(offerId);
     }
 
     const handleAcceptOffer = (offerId: string) => {
-        setOfferId(offerId);
-        acceptOffer();
+        acceptOffer(offerId);
     }
 
 	return (

@@ -6,6 +6,7 @@ interface FileUploadFieldProps {
 	name: string;
 	file: File | null;
 	onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+	onClear?: () => void;
 	disabled?: boolean;
 	accept?: string;
 }
@@ -15,6 +16,7 @@ function FileUploadField({
 	name,
 	file,
 	onChange,
+	onClear,
 	disabled = false,
 	accept = "image/*",
 }: FileUploadFieldProps) {
@@ -64,14 +66,28 @@ function FileUploadField({
 	};
 
 	const handleClear = (e: React.MouseEvent) => {
+		e.preventDefault();
 		e.stopPropagation();
 		if (inputRef.current) {
-			inputRef.current.value = "";
-			// Trigger change event
-			const event = new Event("change", { bubbles: true });
 			const fileInput = inputRef.current as any;
+			// Clear the input's files
 			fileInput.files = new DataTransfer().files;
-			inputRef.current.dispatchEvent(event);
+			inputRef.current.value = "";
+
+			// Call onClear callback if provided, otherwise use onChange
+			if (onClear) {
+				onClear();
+			} else {
+				// Notify parent via the provided onChange handler with an empty files list
+				const changeEvent = {
+					target: {
+						name,
+						files: fileInput.files,
+					},
+				} as unknown as React.ChangeEvent<HTMLInputElement>;
+
+				onChange(changeEvent);
+			}
 		}
 	};
 
@@ -116,11 +132,14 @@ function FileUploadField({
 				/>
 
 				{file ? (
-					<div className="text-center w-full">
+					<div
+						className="text-center w-full"
+						onClick={(e) => e.stopPropagation()}
+					>
 						<div className="flex items-center justify-center mb-2">
 							<span className="text-2xl">✓</span>
 						</div>
-						<p className="text-sm font-medium text-gray-700 break-words px-2">
+						<p className="text-sm font-medium text-gray-700 wrap-break-word px-2">
 							{file.name}
 						</p>
 						<p className="text-xs text-gray-500 mt-1">
@@ -130,7 +149,7 @@ function FileUploadField({
 						{!disabled && (
 							<button
 								onClick={handleClear}
-								className="mt-2 text-xs text-red-500 hover:text-red-700 flex items-center gap-1 mx-auto"
+								className="mt-2 text-xs text-red-500 hover:text-red-700 flex items-center gap-1 mx-auto hover:cursor-pointer	"
 							>
 								<X className="w-3 h-3" />
 								إزالة

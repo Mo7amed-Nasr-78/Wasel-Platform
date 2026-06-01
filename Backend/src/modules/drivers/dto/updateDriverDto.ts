@@ -10,12 +10,14 @@ export class UpdateDriverDto {
   last_name?: string;
 
   @IsOptional()
-  @IsInt()
-  @Min(18)
-  @Max(100)
-  age?: number;
+  @IsString()
+  age?: string;
 
   @IsOptional()
   @IsString()
   national_id?: string;
+
+  @IsOptional()
+  @IsString()
+  phone?: string;
 }

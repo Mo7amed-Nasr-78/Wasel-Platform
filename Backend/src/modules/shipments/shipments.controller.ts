@@ -31,8 +31,8 @@ export class ShipmentsController {
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(['MANUFACTURER', 'ADMIN', 'CARRIER_COMPANY', 'INDEPENDENT_CARRIER'])
   getShipmentsOffers(@Param('shipmentId') shipmentId: string, @Request() req) {
-    const profileId = req.user.profileID as string;
-    return this.shipmentsService.getShipmentOffers(profileId, shipmentId);
+    const user = req.user;
+    return this.shipmentsService.getShipmentOffers(user, shipmentId);
   }
 
   @Get(':id')

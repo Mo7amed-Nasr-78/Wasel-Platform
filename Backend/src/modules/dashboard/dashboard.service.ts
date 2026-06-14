@@ -36,7 +36,7 @@ export class DashboardService {
                     status: "PENDING",
                     profile: {
                         userId
-                    }
+                    }, 
                 }
             });
     

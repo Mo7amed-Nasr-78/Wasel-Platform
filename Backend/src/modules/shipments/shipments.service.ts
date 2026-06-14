@@ -99,24 +99,56 @@ export class ShipmentsService {
     };
   }
 
-  async getShipmentOffers(profileId, shipmentId): Promise<Offer[]> {
-    const offers = await this.prisma.offer.findMany({
-      where: {
-        profileId,
-        shipmentId,
-      },
-      include: {
-        profile: {
-          select: {
-            username: true,
-            first_name: true,
-            last_name: true,
-            picture: true
-          }
+  async getShipmentOffers(user, shipmentId): Promise<Offer[]> {
+    const userId = user.sub;
+    const role = user.role;
+
+    let offers = [];
+
+    if (role === Role.CARRIER_COMPANY || role === Role.INDEPENDENT_CARRIER) {
+      const res = await this.prisma.offer.findMany({
+        where: {
+          shipmentId,
+          profile: {
+            userId
+          },
         },
-        shipment: true,
-      }
-    });
+        include: {
+          profile: {
+            select: {
+              username: true,
+              first_name: true,
+              last_name: true,
+              picture: true
+            }
+          },
+          shipment: true,
+        }
+      });
+
+      offers = res;
+    }
+
+    if (role === Role.MANUFACTURER || role === Role.ADMIN) {
+      const res = await this.prisma.offer.findMany({
+        where: {
+          shipmentId,
+        },
+        include: {
+          profile: {
+            select: {
+              username: true,
+              first_name: true,
+              last_name: true,
+              picture: true
+            }
+          },
+          shipment: true,
+        }
+      });
+
+      offers = res;
+    }
 
     if (offers.length < 1) {
       throw new HttpException(

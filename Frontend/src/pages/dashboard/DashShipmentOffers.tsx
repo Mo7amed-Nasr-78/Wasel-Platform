@@ -49,7 +49,7 @@ export default function DashShipmentOffers() {
 				: "حدث خطأ ما";
 			addNotification(t(axiosMsg), "error", 5000);
 		}
-	}, [isError, error, addNotification, t]);
+	}, [isError, error]);
 
 	if (isLoading) {
 		return (

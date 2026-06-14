@@ -1,6 +1,6 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '@/database/prisma/prisma.service';
-import { Offer, OfferStatus } from '@prisma/client';
+import { Offer, OfferStatus, Role } from '@prisma/client';
 import { CreateOfferDTO } from './dto/create-offer.dto';
 
 @Injectable()
@@ -26,7 +26,9 @@ export class OffersService {
     const userId = req.user.sub as string;
     const role = req.user.role as string;
 
-    if (role == "ADMIN") {
+    let recentOffers = []
+
+    if (role === Role.ADMIN) {
       const recentTenOffers = await this.prisma.offer.findMany({
         where: {
           status: "PENDING"
@@ -37,10 +39,10 @@ export class OffersService {
         take: 10
       });
 
-      return recentTenOffers;
+      recentOffers = recentTenOffers;
     }
 
-    if (role === "MANUFACTURER") {
+    if (role === Role.MANUFACTURER) {
       const recentTenOffers = await this.prisma.offer.findMany({
         where: { 
           status: {
@@ -84,7 +86,7 @@ export class OffersService {
                   last_name: true,
                   picture: true,
                   username: true,
-                  // company_name: true,
+                  company_name: true,
                 }
               },
             }
@@ -96,10 +98,68 @@ export class OffersService {
         take: 10,
       });
 
-      return recentTenOffers;
+      recentOffers = recentTenOffers;
     }
 
-    throw new HttpException("No offers found", HttpStatus.NO_CONTENT);
+    if (role === Role.CARRIER_COMPANY) {
+      const recentTenOffers = await this.prisma.offer.findMany({
+        where: {
+          profile: {
+            userId
+          }
+        },
+        select: {
+          id: true,
+          price: true,
+          proposal: true,
+          status: true,
+          createdAt: true,
+          updatedAt: true,
+          profile: {
+            select: {
+              id: true,
+              first_name: true,
+              last_name: true,
+              picture: true,
+              username: true,
+              company_name: true,
+            }
+          },
+          shipment: {
+            select: {
+              origin: true,
+              destination: true,
+              distance: true,
+              ETA: true,
+              id: true,
+              shipmentId: true,
+              profile: {
+                select: {
+                  id: true,
+                  first_name: true,
+                  last_name: true,
+                  picture: true,
+                  username: true,
+                  company_name: true,
+                }
+              },
+            }
+          }
+        },
+        orderBy: {
+          createdAt: "desc"
+        },
+        take: 10,
+      });
+
+      recentOffers = recentTenOffers;
+    }
+
+    if (recentOffers.length < 1) {
+      throw new HttpException("No offers found", HttpStatus.NO_CONTENT);
+    }
+
+    return recentOffers;
   }
 
   async getOffers(): Promise<Offer[]> {

@@ -28,5 +28,8 @@
     "إسم المستخدم مُستخدم بالفعل": "Username is already in use",
     "حجم الملف كبير": "File too large",
     "تم تحديث بيانات السائق بنجاح": "Driver has been updated successfully",
-    "تم تحديث بيانات الشاحنة بنجاح": "Truck has been updated successfully"
+    "تم تحديث بيانات الشاحنة بنجاح": "Truck has been updated successfully",
+    "مقبول": "ACCEPTED",
+    "قيد الإنتظار": "PENDING",
+    "مرفوض": "REJECTED"
 }   

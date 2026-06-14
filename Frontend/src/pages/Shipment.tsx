@@ -34,12 +34,13 @@ import { useCreateOffer } from "@/api/hooks/offers/useCreateOffer";
 import { Spinner } from "@/components/ui/spinner";
 import ShipmentMap from "@/components/ShipmentMap";
 import { useProps } from "@/components/PropsProvider";
+import { Dialog, DialogTrigger, DialogContent } from "@/components/ui/dialog";
 dayjs.locale("ar");
 
 function Shipment() {
 	const offerInitial: Offer = {
-		price: '',
-		proposal: ""
+		price: "",
+		proposal: "",
 	};
 
 	const { id: shipmentId } = useParams();
@@ -92,7 +93,7 @@ function Shipment() {
 
 		if (isOfferSuccess) {
 			addNotification(t(newOffer.data.message), "success", 5000);
-			setOffer(offerInitial)
+			setOffer(offerInitial);
 		}
 	}, [
 		isOfferSuccess,
@@ -101,7 +102,6 @@ function Shipment() {
 		shipmentError,
 		OfferError,
 		shipmentId,
-		t,
 	]);
 
 	const handleClick = async (e: MouseEvent<HTMLButtonElement>) => {
@@ -215,14 +215,16 @@ function Shipment() {
 								</div>
 							</div>
 
-							{
-								profile?.id !== user?.id && (
+							{profile?.id !== user?.id &&
+								shipment.status ===
+									"PENDING" && (
 									<div className="w-full p-4 rounded-2xl bg-(--secondary-color)">
 										{shipment.suggestedBudget && (
 											<>
 												<h2 className="font-main text-lg text-(--secondary-text) font-normal capitalize mb-2">
 													الميزانية
-													المقترحة من
+													المقترحة
+													من
 													الشاحن
 												</h2>
 												<h3 className="font-main text-3xl text-(--primary-text) font-bold capitalize mb-2">
@@ -230,7 +232,8 @@ function Shipment() {
 														shipment.suggestedBudget
 													}
 													<span className="text-sm font-light text-(--secondary-text)">
-														- جنية
+														-
+														جنية
 														مصري
 													</span>
 												</h3>
@@ -239,7 +242,9 @@ function Shipment() {
 										{shipment.paymentType !==
 											"ON_DELIVER" && (
 											<h3 className="font-main text-sm text-green-400 font-light capitalize mb-3">
-												الدفع عند الإستلام
+												الدفع
+												عند
+												الإستلام
 												متاح
 											</h3>
 										)}
@@ -249,26 +254,34 @@ function Shipment() {
 											className="flex flex-col gap-1 mb-4"
 										>
 											<span className="font-main text-base text-(--primary-text) font-medium">
-												عرض السعر الخاص بك
+												عرض
+												السعر
+												الخاص بك
 											</span>
 											<input
 												type="number"
-												onChange={(e) => {
-													setOffer({
-														...offer,
-														[e
-															.target
-															.name]:
-															Number(
-																e
-																	.target
-																	.value,
-															),
-													});
+												onChange={(
+													e,
+												) => {
+													setOffer(
+														{
+															...offer,
+															[e
+																.target
+																.name]:
+																Number(
+																	e
+																		.target
+																		.value,
+																),
+														},
+													);
 												}}
 												name="price"
 												id="price"
-												value={offer.price}
+												value={
+													offer.price
+												}
 												placeholder="0.00"
 												className="h-12 bg-(--tertiary-color)/25 font-main text-lg font-medium text-(--primary-text) rounded-xl px-3 focus:outline-0"
 											/>
@@ -279,31 +292,44 @@ function Shipment() {
 											className="flex flex-col gap-1 mb-6"
 										>
 											<span className="font-main text-base text-(--primary-text) font-medium">
-												ملاحظات ( اختياري )
+												ملاحظات
+												(
+												اختياري
+												)
 											</span>
 											<textarea
-												onChange={(e) => {
-													setOffer({
-														...offer,
-														[e
-															.target
-															.name]:
-															e
+												onChange={(
+													e,
+												) => {
+													setOffer(
+														{
+															...offer,
+															[e
 																.target
-																.value,
-													});
+																.name]:
+																e
+																	.target
+																	.value,
+														},
+													);
 												}}
 												name="proposal"
 												id="proposal"
-												value={offer.proposal}
+												value={
+													offer.proposal
+												}
 												placeholder="اكتب تفاصيل إضافية لعرضك..."
 												className="font-main bg-(--tertiary-color)/25 placeholder:text-base text-base font-medium text-(--primary-text) rounded-xl p-3 focus:outline-0"
 											/>
 										</label>
 
 										<Button
-											onClick={handleClick}
-											disabled={isOfferPending}
+											onClick={
+												handleClick
+											}
+											disabled={
+												isOfferPending
+											}
 											size={"lg"}
 											className="w-full text-sm rounded-20 mb-3"
 										>
@@ -319,12 +345,12 @@ function Shipment() {
 										</Button>
 
 										<h5 className="font-main text-xs font-medium text-(--secondary-text) text-center">
-											بإرسالك عرضك انت توافق علي
+											بإرسالك عرضك
+											انت توافق علي
 											شروط الخدمة
 										</h5>
 									</div>
-								)
-							}
+								)}
 						</div>
 					</div>
 
@@ -369,7 +395,11 @@ function Shipment() {
 									</div>
 									<div className="flex flex-col items-center z-3 gap-2 mt-3">
 										<span className="font-main text-sm text-(--primary-text) capitalize font-medium py-2 px-3 rounded-full bg-[#E7E7E7]">
-											{ shipment.ETA } - { shipment.distance }
+											{shipment.ETA}{" "}
+											-{" "}
+											{
+												shipment.distance
+											}
 										</span>
 										<PiTruckTrailer className="text-3xl text-(--secondary-text)" />
 									</div>
@@ -484,12 +514,38 @@ function Shipment() {
 							</div>
 							<div className="w-full flex items-center gap-3 overflow-x-scroll scrollbar-hidden">
 								{shipmentImgs.map((img) => {
+									const key =
+										(img as any).id ||
+										img.url;
+
 									return (
-										<img
-											src={img.url}
-											alt="image"
-											className="h-36 w-36 rounded-xl duration-300 hover:scale-98 border border-(--primary-color) object-cover"
-										/>
+										<Dialog key={key}>
+											<DialogTrigger
+												asChild
+											>
+												<button className="p-0 m-0 bg-transparent border-0">
+													<img
+														src={
+															img.url
+														}
+														alt="image"
+														className="h-36 w-36 rounded-xl duration-300 hover:scale-98 border border-(--primary-color) object-cover"
+													/>
+												</button>
+											</DialogTrigger>
+
+											<DialogContent className="max-w-4xl p-0">
+												<div className="w-full max-h-[80vh] flex items-center justify-center p-4">
+													<img
+														src={
+															img.url
+														}
+														alt="image-full"
+														className="w-full h-auto max-h-[76vh] object-contain"
+													/>
+												</div>
+											</DialogContent>
+										</Dialog>
 									);
 								})}
 							</div>
@@ -553,11 +609,14 @@ function Shipment() {
 								</p>
 							</div>
 							<div className="flex flex-col gap-2">
-								{shipment.noFriday || shipment.twoDrivers || shipment.stacking || shipment.additionalInsurance && (
-									<h2 className="font-main font-semibold text-2xl text-(--primary-text) capitalize">
-										متطلبات إضافية
-									</h2>
-								)}
+								{shipment.noFriday ||
+									shipment.twoDrivers ||
+									shipment.stacking ||
+									(shipment.additionalInsurance && (
+										<h2 className="font-main font-semibold text-2xl text-(--primary-text) capitalize">
+											متطلبات إضافية
+										</h2>
+									))}
 								<div className="w-full px-6 grid grid-cols-12 gap-2">
 									{shipment.noFriday && (
 										<div className="col-span-6 flex items-center gap-2">
@@ -613,22 +672,28 @@ function Shipment() {
 									الخريطة
 								</h2>
 							</div>
-                            <div className="w-full h-80">
-                                <ShipmentMap
-                                    originLat={shipment.origin_lat}
-                                    originLng={shipment.origin_lng}
-                                    destinationLat={
-                                        shipment.destination_lat
-                                    }
-                                    destinationLng={
-                                        shipment.destination_lng
-                                    }
-                                    originName={shipment.origin}
-                                    destinationName={
-                                        shipment.destination
-                                    }
-                                />
-                            </div>
+							<div className="w-full h-80">
+								<ShipmentMap
+									originLat={
+										shipment.origin_lat
+									}
+									originLng={
+										shipment.origin_lng
+									}
+									destinationLat={
+										shipment.destination_lat
+									}
+									destinationLng={
+										shipment.destination_lng
+									}
+									originName={
+										shipment.origin
+									}
+									destinationName={
+										shipment.destination
+									}
+								/>
+							</div>
 						</div>
 					</div>
 				</div>

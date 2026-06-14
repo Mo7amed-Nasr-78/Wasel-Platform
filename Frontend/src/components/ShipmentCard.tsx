@@ -43,13 +43,6 @@ function ShipmentCard({ shipment }: { shipment: Shipment }) {
                         <p>{ shipment.profile?.first_name } { shipment.profile?.last_name }</p>
                     </TooltipContent>
                 </Tooltip>
-
-                {/* { shipment.budgetType !== 'OPEN_BUDGET' && (
-                    <div className="absolute bottom-1 right-1 font-main flex flex-col items-start mb-1 rounded-xl border border-(--tertiary-color) py-2 px-3 bg-(--secondary-color)">
-                        <h3 className="text-sm text-(--secondary-text) capitalize">السعر المقترح</h3>
-                        <h4 className="text-sm font-medium text-(--primary-text) text-nowrap"><span className="font-bold text-base text-(--primary-color)">{ shipment.suggestedBudget }</span> ج</h4>
-                    </div>
-                ) } */}
             </div>
 
             <div className="p-3">
@@ -63,7 +56,7 @@ function ShipmentCard({ shipment }: { shipment: Shipment }) {
                     
                 </div> */}
 
-                <div className="flex items-center justify-evenly gap-3 my-2 bg-(--primary-text)/4 py-3 rounded-2xl">
+                <div className="flex items-center justify-evenly gap-3 mt-2 mb-3">
                     <div className="flex flex-col items-center justify-center">
                         <h4 className="font-main font-medium text-xl text-(--primary-text)">{ shipment.origin.split("-")[0].split(" ")[0] }</h4>
                         <h5 className="font-main font-medium text-base text-(--secondary-text)/75">
@@ -82,17 +75,25 @@ function ShipmentCard({ shipment }: { shipment: Shipment }) {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3 mb-4">
-                        <div className="font-main flex items-center rounded-lg bg-(--primary-text)/4 py-3 rounded-2xl py-2 px-3 gap-2">
-                            <div className="w-10 h-10 flex items-center justify-center rounded-full bg-(--primary-color)/12">
-                                <PiTicket className="text-(--primary-color) text-xl"/>
-                            </div>
+                <div className="flex items-center gap-3 mb-3">
+                    { shipment.budgetType !== 'OPEN_BUDGET' && (
+                        <div className="w-1/2 font-main flex items-center bg-(--primary-text)/4 rounded-lg py-2 px-3 gap-2">
                             <div className="flex flex-col items-start">
-                                <h3 className="text-xs text-(--secondary-text)/75 capitalize">العروض</h3>
-                                <h4 className="font-main font-medium text-sm text-(--primary-text)"><span className="font-semibold text-base text-(--primary-color)">{ shipment.offerCount }</span> حتي الان</h4>
+                                <h3 className="text-xs text-(--secondary-text)/75 capitalize">السعر المقترح</h3>
+                                <h4 className="text-sm font-medium text-(--primary-text) text-nowrap"><span className="font-bold text-base text-(--primary-color)">{ shipment.suggestedBudget }</span> ج</h4>
                             </div>
                         </div>
-
+                    )}
+                    
+                    <div className="w-1/2 font-main flex items-center bg-(--primary-text)/4 rounded-lg py-2 px-3 gap-2">
+                        {/* <div className="w-10 h-10 flex items-center justify-center rounded-full bg-(--primary-color)/12">
+                            <PiTicket className="text-(--primary-color) text-xl"/>
+                        </div> */}
+                        <div className="flex flex-col items-start">
+                            <h3 className="text-xs text-(--secondary-text)/75 capitalize">العروض</h3>
+                            <h4 className="font-main font-medium text-sm text-(--primary-text)"><span className="font-semibold text-base text-(--primary-color)">{ shipment.offerCount }</span> حتي الان</h4>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-2">

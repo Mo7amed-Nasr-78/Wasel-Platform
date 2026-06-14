@@ -17,17 +17,17 @@ export class AuthService {
   ) {}
 
   async signup({ username, role, email, password }: SignupDto) {
-    const existingUser = await this.prisma.user.findUnique({
+    const existingUserEmail = await this.prisma.user.findUnique({
       where: {
         email,
       },
     });
 
-    if (existingUser) {
+    if (existingUserEmail) {
       throw new HttpException('Email already in use', HttpStatus.BAD_REQUEST);
     }
 
-    if (!existingUser) {
+    if (!existingUserEmail) {
       const userProfile = await this.prisma.profile.findUnique({
         where: {
           username,
@@ -69,7 +69,7 @@ export class AuthService {
     };
   }
 
-  async   signin(email: string, password: string) {
+  async signin(email: string, password: string) {
     const user = await this.prisma.user.findUnique({
       where: {
         email,

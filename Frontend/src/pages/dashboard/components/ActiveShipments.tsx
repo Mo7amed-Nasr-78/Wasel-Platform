@@ -1,7 +1,22 @@
-import { useShipments } from "@/api/hooks/shipments/useShipments";
+import { useAssignShipment } from "@/api/hooks/shipments/useAssignShipment";
 import { useUserShipments } from "@/api/hooks/user/useUserShipments";
 import { useProps } from "@/components/PropsProvider";
 import { Button } from "@/components/ui/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import {
 	Table,
 	TableBody,
@@ -10,12 +25,22 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import type { Shipment } from "@/shared/interfaces/Interfaces";
-import { PiEye, PiMapPin } from "react-icons/pi";
+import type { Driver, Shipment, Truck } from "@/shared/interfaces/Interfaces";
+import { useMemo, useState } from "react";
+import { PiEye, PiMapPin, PiTruck } from "react-icons/pi";
 import { Link } from "react-router-dom";
+import { useDrivers } from "@/api/hooks/drivers/useDrivers";
+import { useTrucks } from "@/api/hooks/trucks/useTrucks";
 
 const getStatusBadgeColor = (
-	status: "PENDING" | "IN_PROGRESS" | "IN_TRANSIT" | "DELAYED" | "DELIVERED" | "CANCELLED" | undefined,
+	status:
+		| "PENDING"
+		| "IN_PROGRESS"
+		| "IN_TRANSIT"
+		| "DELAYED"
+		| "DELIVERED"
+		| "CANCELLED"
+		| undefined,
 ): {
 	bg: string;
 	text: string;
@@ -46,17 +71,63 @@ const getStatusBadgeColor = (
 };
 
 function ActiveShipments() {
-
-	// const { data } = useShipments();
 	const { user } = useProps();
 	const { data } = useUserShipments();
+	const { data: driversData } = useDrivers();
+	const { data: trucksData } = useTrucks();
 	const shipments: Shipment[] | [] = data?.data || [];
+	const [selectedDriverId, setSelectedDriverId] = useState<string>("");
+	const [selectedTruckId, setSelectedTruckId] = useState<string>("");
+	const [activeShipmentId, setActiveShipmentId] = useState<
+		string | undefined
+	>();
+	const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
 
-	// User Roles
+	const drivers = useMemo(
+		() => (driversData?.data.drivers || []) as Driver[],
+		[driversData],
+	);
+	const trucks = useMemo(
+		() => (trucksData?.data || []) as Truck[],
+		[trucksData],
+	);
+
+	console.log(drivers);
+	console.log(trucks);
+
 	const isIndependentCarrier = user?.role === "INDEPENDENT_CARRIER";
 	const isCarrierCompany = user?.role === "CARRIER_COMPANY";
 	const isManufacturer = user?.role === "MANUFACTURER";
-	// console.log(isIndependentCarrier || isCarrierCompany);
+	const canAssignShipment = isCarrierCompany;
+	const { mutate: assignShipment, isPending } =
+		useAssignShipment(activeShipmentId);
+
+	const handleAssign = () => {
+		if (!activeShipmentId || !selectedDriverId || !selectedTruckId)
+			return;
+
+		assignShipment({
+			driverId: selectedDriverId,
+			truckId: selectedTruckId,
+		});
+		setIsAssignDialogOpen(false);
+		setSelectedDriverId("");
+		setSelectedTruckId("");
+	};
+
+	const openAssignDialog = (shipmentId: string | undefined) => {
+		setActiveShipmentId(shipmentId);
+		setSelectedDriverId("");
+		setSelectedTruckId("");
+		setIsAssignDialogOpen(true);
+	};
+
+	const closeAssignDialog = () => {
+		setIsAssignDialogOpen(false);
+		setSelectedDriverId("");
+		setSelectedTruckId("");
+		setActiveShipmentId(undefined);
+	};
 
 	return (
 		<div className="w-full h-full flex flex-col bg-(--secondary-color) rounded-20 p-6 border border-(--tertiary-color)/20">
@@ -98,20 +169,21 @@ function ActiveShipments() {
 								<TableHead className="font-main font-bold text-(--primary-text) text-center">
 									العروض
 								</TableHead>
-								{ isManufacturer && (
+								{isManufacturer && (
 									<TableHead className="font-main font-bold text-(--primary-text) text-right">
 										أفضل سعر
 									</TableHead>
-								) }
-								{ (isIndependentCarrier || isCarrierCompany) && (
+								)}
+								{(isIndependentCarrier ||
+									isCarrierCompany) && (
 									<TableHead className="font-main font-bold text-(--primary-text) text-right">
 										سعرك
 									</TableHead>
-								) }
+								)}
 								<TableHead className="font-main font-bold text-(--primary-text) text-right">
 									وقت الحمولة
 								</TableHead>
-								<TableHead className="font-main font-bold text-(--primary-text) text-right">
+								<TableHead className="font-main font-bold text-(--primary-text) text-center">
 									الإجراءات
 								</TableHead>
 							</TableRow>
@@ -128,13 +200,17 @@ function ActiveShipments() {
 										className="border-b border-(--tertiary-color)/10 hover:bg-(--primary-color)/5 transition-colors"
 									>
 										<TableCell className="font-main font-medium text-(--primary-text)">
-											{shipment.shipmentId}
+											{
+												shipment.shipmentId
+											}
 										</TableCell>
 										<TableCell className="font-main text-(--secondary-text)">
 											<div className="flex items-center gap-2">
 												<span>
 													{
-														shipment.origin.split("-")[0]
+														shipment.origin.split(
+															"-",
+														)[0]
 													}
 												</span>
 												<span className="text-(--tertiary-color)">
@@ -142,7 +218,9 @@ function ActiveShipments() {
 												</span>
 												<span>
 													{
-														shipment.destination.split("-")[0]
+														shipment.destination.split(
+															"-",
+														)[0]
 													}
 												</span>
 											</div>
@@ -158,42 +236,54 @@ function ActiveShipments() {
 										</TableCell>
 										<TableCell>
 											<span className="text-sm px-3 py-1 rounded-full bg-yellow-500/10 text-yellow-700">
-												{
-													shipment.budgetType === "OPEN_BUDGET" && "مفتوحة"
-												}
-												{
-													shipment.budgetType === "LIMITED_BUDGET" && "محدودة"
-												}
+												{shipment.budgetType ===
+													"OPEN_BUDGET" &&
+													"مفتوحة"}
+												{shipment.budgetType ===
+													"LIMITED_BUDGET" &&
+													"محدودة"}
 											</span>
 										</TableCell>
 										<TableCell className="text-center font-main text-(--primary-text) font-medium">
-											{
-												shipment.offerCount || 0
-											}
+											{shipment.offerCount ||
+												0}
 										</TableCell>
-										{ isManufacturer && (
+										{isManufacturer && (
 											<TableCell className="text-right font-main font-bold text-(--primary-color)">
-												{
-													shipment.bestPrice || 0
-												}
+												{shipment.bestPrice ||
+													0}
 											</TableCell>
-										) }
-										{ (isIndependentCarrier || isCarrierCompany) && (
+										)}
+										{(isIndependentCarrier ||
+											isCarrierCompany) && (
 											<TableCell className="text-right font-main font-bold text-(--primary-color)">
-												{
-													shipment.acceptedOffer?.price || 0
-												}{" "}
+												{shipment
+													.acceptedOffer
+													?.price ||
+													0}{" "}
 												ر.س
 											</TableCell>
-										) }
+										)}
 										<TableCell className="text-right font-main font-bold text-(--primary-color)">
-											{
-												shipment.ETA
-											}
+											{shipment.ETA}
 										</TableCell>
 										<TableCell className="text-right">
 											<div className="flex items-center justify-start gap-2">
-												<Link to={{ pathname: `/dashboard/shipments/${shipment.id}` }}>
+												{canAssignShipment && (
+													<Button
+														size="sm"
+														variant="outline"
+														className="h-9 px-3 rounded-8"
+														onClick={() => openAssignDialog(shipment.id)}
+													>
+														<PiTruck className="text-lg" />
+													</Button>
+												) }
+												<Link
+													to={{
+														pathname: `/dashboard/shipments/${shipment.id}`,
+													}}
+												>
 													<Button
 														size="sm"
 														variant="outline"
@@ -218,9 +308,151 @@ function ActiveShipments() {
 				</div>
 			)}
 
+			<Dialog
+				open={isAssignDialogOpen}
+				onOpenChange={(open) =>
+					open
+						? setIsAssignDialogOpen(true)
+						: closeAssignDialog()
+				}
+			>
+				<DialogContent className="sm:max-w-md text-right">
+					<DialogHeader>
+						<DialogTitle>تعيين شحنة</DialogTitle>
+						<DialogDescription>
+							اختر سائقًا وشاحنة من حسابك الحالي
+							لتعيين هذه الشحنة.
+						</DialogDescription>
+					</DialogHeader>
+
+					<div className="space-y-4 py-2">
+						<div className="flex flex-col space-y-1">
+							<label className="font-main font-medium text-base text-(--primary-text)">
+								السائق
+							</label>
+							<Select
+								value={selectedDriverId}
+								onValueChange={
+									setSelectedDriverId
+								}
+							>
+								<SelectTrigger
+									className="w-full font-main font-medium text-sm text-(--primary-text) border border-(--tertiary-color) rounded-10"
+									size="lg"
+								>
+									<SelectValue placeholder="اختر سائقًا" />
+								</SelectTrigger>
+								<SelectContent position="popper">
+									{drivers.length > 0 ? (
+										drivers.map(
+											(driver) => (
+												<SelectItem
+													key={
+														driver.id
+													}
+													value={
+														driver.id
+													}
+												>
+													{
+														driver.first_name
+													}{" "}
+													{
+														driver.last_name
+													}
+												</SelectItem>
+											),
+										)
+									) : (
+										<p className="px-2 py-1 text-sm text-(--tertiary-color)">
+											لا توجد سائقين
+											متاحين
+										</p>
+									)}
+								</SelectContent>
+							</Select>
+						</div>
+
+						<div className="flex flex-col space-y-1">
+							<label className="text-base font-main font-medium text-(--primary-text)">
+								الشاحنة
+							</label>
+							<Select
+								value={selectedTruckId}
+								onValueChange={
+									setSelectedTruckId
+								}
+							>
+								<SelectTrigger
+									className="w-full font-main font-medium text-sm text-(--primary-text) border border-(--tertiary-color) rounded-10"
+									size="lg"
+								>
+									<SelectValue placeholder="اختر شاحنة" />
+								</SelectTrigger>
+								<SelectContent position="popper">
+									{trucks.length > 0 ? (
+										trucks.map(
+											(truck) => (
+												<SelectItem
+													key={
+														truck.id
+													}
+													value={
+														truck.id
+													}
+												>
+													{
+														truck.truck_num
+													}{" "}
+													-{" "}
+													{
+														truck.truck_type
+													}
+												</SelectItem>
+											),
+										)
+									) : (
+										<p className="px-2 py-1 text-sm text-(--tertiary-color)">
+											لا توجد شاحنات
+											متاحة
+										</p>
+									)}
+								</SelectContent>
+							</Select>
+						</div>
+					</div>
+
+					<DialogFooter>
+						<Button
+							size="lg"
+							variant="outline"
+							onClick={closeAssignDialog}
+						>
+							إلغاء
+						</Button>
+						<Button
+							onClick={handleAssign}
+							disabled={
+								!selectedDriverId ||
+								!selectedTruckId ||
+								isPending
+							}
+							size="lg"
+						>
+							{isPending
+								? "جارِ التعيين..."
+								: "تعيين"}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
 			<div className="flex items-center justify-center pt-4">
 				<Link to={{ pathname: "/dashboard/shipments" }}>
-					<Button variant="outline" className="h-11 text-base">
+					<Button
+						variant="outline"
+						className="h-11 text-base"
+					>
 						عرض جميع الشحنات
 					</Button>
 				</Link>

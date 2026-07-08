@@ -2,6 +2,9 @@ import { useState } from "react";
 import type { Driver } from "@/shared/interfaces/Interfaces";
 import { useDeleteDriver } from "@/api/hooks/drivers/useDeleteDriver";
 import { useUpdateDriver } from "@/api/hooks/drivers/useUpdateDriver";
+import { useApproveDriver } from "@/api/hooks/drivers/useApproveDriver";
+import { useCommentDriver } from "@/api/hooks/drivers/useCommentDriver";
+import { useProps } from "@/components/PropsProvider";
 import { Trash2, Edit } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import {
@@ -50,8 +53,16 @@ function DriverCard({ driver, onDelete }: DriverCardProps) {
 		national_id_card_front: null as File | null,
 		national_id_card_back: null as File | null,
 	});
+	const [commentText, setCommentText] = useState("");
+	const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
+	const { user } = useProps();
 	const { mutate: deleteDriver, isPending: isDeleting } = useDeleteDriver();
 	const { mutate: updateDriver, isPending: isUpdating } = useUpdateDriver();
+	const { mutate: approveDriver, isPending: isApproving } =
+		useApproveDriver();
+	const { mutate: commentDriver, isPending: isCommenting } =
+		useCommentDriver();
+	const isAdmin = user?.role?.toUpperCase() === "ADMIN";
 
 	const handleDeleteClick = () => {
 		setIsDeleteDialogOpen(true);
@@ -136,6 +147,24 @@ function DriverCard({ driver, onDelete }: DriverCardProps) {
 		);
 	};
 
+	const handleApprove = () => {
+		approveDriver(driver.id);
+	};
+
+	const handleCommentSubmit = (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!commentText.trim()) return;
+		commentDriver(
+			{ driverId: driver.id, comment: commentText.trim() },
+			{
+				onSuccess: () => {
+					setCommentText("");
+					setIsCommentDialogOpen(false);
+				},
+			},
+		);
+	};
+
 	return (
 		<div className="col-span-6 md:col-span-4 rounded-20 p-4 shadow-lg shadow-black/10 bg-(--secondary-color) border border-gray-200">
 			{/* Header with profile and delete button */}
@@ -157,7 +186,7 @@ function DriverCard({ driver, onDelete }: DriverCardProps) {
 							</p>
 						</div>
 					</div>
-					<div className="flex items-center">
+					<div className="flex items-center gap-1">
 						<Tooltip>
 							<TooltipTrigger asChild>
 								<Button
@@ -218,20 +247,45 @@ function DriverCard({ driver, onDelete }: DriverCardProps) {
 					<span className="text-gray-600">الحالة:</span>
 					<span
 						className={`font-medium px-2 py-1 rounded text-xs ${
-							driver.status === "APPROVED"
+							driver.status === "IN_WORK"
 								? "bg-green-100 text-green-700"
-								: driver.status === "REJECTED"
+								: driver.status === "IN_REST"
 									? "bg-red-100 text-red-700"
-									: "bg-yellow-100 text-yellow-700"
+									: driver.status ===
+										  "AVAILABLE"
+										? "bg-blue-100 text-blue-700"
+										: "bg-yellow-100 text-yellow-700"
 						}`}
 					>
-						{driver.status === "APPROVED"
-							? "موافق عليه"
-							: driver.status === "REJECTED"
-								? "مرفوض"
-								: "قيد الانتظار"}
+						{driver.status === "IN_WORK"
+							? "عمل"
+							: driver.status === "IN_REST"
+								? "راحة"
+								: driver.status === "AVAILABLE"
+									? "متوفر"
+									: "قيد الإنتظار"}
 					</span>
 				</div>
+				{isAdmin && (
+					<div className="flex justify-between">
+						<span className="text-gray-600">
+							حالة التوثيق:
+						</span>
+						<span
+							className={`font-medium px-2 py-1 rounded text-xs ${
+								driver.verificationStatus ===
+								"VERIFIED"
+									? "bg-green-100 text-green-700"
+									: "bg-yellow-100 text-yellow-700"
+							}`}
+						>
+							{driver.verificationStatus ===
+							"VERIFIED"
+								? "موافق عليه"
+								: "قيد الانتظار"}
+						</span>
+					</div>
+				)}
 			</div>
 
 			{/* Document Images */}
@@ -347,6 +401,37 @@ function DriverCard({ driver, onDelete }: DriverCardProps) {
 				</div>
 			</div>
 
+			{isAdmin && (
+				<div className="mt-4 flex w-full gap-2 border-t pt-3">
+					<Button
+						size="lg"
+						type="button"
+						onClick={handleApprove}
+						disabled={
+							isApproving ||
+							driver.verificationStatus ===
+								"VERIFIED"
+						}
+						className="flex-1 bg-green-600 text-white hover:bg-green-700"
+					>
+						{isApproving
+							? "جاري الموافقة..."
+							: "موافقة"}
+					</Button>
+					<Button
+						size="lg"
+						type="button"
+						onClick={() => setIsCommentDialogOpen(true)}
+						disabled={isCommenting}
+						className="flex-1 bg-amber-500 text-white hover:bg-amber-600"
+					>
+						{isCommenting
+							? "جاري الإرسال..."
+							: "إرسال تعليق"}
+					</Button>
+				</div>
+			)}
+
 			{/* Image Preview Modal */}
 			<Dialog
 				open={!!selectedImage}
@@ -383,6 +468,70 @@ function DriverCard({ driver, onDelete }: DriverCardProps) {
 				description={`هل أنت متأكد من رغبتك في حذف السائق ${driver.first_name} ${driver.last_name}؟ هذا الإجراء لا يمكن التراجع عنه.`}
 				isLoading={isDeleting}
 			/>
+
+			{/* Comment Driver Dialog */}
+			<Dialog
+				open={isCommentDialogOpen}
+				onOpenChange={setIsCommentDialogOpen}
+			>
+				<DialogContent
+					className="max-w-lg bg-(--bg-color) border-0"
+					dir="rtl"
+				>
+					<DialogHeader>
+						<DialogTitle className="text-(--primary-text) text-right">
+							إرسال تعليق للسائق
+						</DialogTitle>
+					</DialogHeader>
+					<form
+						onSubmit={handleCommentSubmit}
+						className="space-y-4"
+					>
+						<label className="text-sm font-medium text-(--primary-text) block text-right">
+							نص التعليق
+						</label>
+						<textarea
+							value={commentText}
+							onChange={(e) =>
+								setCommentText(e.target.value)
+							}
+							placeholder="اكتب تعليقًا للسائق..."
+							required
+							disabled={isCommenting}
+							className="w-full min-h-28 rounded-md border border-gray-300 px-3 py-2 text-right focus:outline-none focus:ring-2 focus:ring-(--primary-color)"
+						/>
+						<div className="flex gap-3 pt-2">
+							<Button
+								size="lg"
+								type="submit"
+								disabled={
+									isCommenting ||
+									!commentText.trim()
+								}
+								className="flex-1 bg-(--primary-color) text-white hover:bg-(--primary-color)/80"
+							>
+								{isCommenting
+									? "جاري الإرسال..."
+									: "إرسال التعليق"}
+							</Button>
+							<Button
+								size="lg"
+								type="button"
+								variant="outline"
+								onClick={() =>
+									setIsCommentDialogOpen(
+										false,
+									)
+								}
+								disabled={isCommenting}
+								className="flex-1"
+							>
+								إلغاء
+							</Button>
+						</div>
+					</form>
+				</DialogContent>
+			</Dialog>
 
 			{/* Edit Driver Dialog */}
 			<Dialog

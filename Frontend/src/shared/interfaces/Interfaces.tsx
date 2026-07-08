@@ -190,8 +190,8 @@ export interface Driver {
 	license_back: string;
 	national_id_card_front: string;
 	national_id_card_back: string;
-	status: "PENDING" | "APPROVED" | "REJECTED";
-	verificationStatus: "PENDING" | "APPROVED" | "REJECTED";
+	status: "PENDING" | "AVAILABLE" | "IN_WORK" | "IN_REST";
+	verificationStatus: "PENDING" | "VERIFIED";
 	profileId: string;
 }
 
@@ -218,7 +218,7 @@ export interface Truck {
 	truck_type: string;
 	truck_model: string;
 	status: "ACTIVE" | "INACTIVE" | "MAINTENANCE";
-	verificationStatus: "PENDING" | "APPROVED" | "REJECTED";
+	verificationStatus: "PENDING" | "VERIFIED";
 	createdAt: string;
 	updatedAt: string;
 	profileId: string;

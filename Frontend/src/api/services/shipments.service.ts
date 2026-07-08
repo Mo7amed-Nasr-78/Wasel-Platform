@@ -26,6 +26,10 @@ class ShipmentsService {
 	updateShipment(id: string | undefined, data: Record<string, unknown>) {
 		return privateHttpClient.put(`/shipments/${id}`, data);
 	}
+
+	assignShipment(id: string | undefined, data: Record<string, unknown>) {
+		return privateHttpClient.post(`/shipments/${id}/assign`, data);
+	}
 }
 
 export const shipmentsService = new ShipmentsService();

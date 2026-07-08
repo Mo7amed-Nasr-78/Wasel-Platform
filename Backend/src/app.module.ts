@@ -39,12 +39,12 @@ import { DriversModule } from './modules/drivers/drivers.module';
     InvoiceModule,
     PrismaModule,
     DashboardModule,
-    NotificationsModule,
+    // NotificationsModule,
     WalletModule,
     TrucksModule,
     DriversModule,
   ],
   controllers: [AppController, AddressController, R2Controller, DashboardController],
-  providers: [AppService, AuthGuard, AddressService, R2Service, DashboardService, NotificationsService],
+  providers: [AppService, AuthGuard, AddressService, R2Service, DashboardService],
 })
 export class AppModule {}

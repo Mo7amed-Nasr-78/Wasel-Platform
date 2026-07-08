@@ -201,8 +201,8 @@ export const statItems = [
         hasAccess: ["admin", "manufacturer", "carrier_company", "independent_carrier"]
     },
     {
-        key: "avgDeliveryTime",
-        title: "Avg Delivery Time",
+        key: "delayedShipments",
+        title: "delayed shipments",
         icon: PiClock,
         hasAccess: ["admin"]
     },

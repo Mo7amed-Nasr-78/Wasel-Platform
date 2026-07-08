@@ -1,6 +1,6 @@
 import { PrismaService } from '@/database/prisma/prisma.service';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Driver } from '@prisma/client';
+import { Driver, DriverStatus, Role, VerificationStatus } from '@prisma/client';
 import { CreateDriverDto } from './dto/createDriverDto';
 import { UpdateDriverDto } from './dto/updateDriverDto';
 import { DriverAttachments } from '@/shared/interfaces/interfaces';
@@ -38,65 +38,137 @@ export class DriversService {
     return driver;
   }
 
-  async getDrivers(userId: string): Promise<{
-    status: HttpStatus,
-    message: string,
-    drivers: Driver[],
-    meta: {
-      total: number,
-      pending: number,
-      available: number,
-      inWork: number,
-      inRest: number
-    }
+  async getDrivers(req): Promise<{
+    status: HttpStatus;
+    message: string;
+    drivers: Driver[] | [];
+    meta:
+      | {
+          total: number;
+          pending: number;
+          available: number;
+          inWork: number;
+          inRest: number;
+        }
+      | {};
   }> {
-    const drivers = await this.prisma.driver.findMany({
-      where: {
-        profile: {
-          userId,
+    const { status, verificationStatus }: { status: Role, verificationStatus: VerificationStatus } = req.query;
+    const { sub: userId, role } = req.user;
+
+    console.log(verificationStatus);
+
+    if (status && status.toUpperCase() as DriverStatus)
+      throw new HttpException("Invalid driver status", HttpStatus.BAD_REQUEST);
+    
+    if (verificationStatus && verificationStatus.toUpperCase() as VerificationStatus)
+      throw new HttpException("Invalid verification status", HttpStatus.BAD_REQUEST);
+
+    let res = [];
+    let meta = {};
+
+    if (Role.CARRIER_COMPANY.includes(role)) {
+      const drivers = await this.prisma.driver.findMany({
+        where: {
+          ...(status ? { status: status.toUpperCase() as DriverStatus } : {}),
+          ...(verificationStatus ? { verificationStatus: verificationStatus.toUpperCase() as VerificationStatus } : {}),
+          profile: {
+            userId,
+          },
         },
-      },
-    });
+      });
 
-    const pending = await this.prisma.driver.count({
-      where: {
-        status: 'PENDING'
+      const pending = await this.prisma.driver.count({
+        where: {
+          status: DriverStatus.PENDING,
+          profile: {
+            userId,
+          },
+        },
+      });
+
+      const available = await this.prisma.driver.count({
+        where: {
+          status: DriverStatus.AVAILABLE,
+          profile: {
+            userId,
+          },
+        },
+      });
+
+      const inWork = await this.prisma.driver.count({
+        where: {
+          status: DriverStatus.IN_WORK,
+          profile: {
+            userId,
+          },
+        },
+      });
+
+      const inRest = await this.prisma.driver.count({
+        where: {
+          status: DriverStatus.IN_REST,
+          profile: {
+            userId,
+          },
+        },
+      });
+
+      if (drivers.length < 1) {
+        throw new HttpException('No drivers found', HttpStatus.NO_CONTENT);
       }
-    });
 
-    const available = await this.prisma.driver.count({
-      where: {
-        status: 'AVAILABLE'
+      res = drivers;
+      meta['total'] = drivers.length;
+      meta['pending'] = pending;
+      meta['available'] = available;
+      meta['inWork'] = inWork;
+      meta['inRest'] = inRest;
+    }
+
+    if (Role.ADMIN.includes(role)) {
+      const drivers = await this.prisma.driver.findMany();
+
+      const pending = await this.prisma.driver.count({
+        where: {
+          status: 'PENDING',
+        },
+      });
+
+      const available = await this.prisma.driver.count({
+        where: {
+          status: 'AVAILABLE',
+        },
+      });
+
+      const inWork = await this.prisma.driver.count({
+        where: {
+          status: 'IN_WORK',
+        },
+      });
+
+      const inRest = await this.prisma.driver.count({
+        where: {
+          status: 'IN_REST',
+        },
+      });
+
+      if (drivers.length < 1) {
+        throw new HttpException('No drivers found', HttpStatus.NO_CONTENT);
       }
-    });
 
-    const inWork = await this.prisma.driver.count({
-      where: {
-        status: 'IN_WORK'
-      }
-    });
-
-    const inRest = await this.prisma.driver.count({
-      where: {
-        status: 'IN_REST'
-      }
-    });
-
-    if (drivers.length < 1) {
-      throw new HttpException('No drivers found', HttpStatus.NO_CONTENT);
+      res = drivers;
+      meta['total'] = drivers.length;
+      meta['pending'] = pending;
+      meta['available'] = available;
+      meta['inWork'] = inWork;
+      meta['inRest'] = inRest;
     }
 
     return {
       status: 200,
-      message: "Drivers retrieved successfully",
-      drivers,
-      meta: {
-        total: drivers.length,
-        pending,
-        available,
-        inWork,
-        inRest
-      }
+      message: 'Drivers retrieved successfully',
+      drivers: res,
+      meta: meta,
     };
   }
 
@@ -332,6 +404,44 @@ export class DriversService {
       status: HttpStatus.OK,
       message: 'Driver has been updated successfully',
       updatedDriver,
+    };
+  }
+
+  async approveDriver(
+    driverId: string,
+    role: Role,
+  ): Promise<{
+    status: HttpStatus;
+    message: string;
+    driver: Driver;
+  }> {
+    if (!Role.ADMIN.includes(role))
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+
+    const driver = await this.prisma.driver.findUnique({
+      where: {
+        id: driverId,
+        status: DriverStatus.PENDING,
+      },
+    });
+
+    if (!driver)
+      throw new HttpException('No driver found', HttpStatus.NO_CONTENT);
+
+    const updatedDriver = await this.prisma.driver.update({
+      where: {
+        id: driverId,
+      },
+      data: {
+        status: DriverStatus.AVAILABLE,
+        verificationStatus: VerificationStatus.VERIFIED,
+      },
+    });
+
+    return {
+      status: HttpStatus.OK,
+      message: 'Driver has been updated successfully',
+      driver: updatedDriver,
     };
   }
 }

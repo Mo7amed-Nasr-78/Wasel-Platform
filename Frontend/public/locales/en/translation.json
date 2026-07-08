@@ -31,5 +31,9 @@
     "تم تحديث بيانات الشاحنة بنجاح": "Truck has been updated successfully",
     "مقبول": "ACCEPTED",
     "قيد الإنتظار": "PENDING",
-    "مرفوض": "REJECTED"
+    "مرفوض": "REJECTED",
+    "السواق غير متوفر": "Driver is not available",
+    "الحمولات المتأخرة": "delayed shipments",
+    "الحمولات النشطة": "active shipments",
+	"الحمولات المتكملة": "completed shipments"
 }   

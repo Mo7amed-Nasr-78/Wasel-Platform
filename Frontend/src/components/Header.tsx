@@ -4,7 +4,7 @@ import UserProfile from "./UserProfile";
 
 function Header({ hideItems = false }: { hideItems?: boolean }) {
     return (
-        <header className="absolute top-0 left-0 right-0 py-3 mt-4">
+        <header className="absolute top-0 left-0 right-0 py-3 mt-4 z-100">
             <div className={`${!hideItems? 'justify-between': 'justify-center'} container mx-auto flex items-center`}>
                 <Link to={{ pathname: "/" }}>
                     <div className="h-14">

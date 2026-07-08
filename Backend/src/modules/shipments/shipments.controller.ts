@@ -27,7 +27,7 @@ import { ShipmentAttachments } from '@/shared/interfaces/interfaces';
 export class ShipmentsController {
   constructor(private readonly shipmentsService: ShipmentsService) {}
 
-  @Get(':shipmentId/offers')    
+  @Get(':shipmentId/offers')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(['MANUFACTURER', 'ADMIN', 'CARRIER_COMPANY', 'INDEPENDENT_CARRIER'])
   getShipmentsOffers(@Param('shipmentId') shipmentId: string, @Request() req) {
@@ -41,13 +41,16 @@ export class ShipmentsController {
   }
 
   @Get()
-  getShipments(@Query() query: { 
-    search: string,
-    type: string, 
-    minWeight: number | undefined, 
-    maxWeight: number | undefined, 
-    urgent: boolean
-  }) {
+  getShipments(
+    @Query()
+    query: {
+      search: string;
+      type: string;
+      minWeight: number | undefined;
+      maxWeight: number | undefined;
+      urgent: boolean;
+    },
+  ) {
     return this.shipmentsService.getShipments(query);
   }
 
@@ -90,5 +93,23 @@ export class ShipmentsController {
     @Body() body: UpdateShipmentDto,
   ) {
     return this.shipmentsService.updateShipment(shipmentId, body);
+  }
+
+  @Post(':id/assign')
+  @Roles(['CARRIER_COMPANY'])
+  @UseGuards(AuthGuard, RolesGuard)
+  assignDriverAndTruck(
+    @Param('id') shipmentId: string,
+    @Body() body: { driverId: string; truckId: string },
+    @Request() req,
+  ) {
+    const user = req.user;
+    const { driverId, truckId } = body;
+    return this.shipmentsService.assignDriverAndTruck(
+      user,
+      shipmentId,
+      driverId,
+      truckId,
+    );
   }
 }

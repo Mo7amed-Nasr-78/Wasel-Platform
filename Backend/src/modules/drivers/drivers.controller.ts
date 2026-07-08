@@ -7,6 +7,7 @@ import {
   Post,
   Put,
   Req,
+  Request,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
@@ -18,6 +19,7 @@ import { CreateDriverDto } from './dto/createDriverDto';
 import { UpdateDriverDto } from './dto/updateDriverDto';
 import { DriverAttachments } from '@/shared/interfaces/interfaces';
 import { Roles } from '@/common/decorators/roles.decorator';
+import { RolesGuard } from '@/common/guards/rolesGuard';
 
 @Roles(['CARRIER_COMPANY'])
 @Controller('drivers')
@@ -27,8 +29,8 @@ export class DriversController {
   @Get()
   @UseGuards(AuthGuard)
   getDrivers(@Req() req) {
-    const { sub } = req.user;
-    return this.driversService.getDrivers(sub);
+    // const { sub, role } = req.user;
+    return this.driversService.getDrivers(req);
   }
 
   @Get(':driverId')
@@ -98,5 +100,14 @@ export class DriversController {
   ) {
     const user = req.user;
     return this.driversService.updateDriver(user, driverId, data, attachments);
+  }
+
+
+  @Post(':id/approve')
+  @Roles(["ADMIN"])
+  @UseGuards(AuthGuard, RolesGuard)
+  approveDriver(@Param("id") driverId: string, @Request() req) {
+    const { role } = req.user;
+    return this.driversService.approveDriver(driverId, role)
   }
 }

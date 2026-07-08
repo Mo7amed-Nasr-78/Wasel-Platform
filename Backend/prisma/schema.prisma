@@ -148,7 +148,7 @@ model User {
   createAt  DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  profile     Profile?        @relation("ProfileUser")
+  profile       Profile?        @relation("ProfileUser")
   authProviders authProviders[]
   wallet        Wallet?
 }
@@ -210,6 +210,10 @@ model Shipment {
   acceptedOffer    Offer?               @relation("AcceptedOffer", fields: [acceptedOfferId], references: [id])
   profileId        String
   profile          Profile              @relation("ProfileShipments", fields: [profileId], references: [id])
+  assignedDriverId String?
+  assignedDriver   Driver?              @relation("ShipmentAssignedDriver", fields: [assignedDriverId], references: [id])
+  assignedTruckId  String?
+  assignedTruck    Truck?               @relation("ShipmentAssignedTruck", fields: [assignedTruckId], references: [id])
 }
 
 model ShipmentAttachment {
@@ -299,13 +303,14 @@ model Truck {
   updatedAt           DateTime           @updatedAt
 
   // Relations
-  profileId String
-  profile   Profile @relation("ProfileTrucks", fields: [profileId], references: [id])
+  profileId         String
+  profile           Profile    @relation("ProfileTrucks", fields: [profileId], references: [id])
+  assignedShipments Shipment[] @relation("ShipmentAssignedTruck")
 }
 
 model Driver {
   id                     String             @id @default(uuid())
-  driverId               String @unique()
+  driverId               String             @unique()
   first_name             String
   last_name              String
   age                    String
@@ -320,9 +325,10 @@ model Driver {
   verificationStatus     VerificationStatus @default(PENDING)
 
   // Relations
-  addresses Address[] @relation("DriverAddresses")
-  profileId String
-  profile   Profile   @relation("ProfileDrivers", fields: [profileId], references: [id])
+  addresses         Address[]  @relation("DriverAddresses")
+  profileId         String
+  profile           Profile    @relation("ProfileDrivers", fields: [profileId], references: [id])
+  assignedShipments Shipment[] @relation("ShipmentAssignedDriver")
 
   @@index([id])
 }
@@ -336,8 +342,8 @@ model Address {
   // Relations
   profileId String?
   profile   Profile? @relation("ProfileAdresses", fields: [profileId], references: [id])
-  driverId String?
-  driver   Driver?  @relation("DriverAddresses", fields: [driverId], references: [id])
+  driverId  String?
+  driver    Driver?  @relation("DriverAddresses", fields: [driverId], references: [id])
 }
 
 model Invoice {

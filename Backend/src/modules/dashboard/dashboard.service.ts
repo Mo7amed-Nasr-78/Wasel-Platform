@@ -1,7 +1,7 @@
 import { PrismaService } from '@/database/prisma/prisma.service';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { WalletService } from '../wallet';
-import { Role } from '@prisma/client';
+import { Role, ShipmentStatus } from '@prisma/client';
 
 @Injectable()
 export class DashboardService {
@@ -33,7 +33,7 @@ export class DashboardService {
         if (Role.CARRIER_COMPANY.includes(role) || Role.MANUFACTURER.includes(role)) {
             const activeShipments = await this.prismaService.shipment.count({
                 where: {
-                    status: "PENDING",
+                    status: Role.CARRIER_COMPANY.includes(role)? ShipmentStatus.IN_PROGRESS : ShipmentStatus.PENDING,
                     profile: {
                         userId
                     }, 
@@ -42,7 +42,10 @@ export class DashboardService {
     
             const compoletedShipments = await this.prismaService.shipment.count({
                 where: {
-                    status: "DELIVERED"
+                    status: ShipmentStatus.DELIVERED,
+                    profile: {
+                        userId
+                    }
                 }
             });
 
@@ -63,6 +66,49 @@ export class DashboardService {
             res["balance"] = wallet.balance || 0;
             res["totalSpent"] = 0;
 
+        }
+
+        if (Role.ADMIN.includes(role)) {
+
+            const activeShipments = await this.prismaService.shipment.count({
+                where: {
+                    status: {
+                        in: [ShipmentStatus.PENDING, ShipmentStatus.IN_PROGRESS, ShipmentStatus.IN_TRANSIT]
+                    }
+                }
+            });
+
+            const compoletedShipments = await this.prismaService.shipment.count({
+                where: {
+                    status: ShipmentStatus.DELIVERED,
+                    profile: {
+                        userId
+                    }
+                }
+            });
+
+            const delayedShipments = await this.prismaService.shipment.count({
+                where: {
+                    status: ShipmentStatus.DELAYED
+                }
+            })
+
+            const wallet = await this.prismaService.wallet.findUnique({
+                where: {
+                    userId,
+                },
+                select: {
+                    balance: true
+                }
+            })
+
+            if (!wallet) throw new HttpException("Failed to retrieve wallet balance", HttpStatus.INTERNAL_SERVER_ERROR);
+
+            res["shipments"] = shipments;
+            res["activeShipments"] = activeShipments;
+            res["completedShipments"] = compoletedShipments;
+            res["delayedShipments"] = delayedShipments;
+            res["balance"] = wallet.balance || 0;
         }
 
         return res;

@@ -1,10 +1,17 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Offer, Role, Shipment, ShipmentStatus } from '@prisma/client';
+import {
+  Offer,
+  Role,
+  Shipment,
+  ShipmentStatus,
+  DriverStatus,
+  TruckStatus,
+} from '@prisma/client';
 import { PrismaService } from '@/database/prisma/prisma.service';
 import { CreateShipmentDto } from './dto/create-shipment.dto';
 import { UpdateShipmentDto } from './dto/update-shipment.dto';
 import { R2Service } from '@/shared/services/r2/r2.service';
-import Multer from "multer";
+import Multer from 'multer';
 import { ShipmentAttachments } from '@/shared/interfaces/interfaces';
 
 @Injectable()
@@ -27,12 +34,12 @@ export class ShipmentsService {
             profile: {
               select: {
                 first_name: true,
-                last_name: true
-              }
-            }
-          }
-        }
-      }
+                last_name: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!shipment) {
@@ -46,32 +53,36 @@ export class ShipmentsService {
     total: number;
     shipments: Shipment[];
   }> {
-
     const { type, minWeight, maxWeight, urgent, search } = query;
 
     const shipments = await this.prisma.shipment.findMany({
       where: {
-        ...(type? { shipmentType: type } : {}),
-        ...(urgent? { urgent: true } : {}),
-        ...(!isNaN(Number(minWeight)) && !isNaN(Number(maxWeight))? {
-          AND: [
-            { weight: { gt: Number(minWeight) } },
-            { weight: { lte: Number(maxWeight) } },
-          ]
-        } : {}),
-        ...(search? {
-          OR: [
-            {
-              origin: {
-                contains: search
-              }, 
-            }, {
-              destination: {
-                contains: search
-              }
+        ...(type ? { shipmentType: type } : {}),
+        ...(urgent ? { urgent: true } : {}),
+        ...(!isNaN(Number(minWeight)) && !isNaN(Number(maxWeight))
+          ? {
+              AND: [
+                { weight: { gt: Number(minWeight) } },
+                { weight: { lte: Number(maxWeight) } },
+              ],
             }
-          ]
-        }: {}),
+          : {}),
+        ...(search
+          ? {
+              OR: [
+                {
+                  origin: {
+                    contains: search,
+                  },
+                },
+                {
+                  destination: {
+                    contains: search,
+                  },
+                },
+              ],
+            }
+          : {}),
       },
       include: {
         attachments: {
@@ -110,7 +121,7 @@ export class ShipmentsService {
         where: {
           shipmentId,
           profile: {
-            userId
+            userId,
           },
         },
         include: {
@@ -119,11 +130,11 @@ export class ShipmentsService {
               username: true,
               first_name: true,
               last_name: true,
-              picture: true
-            }
+              picture: true,
+            },
           },
           shipment: true,
-        }
+        },
       });
 
       offers = res;
@@ -140,11 +151,11 @@ export class ShipmentsService {
               username: true,
               first_name: true,
               last_name: true,
-              picture: true
-            }
+              picture: true,
+            },
           },
           shipment: true,
-        }
+        },
       });
 
       offers = res;
@@ -215,7 +226,7 @@ export class ShipmentsService {
       paymentType,
       suggestedBudget,
       ETA,
-      distance
+      distance,
     } = data;
 
     const newShipment = await this.prisma.shipment.create({
@@ -258,8 +269,13 @@ export class ShipmentsService {
 
     for (const file of shipmentAttachments.shipmentImgs) {
       const type = file.mimetype.split('/')[0];
-      const name = file.originalname.split(".").slice(0, file.originalname.split(".").length - 1).join(".");
-      const extension = file.originalname.split(".").splice(file.originalname.split(".").length - 1, 1)[0];
+      const name = file.originalname
+        .split('.')
+        .slice(0, file.originalname.split('.').length - 1)
+        .join('.');
+      const extension = file.originalname
+        .split('.')
+        .splice(file.originalname.split('.').length - 1, 1)[0];
       const size = (file.size / 1024 / 1024).toFixed(2); // MB
       const imageUrl = await this.R2Service.uploadFile(
         file,
@@ -283,8 +299,13 @@ export class ShipmentsService {
 
     for (const file of shipmentAttachments.shipmentDocs) {
       const type = file.mimetype.split('/')[0];
-      const name = file.originalname.split(".").slice(0, file.originalname.split(".").length - 1).join(".");
-      const extension = file.originalname.split(".").splice(file.originalname.split(".").length - 1, 1)[0];
+      const name = file.originalname
+        .split('.')
+        .slice(0, file.originalname.split('.').length - 1)
+        .join('.');
+      const extension = file.originalname
+        .split('.')
+        .splice(file.originalname.split('.').length - 1, 1)[0];
       const size = (file.size / 1024 / 1024).toFixed(2); // MB
       const docUrl = await this.R2Service.uploadFile(
         file,
@@ -394,6 +415,127 @@ export class ShipmentsService {
       status: 200,
       message: 'Shipment updated successfully',
       updatedShipment: updateShipment,
+    };
+  }
+
+  async assignDriverAndTruck(
+    user,
+    shipmentId: string,
+    driverId: string,
+    truckId: string,
+  ) {
+    const userId = user.sub;
+
+    const userProfile = await this.prisma.profile.findUnique({
+      where: { userId },
+      select: { id: true, role: true },
+    });
+
+    if (!userProfile || userProfile.role !== Role.CARRIER_COMPANY) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    const shipment = await this.prisma.shipment.findUnique({
+      where: { id: shipmentId },
+      include: {
+        acceptedOffer: {
+          include: { profile: { select: { id: true, userId: true } } },
+        },
+      },
+    });
+
+    if (!shipment) {
+      throw new HttpException('Shipment not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (shipment.status !== ShipmentStatus.IN_PROGRESS) {
+      throw new HttpException(
+        'Shipment is not in progress',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (!shipment.acceptedOffer) {
+      throw new HttpException(
+        'No accepted offer for this shipment',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    // Ensure the caller is the carrier whose offer was accepted
+    const acceptedOfferProfileId = shipment.acceptedOffer.profile.id;
+    if (acceptedOfferProfileId !== userProfile.id) {
+      throw new HttpException(
+        'You are not authorized to assign assets to this shipment',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    const driver = await this.prisma.driver.findUnique({
+      where: { id: driverId },
+    });
+
+    if (!driver) {
+      throw new HttpException('Driver not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (driver.profileId !== userProfile.id) {
+      throw new HttpException(
+        'Driver does not belong to your company',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    if (driver.status !== DriverStatus.AVAILABLE) {
+      throw new HttpException(
+        'Driver is not available',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const truck = await this.prisma.truck.findUnique({
+      where: { id: truckId },
+    });
+
+    if (!truck) {
+      throw new HttpException('Truck not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (truck.profileId !== userProfile.id) {
+      throw new HttpException(
+        'Truck does not belong to your company',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    if (truck.status !== TruckStatus.ACTIVE) {
+      throw new HttpException('Truck is not available', HttpStatus.BAD_REQUEST);
+    }
+
+    // Perform updates in a transaction
+    const [updatedShipment] = await this.prisma.$transaction([
+      this.prisma.shipment.update({
+        where: { id: shipmentId },
+        data: {
+          assignedDriver: { connect: { id: driverId } },
+          assignedTruck: { connect: { id: truckId } },
+          status: ShipmentStatus.IN_TRANSIT,
+        },
+      }),
+      this.prisma.driver.update({
+        where: { id: driverId },
+        data: { status: DriverStatus.IN_WORK },
+      }),
+      this.prisma.truck.update({
+        where: { id: truckId },
+        data: { status: TruckStatus.IN_WORK },
+      }),
+    ]);
+
+    return {
+      status: 200,
+      message: 'Driver and truck assigned, shipment moved to in_transit',
+      shipment: updatedShipment,
     };
   }
 }

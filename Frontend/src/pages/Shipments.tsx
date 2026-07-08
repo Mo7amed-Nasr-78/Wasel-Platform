@@ -72,7 +72,7 @@ function Shipments() {
                         title='الحمولات المتاحة'
                         subTitle='تصفح الحمولات المتاحة أو قم بتقديم عروضك لنقلها بأمان وسرعة'
                     />
-                    <Link to={"/newShipment"} className={user && user.role === 'MANUFACTURER'? 'block': 'hidden' }>
+                    <Link to={"/newShipment"} className={user && ["MANUFACTURER", "ADMIN"].includes(user.role)? 'block': 'hidden' }>
                         <Button size={"xl"} className="px-8">
                             إضافة حمولة
                         </Button>

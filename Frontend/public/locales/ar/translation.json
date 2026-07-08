@@ -22,6 +22,7 @@
 	"Invalid OTP": "رمز تحقيق غير صالح",
 	"active shipments": "الحمولات النشطة",
 	"completed shipments": "الحمولات المتكملة",
+	"delayed shipments": "الحمولات المتأخرة",
 	"total spent": "إجمالي المصاريف",
 	"Avg Delivery Time": "متوسط التوصيل",
 	"Pick a pickup date": "إختار تاريخ الإنطلاق",
@@ -38,5 +39,6 @@
 	"Truck has been updated successfully": "تم تحديث بيانات الشاحنة بنجاح",
 	"ACCEPTED": "مقبول",
     "PENDING": "قيد الإنتظار",
-    "REJECTED": "مرفوض"
+    "REJECTED": "مرفوض",
+	"Driver is not available": "السواق غير متوفر"
 }

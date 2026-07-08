@@ -70,7 +70,7 @@ class PrivateHttpClient {
 				}
 				const delay = baseDelay * Math.pow(2, attempts - 1);
 				await new Promise((resolve) =>
-					setTimeout(resolve, delay), 
+					setTimeout(resolve, delay),
 				);
 			} finally {
 				this.refreshPromise = null;
@@ -132,11 +132,11 @@ class PrivateHttpClient {
 		return this.instance.get(url);
 	}
 
-	post(url: string, data?: Record<string, unknown>, config?: Record<string, unknown>) {
+	post(url: string, data?: unknown, config?: Record<string, unknown>) {
 		return this.instance.post(url, data, config);
 	}
 
-	put(url: string, data: Record<string, unknown>, config?: Record<string, unknown>) {
+	put(url: string, data: unknown, config?: Record<string, unknown>) {
 		return this.instance.put(url, data, config);
 	}
 
@@ -161,7 +161,7 @@ class PublicHttpClient {
 		return this.instance.get(url);
 	}
 
-	post(url: string, data?: Record<string, unknown>, config?: Record<string, unknown>) {
+	post(url: string, data?: unknown, config?: Record<string, unknown>) {
 		return this.instance.post(url, data, config);
 	}
 }

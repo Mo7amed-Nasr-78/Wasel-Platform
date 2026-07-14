@@ -2,6 +2,9 @@ import { useState } from "react";
 import type { Truck } from "@/shared/interfaces/Interfaces";
 import { useDeleteTruck } from "@/api/hooks/trucks/useDeleteTruck";
 import { useUpdateTruck } from "@/api/hooks/trucks/useUpdateTruck";
+import { useVerifyTruck } from "@/api/hooks/trucks/useVerifyTruck";
+import { useCommentTruck } from "../../../api/hooks/trucks/useCommentTruck";
+import { useProps } from "@/components/PropsProvider";
 import { Trash2, Edit } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import {
@@ -46,8 +49,15 @@ function TruckCard({ truck, onDelete }: TruckCardProps) {
 		truck_license_back: null as File | null,
 		truck_front: null as File | null,
 	});
+	const [commentText, setCommentText] = useState("");
+	const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
+	const { user } = useProps();
 	const { mutate: deleteTruck, isPending: isDeleting } = useDeleteTruck();
 	const { mutate: updateTruck, isPending: isUpdating } = useUpdateTruck();
+	const { mutate: verifyTruck, isPending: isVerifying } = useVerifyTruck();
+	const { mutate: commentTruck, isPending: isCommenting } =
+		useCommentTruck();
+	const isAdmin = user?.role?.toUpperCase() === "ADMIN";
 
 	const handleDeleteClick = () => {
 		setIsDeleteDialogOpen(true);
@@ -122,8 +132,25 @@ function TruckCard({ truck, onDelete }: TruckCardProps) {
 			formData.append("truck_front", editFiles.truck_front);
 		}
 
-		updateTruck(
-			{ truckId: truck.id, data: formData },
+		updateTruck({ truckId: truck.id, data: formData });
+	};
+
+	const handleVerifyTruck = () => {
+		verifyTruck(truck.id);
+	};
+
+	const handleCommentSubmit = (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!commentText.trim()) return;
+
+		commentTruck(
+			{ truckId: truck.id, comment: commentText.trim() },
+			{
+				onSuccess: () => {
+					setCommentText("");
+					setIsCommentDialogOpen(false);
+				},
+			},
 		);
 	};
 
@@ -225,20 +252,17 @@ function TruckCard({ truck, onDelete }: TruckCardProps) {
 					<span
 						className={`font-medium px-2 py-1 rounded text-xs ${
 							truck.verificationStatus ===
-							"APPROVED"
+							"VERIFIED"
 								? "bg-green-100 text-green-700"
 								: truck.verificationStatus ===
-									"REJECTED"
+									  "PENDING"
 									? "bg-red-100 text-red-700"
 									: "bg-yellow-100 text-yellow-700"
 						}`}
 					>
-						{truck.verificationStatus === "APPROVED"
+						{truck.verificationStatus === "VERIFIED"
 							? "موافق عليه"
-							: truck.verificationStatus ===
-								"REJECTED"
-								? "مرفوض"
-								: "قيد الانتظار"}
+							: "قيد الانتظار"}
 					</span>
 				</div>
 			</div>
@@ -304,6 +328,37 @@ function TruckCard({ truck, onDelete }: TruckCardProps) {
 				</div>
 			</div>
 
+			{isAdmin && (
+				<div className="mt-4 flex w-full gap-2 border-t pt-3">
+					<Button
+						size="lg"
+						type="button"
+						onClick={handleVerifyTruck}
+						disabled={
+							isVerifying ||
+							truck.verificationStatus ===
+								"VERIFIED"
+						}
+						className="flex-1 bg-green-600 text-white hover:bg-green-700"
+					>
+						{isVerifying
+							? "جاري التوثيق..."
+							: "توثيق الشاحنة"}
+					</Button>
+					<Button
+						size="lg"
+						type="button"
+						onClick={() => setIsCommentDialogOpen(true)}
+						disabled={isCommenting}
+						className="flex-1 bg-amber-500 text-white hover:bg-amber-600"
+					>
+						{isCommenting
+							? "جاري الإرسال..."
+							: "إرسال تعليق"}
+					</Button>
+				</div>
+			)}
+
 			{/* Image Preview Modal */}
 			<Dialog
 				open={!!selectedImage}
@@ -322,6 +377,70 @@ function TruckCard({ truck, onDelete }: TruckCardProps) {
 							</p>
 						</div>
 					)}
+				</DialogContent>
+			</Dialog>
+
+			{/* Comment Truck Dialog */}
+			<Dialog
+				open={isCommentDialogOpen}
+				onOpenChange={setIsCommentDialogOpen}
+			>
+				<DialogContent
+					className="max-w-lg bg-(--bg-color) border-0"
+					dir="rtl"
+				>
+					<DialogHeader>
+						<DialogTitle className="text-(--primary-text) text-right">
+							إرسال تعليق للشاحنة
+						</DialogTitle>
+					</DialogHeader>
+					<form
+						onSubmit={handleCommentSubmit}
+						className="space-y-4"
+					>
+						<label className="text-sm font-medium text-(--primary-text) block text-right">
+							نص التعليق
+						</label>
+						<textarea
+							value={commentText}
+							onChange={(e) =>
+								setCommentText(e.target.value)
+							}
+							placeholder="اكتب تعليقًا للشاحنة..."
+							required
+							disabled={isCommenting}
+							className="w-full min-h-28 rounded-md border border-gray-300 px-3 py-2 text-right focus:outline-none focus:ring-2 focus:ring-(--primary-color)"
+						/>
+						<div className="flex gap-3 pt-2">
+							<Button
+								size="lg"
+								type="submit"
+								disabled={
+									isCommenting ||
+									!commentText.trim()
+								}
+								className="flex-1 bg-(--primary-color) text-white hover:bg-(--primary-color)/80"
+							>
+								{isCommenting
+									? "جاري الإرسال..."
+									: "إرسال التعليق"}
+							</Button>
+							<Button
+								size="lg"
+								type="button"
+								variant="outline"
+								onClick={() =>
+									setIsCommentDialogOpen(
+										false,
+									)
+								}
+								disabled={isCommenting}
+								className="flex-1"
+							>
+								إلغاء
+							</Button>
+						</div>
+					</form>
 				</DialogContent>
 			</Dialog>
 

@@ -26,7 +26,8 @@ export class UserService {
   ): Promise<Shipment[] | HttpException> {
 
     let res = [];
-    if (role.includes("MANUFACTURER")) {
+
+    if (Role.MANUFACTURER.includes(role)) {
       const shipments = await this.prisma.shipment.findMany({
         where: {
           profile: {
@@ -38,7 +39,7 @@ export class UserService {
       res = shipments;
     }
 
-    if (["INDEPENDENT_CARRIER", "CARRIER_COMPANY"].includes(role)) {
+    if (Role.CARRIER_COMPANY.includes(role) || Role.INDEPENDENT_CARRIER.includes(role)) {
       const shipments = await this.prisma.shipment.findMany({
         where: {
           acceptedOffer: {
@@ -62,8 +63,8 @@ export class UserService {
       res = shipments;
     }
 
-    if (role.includes("ADMIN")) {
-      const shipments = await this.prisma.shipment.findMany({});
+    if (Role.ADMIN.includes(role)) {
+      const shipments = await this.prisma.shipment.findMany();
       res = shipments;
     }
 

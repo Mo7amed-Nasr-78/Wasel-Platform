@@ -117,7 +117,7 @@ function RecentOffers() {
 									className={`p-3 rounded-xl transition-all border border-(--primary-color)/25 bg-(--primary-color)/4`}
 								>
 									<div className="flex flex-col items-start justify-between">
-										<div className="w-full flex items-center justify-between">
+										<div className="w-full flex items-center justify-between mb-3">
 											<Link to={`/dashboard/shipments/${offer.shipment.id}`}>
 												<p className="font-bold text-(--primary-text) hover:text-(--primary-color) underline">
 													{
@@ -128,8 +128,8 @@ function RecentOffers() {
 											<span className={`text-xs px-3 py-1 rounded-full ${statusColor.text} ${statusColor.bg}`}>{ statusColor.label }</span>
 										</div>
 										
-										<div className="w-full px-2 flex-1">
-											<div className="flex items-center justify-between gap-2 mb-3">
+										<div className="w-full px-2 flex-1 mb-3">
+											{/* <div className="flex items-center justify-between gap-2 mb-3">
 												<h3 className="font-bold text-(--primary-text) truncate">
 													{ isManufacturer && (offer.profile.first_name + " " + offer.profile.last_name) }
 													{ isCarrierCompany && (offer.profile.company_name) }
@@ -139,7 +139,7 @@ function RecentOffers() {
 														أفضل عرض
 													</span>
 												)}
-											</div>
+											</div> */}
 
 											{/* <div className="flex items-center gap-2 mb-3">
 												{renderStars(
@@ -156,7 +156,7 @@ function RecentOffers() {
 											</div> */}
 
 											<div className="flex flex-col items-center gap-1">
-												{isManufacturer && (
+												{/* {isManufacturer && (
 													<div className="flex items-center justify-between">
 														<p className="text-(--secondary-text) text-sm mb-1">
 															الشحنة
@@ -169,7 +169,7 @@ function RecentOffers() {
 															</p>
 														</Link>
 													</div>
-												) }
+												) } */}
 												<div className="w-full flex items-center justify-between">
 													<p className="text-(--secondary-text) text-sm mb-1">
 														السعر

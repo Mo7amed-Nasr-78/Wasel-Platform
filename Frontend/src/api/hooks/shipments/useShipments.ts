@@ -4,11 +4,14 @@ import type { ShipmentFilter } from "@/shared/interfaces/Interfaces";
 
 export function useShipments(query?: ShipmentFilter) {
 	const queryParams = query && Object.fromEntries(
-		Object.entries(query).filter(([, value]) => Boolean(value)),
+		Object.entries(query).filter(([, value]) => {
+			if (Array.isArray(value)) return value.length > 0;
+			return Boolean(value);
+		}),
 	);
 
 	return useQuery({
-		queryKey: ["shipments ", query],
+		queryKey: ["shipments", query],
 		queryFn: () => shipmentsService.getShipments(queryParams),
 		retry: false,
 	});

@@ -140,6 +140,10 @@ class PrivateHttpClient {
 		return this.instance.put(url, data, config);
 	}
 
+	patch(url: string, data: unknown, config?: Record<string, unknown>) {
+		return this.instance.patch(url, data, config);
+	}
+
 	delete(url: string) {
 		return this.instance.delete(url);
 	}
@@ -163,6 +167,10 @@ class PublicHttpClient {
 
 	post(url: string, data?: unknown, config?: Record<string, unknown>) {
 		return this.instance.post(url, data, config);
+	}
+
+	patch(url: string, data?: unknown, config?: Record<string, unknown>) {
+		return this.instance.patch(url, data, config);
 	}
 }
 export const publicHttpClient = new PublicHttpClient();

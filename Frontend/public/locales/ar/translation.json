@@ -40,5 +40,6 @@
 	"ACCEPTED": "مقبول",
     "PENDING": "قيد الإنتظار",
     "REJECTED": "مرفوض",
-	"Driver is not available": "السواق غير متوفر"
+	"Driver is not available": "السواق غير متوفر",
+	"Truck verified successfully": "تم توثيق الشاحنة بنجاح"
 }

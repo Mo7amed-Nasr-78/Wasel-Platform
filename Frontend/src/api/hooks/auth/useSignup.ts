@@ -17,7 +17,7 @@ export function useSignup() {
             toast.success(t(res.data.message));
             setTimeout(() => {
                 navigate('/signin');
-            }, 3000)
+            }, 1500)
         },
 
         onError: (err) => {

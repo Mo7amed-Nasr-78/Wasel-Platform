@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type {
 	HeaderContext,
 	CellContext,
@@ -25,25 +25,90 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import type { Shipment } from "@/shared/interfaces/Interfaces";
+import type { Shipment, ShipmentFilter } from "@/shared/interfaces/Interfaces";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
 import "dayjs/locale/ar";
-import { PiCaretLeft, PiCaretRight, PiWarningCircle } from "react-icons/pi";
+dayjs.extend(utc);
+import { PiCaretLeft, PiCaretRight, PiWarningCircle, PiCheckCircle } from "react-icons/pi";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useShipments } from "@/api/hooks/shipments/useShipments";
+import { isAxiosError } from "axios";
+import { useNotification } from "@/components/NotificationContext";
+import { useProps } from "@/components/PropsProvider";
+import { useDeliverShipment } from "@/api/hooks/shipments/useDeliverShipment";
+import { shipmentFilters } from "@/pages/dashboard/config/filters";
+import { ReusableFilters } from "./filters/ReusableFilters";
 
 dayjs.locale("ar");
 
-interface ShipmentsDataTableProps {
-	data: Shipment[];
-	isLoading: boolean;
+function ActionsCell({ row }: { row: Row<Shipment> }) {
+	const { user } = useProps();
+	const shipment = row.original;
+	const isCarrierCompany = user?.role === "CARRIER_COMPANY";
+	const canDeliver = isCarrierCompany && shipment.status === "IN_TRANSIT";
+	const { mutate: deliverShipment, isPending } = useDeliverShipment(shipment.id);
+
+	if (!canDeliver) return null;
+
+	return (
+		<Button
+			size="sm"
+			onClick={() => deliverShipment()}
+			disabled={isPending}
+			className="font-main gap-1.5"
+		>
+			<PiCheckCircle className="text-base" />
+			{isPending ? "..." : "تسليم"}
+		</Button>
+	);
 }
 
-export function ShipmentsDataTable({
-	data,
-	isLoading,
-}: ShipmentsDataTableProps) {
+export function ShipmentsDataTable() {
+	const { t } = useTranslation();
+	const { addNotification } = useNotification();
 	const [sorting, setSorting] = useState<TanstackSortingState>([]);
+	const [filters, setFilters] = useState<ShipmentFilter>({
+		search: "",
+		type: "",
+		urgent: false,
+		status: [],
+		minWeight: undefined,
+		maxWeight: undefined,
+		pickupAt: undefined,
+		deliveryAt: undefined,
+	});
+
+	const {
+		data: response,
+		isLoading,
+		isError,
+		error,
+	} = useShipments(filters);
+	const shipments: Shipment[] = response?.data?.shipments || [];
+
+	useEffect(() => {
+		if (isError) {
+			const axiosMsg = isAxiosError(error)
+				? error.response?.data.message
+				: "حدث خطأ ما";
+			addNotification(t(axiosMsg), "error", 5000);
+		}
+	}, [isError, error, addNotification, t]);
+
+	const clearFilters = () => {
+		setFilters({
+			search: "",
+			type: "",
+			urgent: false,
+			status: [],
+			minWeight: undefined,
+			maxWeight: undefined,
+			pickupAt: undefined,
+			deliveryAt: undefined,
+		});
+	};
 
 	const columns: ColumnDef<Shipment>[] = [
 		{
@@ -113,9 +178,9 @@ export function ShipmentsDataTable({
 				const status = row.getValue("status");
 				const statusColors: Record<string, string> = {
 					PENDING: "bg-yellow-100 text-yellow-800 border-yellow-300",
-					ACTIVE: "bg-blue-100 text-blue-800 border-blue-300",
+					IN_TRANSIT: "bg-blue-100 text-blue-800 border-blue-300",
 					IN_PROGRESS: "bg-blue-50 text-blue-800 border-blue-300",
-					COMPLETED:
+					DELIVERED:
 						"bg-green-100 text-green-800 border-green-300",
 					CANCELLED:
 						"bg-red-100 text-red-800 border-red-300",
@@ -125,9 +190,9 @@ export function ShipmentsDataTable({
 					"bg-gray-100 text-gray-800 border-gray-300";
 				const statusText: Record<string, string> = {
 					PENDING: "قيد الانتظار",
-					ACTIVE: "نشط",
+					IN_TRANSIT: "قيد التوصيل",
 					IN_PROGRESS: "قيد الانطلاق",
-					COMPLETED: "مكتمل",
+					DELIVERED: "مكتمل",
 					CANCELLED: "ملغى",
 				};
 				return (
@@ -144,7 +209,7 @@ export function ShipmentsDataTable({
 			header: "تاريخ الانطلاق",
 			cell: ({ row }: CellContext<Shipment, unknown>) => (
 				<span className="font-main text-sm text-(--secondary-text)">
-					{dayjs(row.getValue("pickupAt")).format(
+					{dayjs.utc(row.getValue("pickupAt")).format(
 						"DD MMM YYYY",
 					)}
 				</span>
@@ -155,7 +220,7 @@ export function ShipmentsDataTable({
 			header: "تاريخ الوصول",
 			cell: ({ row }: CellContext<Shipment, unknown>) => (
 				<span className="font-main text-sm text-(--secondary-text)">
-					{dayjs(row.getValue("deliveryAt")).format(
+					{dayjs.utc(row.getValue("deliveryAt")).format(
 						"DD MMM YYYY",
 					)}
 				</span>
@@ -209,10 +274,17 @@ export function ShipmentsDataTable({
 				);
 			},
 		},
+		{
+			id: "actions",
+			header: "",
+			cell: ({ row }: CellContext<Shipment, unknown>) => (
+				<ActionsCell row={row} />
+			),
+		},
 	];
 
 	const table = useReactTable({
-		data,
+		data: shipments,
 		columns,
 		getCoreRowModel: getCoreRowModel(),
 		getPaginationRowModel: getPaginationRowModel(),
@@ -228,150 +300,173 @@ export function ShipmentsDataTable({
 		},
 	});
 
-	if (isLoading) {
-		return (
-			<div className="flex items-center justify-center h-96">
-				<div className="text-center">
-					<div className="w-12 h-12 rounded-full border-4 border-(--tertiary-color) border-t-(--primary-color) animate-spin mx-auto mb-4"></div>
-					<p className="font-main text-(--secondary-text)">
-						جاري التحميل...
-					</p>
-				</div>
-			</div>
-		);
-	}
-
-	if (data.length === 0) {
-		return (
-			<div className="flex items-center justify-center w-full h-full">
-				<p className="font-main text-2xl text-(--primary-color)">
-					لا توجد حمولات
-				</p>
-			</div>
-		);
-	}
+	const hasActiveFilters =
+		filters.search ||
+		filters.type ||
+		filters.urgent ||
+		filters.status.length > 0 ||
+		filters.minWeight !== undefined ||
+		filters.maxWeight !== undefined ||
+		filters.pickupAt !== undefined ||
+		filters.deliveryAt !== undefined;
 
 	return (
-		<div className="w-full h-full">
-			<div className="h-[calc(100%-56px)] rounded-xl border border-(--tertiary-color) bg-(--secondary-color) overflow-hidden">
-				<Table className="h-full">
-					<TableHeader className="bg-(--tertiary-color)/10">
-						{table
-							.getHeaderGroups()
-							.map(
-								(
-									headerGroup: HeaderGroup<Shipment>,
-								) => (
-									<TableRow
-										key={headerGroup.id}
-										className="border-b border-(--tertiary-color)/50 hover:bg-transparent"
-									>
-										{headerGroup.headers.map(
-											(
-												header: any,
-											) => (
-												<TableHead
-													key={
-														header.id
-													}
-													className="font-main font-semibold text-(--primary-text) px-4 py-3 text-right"
-												>
-													{header.isPlaceholder
-														? null
-														: flexRender(
-																header
-																	.column
-																	.columnDef
-																	.header,
-																header.getContext(),
-															)}
-												</TableHead>
-											),
-										)}
-									</TableRow>
-								),
-							)}
-					</TableHeader>
-					<TableBody>
-						{table
-							.getRowModel()
-							.rows.map((row: Row<Shipment>) => (
-								<TableRow
-									key={row.id}
-									className="border-b border-(--tertiary-color)/30 hover:bg-(--tertiary-color)/5 transition-colors"
-								>
-									{row
-										.getVisibleCells()
-										.map(
-											(
-												cell: Cell<
-													Shipment,
-													unknown
-												>,
-											) => (
-												<TableCell
-													key={
-														cell.id
-													}
-													className="font-main text-(--primary-text) px-4 py-3"
-												>
-													{flexRender(
-														cell
-															.column
-															.columnDef
-															.cell,
-														cell.getContext(),
-													)}
-												</TableCell>
-											),
-										)}
-								</TableRow>
-							))}
-					</TableBody>
-				</Table>
+		<div className="w-full h-full flex flex-col gap-4">
+			{/* Filters section box */}
+			<div className="rounded-xl border border-(--tertiary-color) bg-(--secondary-color) p-4">
+				<ReusableFilters
+					configs={shipmentFilters}
+					values={filters as unknown as Record<string, unknown>}
+					onChange={(key, value) =>
+						setFilters({ ...filters, [key]: value })
+					}
+					onClear={hasActiveFilters ? clearFilters : undefined}
+				/>
 			</div>
 
-			{/* Pagination */}
-			<div className="flex items-center justify-between mt-6">
-				<div className="text-sm font-main text-(--secondary-text)">
-					الصفحة{" "}
-					<span className="font-semibold text-(--primary-text)">
-						{table.getState().pagination.pageIndex + 1}
-					</span>{" "}
-					من{" "}
-					<span className="font-semibold text-(--primary-text)">
-						{table.getPageCount()}
-					</span>
-					- إجمالي{" "}
-					<span className="font-semibold text-(--primary-color)">
-						{data.length}
-					</span>{" "}
-					حمولة
-				</div>
-				<div className="flex items-center gap-2">
-					<Button
-						type="button"
-						variant="outline"
-						size="sm"
-						onClick={() => table.previousPage()}
-						disabled={!table.getCanPreviousPage()}
-						className="font-main text-lg"
-					>
-						<PiCaretRight className="mr-1" />
-						السابق
-					</Button>
-					<Button
-						type="button"
-						variant="outline"
-						size="sm"
-						onClick={() => table.nextPage()}
-						disabled={!table.getCanNextPage()}
-						className="font-main text-lg"
-					>
-						التالي
-						<PiCaretLeft className="ml-1" />
-					</Button>
-				</div>
+			{/* Table section box */}
+			<div className="flex-1 rounded-xl border border-(--tertiary-color) bg-(--secondary-color)	 flex flex-col gap-4">
+				{isLoading ? (
+					<div className="flex items-center justify-center flex-1">
+						<div className="text-center">
+							<div className="w-12 h-12 rounded-full border-4 border-(--tertiary-color) border-t-(--primary-color) animate-spin mx-auto mb-4"></div>
+							<p className="font-main text-(--secondary-text)">
+								جاري التحميل...
+							</p>
+						</div>
+					</div>
+				) : shipments.length === 0 ? (
+					<div className="flex items-center justify-center flex-1">
+						<p className="font-main text-2xl text-(--primary-color)">
+							لا توجد حمولات
+						</p>
+					</div>
+				) : (
+					<div className="flex-1 overflow-hidden">
+						<Table className="h-full">
+							<TableHeader className="bg-(--tertiary-color)/10">
+								{table
+									.getHeaderGroups()
+									.map(
+										(
+											headerGroup: HeaderGroup<Shipment>,
+										) => (
+											<TableRow
+												key={headerGroup.id}
+												className="border-b border-(--tertiary-color)/50 hover:bg-transparent"
+											>
+												{headerGroup.headers.map(
+													(header: any) => (
+														<TableHead
+															key={
+																header.id
+															}
+															className="font-main font-semibold text-(--primary-text) px-4 py-3 text-right"
+														>
+															{header.isPlaceholder
+																? null
+																: flexRender(
+																		header
+																			.column
+																			.columnDef
+																			.header,
+																		header.getContext(),
+																	)}
+														</TableHead>
+													),
+												)}
+											</TableRow>
+										),
+									)}
+							</TableHeader>
+							<TableBody>
+								{table
+									.getRowModel()
+									.rows.map(
+										(
+											row: Row<Shipment>,
+										) => (
+											<TableRow
+												key={row.id}
+												className="border-b border-(--tertiary-color)/30 hover:bg-(--tertiary-color)/5 transition-colors"
+											>
+												{row
+													.getVisibleCells()
+													.map(
+														(
+															cell: Cell<
+																Shipment,
+																unknown
+															>,
+														) => (
+															<TableCell
+																key={
+																	cell.id
+																}
+																className="font-main text-(--primary-text) px-4 py-3"
+															>
+																{flexRender(
+																	cell
+																		.column
+																		.columnDef
+																		.cell,
+																	cell.getContext(),
+																)}
+															</TableCell>
+														),
+													)}
+											</TableRow>
+										),
+									)}
+							</TableBody>
+						</Table>
+					</div>
+				)}
+
+				{shipments.length > 0 && (
+					<div className="flex items-center justify-between p-2">
+						<div className="text-sm font-main text-(--secondary-text)">
+							الصفحة{" "}
+							<span className="font-semibold text-(--primary-text)">
+								{table.getState().pagination
+									.pageIndex + 1}
+							</span>{" "}
+							من{" "}
+							<span className="font-semibold text-(--primary-text)">
+								{table.getPageCount()}
+							</span>
+							- إجمالي{" "}
+							<span className="font-semibold text-(--primary-color)">
+								{shipments.length}
+							</span>{" "}
+							حمولة
+						</div>
+						<div className="flex items-center gap-2">
+							<Button
+								type="button"
+								variant="outline"
+								size="sm"
+								onClick={() => table.previousPage()}
+								disabled={!table.getCanPreviousPage()}
+								className="font-main text-lg"
+							>
+								<PiCaretRight className="mr-1" />
+								السابق
+							</Button>
+							<Button
+								type="button"
+								variant="outline"
+								size="sm"
+								onClick={() => table.nextPage()}
+								disabled={!table.getCanNextPage()}
+								className="font-main text-lg"
+							>
+								التالي
+								<PiCaretLeft className="ml-1" />
+							</Button>
+						</div>
+					</div>
+				)}
 			</div>
 		</div>
 	);

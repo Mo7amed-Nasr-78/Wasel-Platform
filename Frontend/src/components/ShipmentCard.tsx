@@ -2,7 +2,6 @@ import ImagesCarousel from "./ImagesCarousel"
 import { 
     PiUser,
     PiClock,
-    PiTicket,
 } from "react-icons/pi"
 import { Link } from "react-router-dom"
 import type { Shipment } from "@/shared/interfaces/Interfaces"
@@ -34,8 +33,8 @@ function ShipmentCard({ shipment }: { shipment: Shipment }) {
                 </div>
 
                 <Tooltip>
-                    <TooltipTrigger>
-                        <div className="w-10 h-10 rounded-full bg-(--secondary-color) flex items-center justify-center absolute top-3 left-3">
+                    <TooltipTrigger className="absolute top-3 left-3">
+                        <div className="w-10 h-10 rounded-full bg-(--secondary-color) flex items-center justify-center">
                             <PiUser className="text-md text-(--primary-text)"/>
                         </div>
                     </TooltipTrigger>

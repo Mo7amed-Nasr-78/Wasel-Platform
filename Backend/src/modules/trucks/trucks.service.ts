@@ -1,6 +1,6 @@
 import { PrismaService } from '@/database/prisma/prisma.service';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Truck } from '@prisma/client';
+import { Role, Truck, VerificationStatus } from '@prisma/client';
 import { AddTruckDto } from './dto/addTruckDto';
 import { UpdateTruckDto } from './dto/updateTruckDto';
 import { TruckAttachments } from '@/shared/interfaces/interfaces';
@@ -43,13 +43,20 @@ export class TrucksService {
   }
 
   async getTrucks(userId, role): Promise<Truck[]> {
-    const trucks = await this.prisma.truck.findMany({
-      where: {
-        profile: {
-          userId,
+
+    let trucks = [];
+
+    if (Role.ADMIN.includes(role)) {
+      trucks = await this.prisma.truck.findMany();
+    } else {
+      trucks = await this.prisma.truck.findMany({
+        where: {
+          profile: {
+            userId,
+          },
         },
-      },
-    });
+      });
+    }
 
     if (trucks.length < 1) {
       throw new HttpException('No trucks found', HttpStatus.NO_CONTENT);
@@ -230,5 +237,38 @@ export class TrucksService {
       message: 'Truck has been updated successfully',
       updatedTruck,
     };
+  }
+
+  async verifyTruck(truckId: string): Promise<{
+    status: HttpStatus,
+    message: string,
+    truck: Truck
+  }> {
+
+    const truck = await this.prisma.truck.findUnique({
+      where: {
+        id: truckId,
+        verificationStatus: VerificationStatus.PENDING
+      }
+    });
+
+    if (!truck)
+      throw new HttpException("No trucks found", HttpStatus.NO_CONTENT);
+
+    const verifiedTruck = await this.prisma.truck.update({
+      where: {
+        id: truckId,
+      },
+      data: {
+        verificationStatus: VerificationStatus.VERIFIED
+      }
+    });
+
+
+    return {
+      status: HttpStatus.OK,
+      message: "Truck verified successfully",
+      truck: verifiedTruck
+    }
   }
 }

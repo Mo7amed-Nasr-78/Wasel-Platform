@@ -6,6 +6,7 @@ import {
   ShipmentStatus,
   DriverStatus,
   TruckStatus,
+  VerificationStatus,
 } from '@prisma/client';
 import { PrismaService } from '@/database/prisma/prisma.service';
 import { CreateShipmentDto } from './dto/create-shipment.dto';
@@ -53,59 +54,150 @@ export class ShipmentsService {
     total: number;
     shipments: Shipment[];
   }> {
-    const { type, minWeight, maxWeight, urgent, search } = query;
+    const {
+      type,
+      status,
+      goodsType,
+      packaging,
+      budgetType,
+      paymentType,
+      minWeight,
+      maxWeight,
+      minLength,
+      maxLength,
+      minWidth,
+      maxWidth,
+      minHeight,
+      maxHeight,
+      pickupAt,
+      deliveryAt,
+      urgent,
+      stacking,
+      additionalInsurance,
+      twoDrivers,
+      noFriday,
+      search,
+      page,
+      limit,
+      sortBy,
+      sortOrder,
+    } = query;
 
-    const shipments = await this.prisma.shipment.findMany({
-      where: {
-        ...(type ? { shipmentType: type } : {}),
-        ...(urgent ? { urgent: true } : {}),
-        ...(!isNaN(Number(minWeight)) && !isNaN(Number(maxWeight))
-          ? {
-              AND: [
-                { weight: { gt: Number(minWeight) } },
-                { weight: { lte: Number(maxWeight) } },
-              ],
-            }
-          : {}),
-        ...(search
-          ? {
-              OR: [
-                {
-                  origin: {
-                    contains: search,
-                  },
-                },
-                {
-                  destination: {
-                    contains: search,
-                  },
-                },
-              ],
-            }
-          : {}),
-      },
-      include: {
-        attachments: {
-          select: {
-            attachmentType: true,
-            url: true,
+    const where = {
+      ...(type ? { shipmentType: type } : {}),
+      ...(status
+        ? {
+            status: {
+              in: Array.isArray(status)
+                ? status
+                : status.split(',').map((s) => s.trim()),
+            },
+          }
+        : {}),
+      ...(goodsType ? { goodsType } : {}),
+      ...(packaging ? { packaging } : {}),
+      ...(budgetType ? { budgetType } : {}),
+      ...(paymentType ? { paymentType } : {}),
+      ...(urgent? { urgent: true } : {}),
+      ...(stacking? { stacking: true } : {}),
+      ...(additionalInsurance? { additionalInsurance: true } : {}),
+      ...(twoDrivers? { twoDrivers: true } : {}),
+      ...(noFriday ? { noFriday: true } : {}),
+      ...(!isNaN(Number(minWeight)) && !isNaN(Number(maxWeight))
+        ? {
+            AND: [
+              { weight: { gt: Number(minWeight) } },
+              { weight: { lte: Number(maxWeight) } },
+            ],
+          }
+        : {}),
+      ...(!isNaN(Number(minLength)) && !isNaN(Number(maxLength))
+        ? {
+            AND: [
+              { length: { gt: Number(minLength) } },
+              { length: { lte: Number(maxLength) } },
+            ],
+          }
+        : {}),
+      ...(!isNaN(Number(minWidth)) && !isNaN(Number(maxWidth))
+        ? {
+            AND: [
+              { width: { gt: Number(minWidth) } },
+              { width: { lte: Number(maxWidth) } },
+            ],
+          }
+        : {}),
+      ...(!isNaN(Number(minHeight)) && !isNaN(Number(maxHeight))
+        ? {
+            AND: [
+              { height: { gt: Number(minHeight) } },
+              { height: { lte: Number(maxHeight) } },
+            ],
+          }
+        : {}),
+      ...(pickupAt
+        ? {
+            pickupAt: {
+              gte: new Date(`${pickupAt}T00:00:00.000Z`),
+              lte: new Date(`${pickupAt}T23:59:59.999Z`),
+            },
+          }
+        : {}),
+      ...(deliveryAt
+        ? {
+            deliveryAt: {
+              gte: new Date(`${deliveryAt}T00:00:00.000Z`),
+              lte: new Date(`${deliveryAt}T23:59:59.999Z`),
+            },
+          }
+        : {}),
+      ...(search
+        ? {
+            OR: [
+              { origin: { contains: search } },
+              { destination: { contains: search } },
+            ],
+          }
+        : {}),
+    };
+
+    const skip = page && limit ? (Number(page) - 1) * Number(limit) : undefined;
+    const take = limit ? Number(limit) : undefined;
+
+    const orderBy = sortBy
+      ? { [sortBy]: sortOrder === 'asc' ? 'asc' as const : 'desc' as const }
+      : { createAt: 'desc' as const };
+
+    const [shipments, total] = await this.prisma.$transaction([
+      this.prisma.shipment.findMany({
+        where,
+        skip,
+        take,
+        orderBy,
+        include: {
+          attachments: {
+            select: {
+              attachmentType: true,
+              url: true,
+            },
+          },
+          profile: {
+            select: {
+              first_name: true,
+              last_name: true,
+            },
           },
         },
-        profile: {
-          select: {
-            first_name: true,
-            last_name: true,
-          },
-        },
-      },
-    });
+      }),
+      this.prisma.shipment.count({ where }),
+    ]);
 
     if (shipments.length < 1) {
       throw new HttpException('Shipments not found', HttpStatus.NO_CONTENT);
     }
 
     return {
-      total: shipments.length,
+      total,
       shipments,
     };
   }
@@ -418,6 +510,69 @@ export class ShipmentsService {
     };
   }
 
+  async deliverShipment(user, shipmentId: string) {
+    const userId = user.sub;
+
+    const userProfile = await this.prisma.profile.findUnique({
+      where: { userId },
+      select: { id: true, role: true },
+    });
+
+    if (
+      !userProfile ||
+      (userProfile.role !== Role.CARRIER_COMPANY &&
+        userProfile.role !== Role.INDEPENDENT_CARRIER)
+    ) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    const shipment = await this.prisma.shipment.findUnique({
+      where: { id: shipmentId },
+      include: {
+        acceptedOffer: {
+          include: { profile: { select: { id: true } } },
+        },
+      },
+    });
+
+    if (!shipment) {
+      throw new HttpException('Shipment not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (shipment.status !== ShipmentStatus.IN_TRANSIT) {
+      throw new HttpException(
+        'Shipment is not in transit',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (!shipment.acceptedOffer) {
+      throw new HttpException(
+        'No accepted offer for this shipment',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const acceptedOfferProfileId = shipment.acceptedOffer.profile.id;
+    if (acceptedOfferProfileId !== userProfile.id) {
+      throw new HttpException(
+        'You are not authorized to deliver this shipment',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    const updatedShipment = await this.prisma.shipment.update({
+      where: { id: shipmentId },
+      data: { status: ShipmentStatus.DELIVERED },
+    });
+
+    return {
+      status: 200,
+      message: 'Shipment delivered successfully',
+      shipment: updatedShipment,
+    };
+  }
+
   async assignDriverAndTruck(
     user,
     shipmentId: string,
@@ -486,6 +641,13 @@ export class ShipmentsService {
       );
     }
 
+    if (driver.verificationStatus !== VerificationStatus.VERIFIED) {
+      throw new HttpException(
+        'Driver is not verified',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     if (driver.status !== DriverStatus.AVAILABLE) {
       throw new HttpException(
         'Driver is not available',
@@ -506,6 +668,10 @@ export class ShipmentsService {
         'Truck does not belong to your company',
         HttpStatus.FORBIDDEN,
       );
+    }
+
+    if (truck.verificationStatus !== VerificationStatus.VERIFIED) {
+      throw new HttpException('Truck is not verified', HttpStatus.BAD_REQUEST);
     }
 
     if (truck.status !== TruckStatus.ACTIVE) {

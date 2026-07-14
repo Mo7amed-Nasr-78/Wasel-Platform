@@ -21,12 +21,12 @@ export interface Shipment {
 	ETA?: string;
 	distance?: string;
 	status?:
-		| "PENDING"
-		| "IN_PROGRESS"
-		| "IN_TRANSIT"
-		| "DELAYED"
-		| "DELIVERED"
-		| "CANCELLED";
+	| "PENDING"
+	| "IN_PROGRESS"
+	| "IN_TRANSIT"
+	| "DELAYED"
+	| "DELIVERED"
+	| "CANCELLED";
 
 	urgent?: boolean;
 	additionalInsurance?: boolean;
@@ -96,12 +96,12 @@ export interface OfferResponse {
 		goodsType: string;
 		description: string;
 		status:
-			| "PENDING"
-			| "IN_PROGRESS"
-			| "IN_TRANSIT"
-			| "DELAYED"
-			| "DELIVERED"
-			| "CANCELLED";
+		| "PENDING"
+		| "IN_PROGRESS"
+		| "IN_TRANSIT"
+		| "DELAYED"
+		| "DELIVERED"
+		| "CANCELLED";
 		pickupAt: string;
 		deliveryAt: string;
 		urgent: boolean;
@@ -146,8 +146,11 @@ export interface ShipmentFilter {
 	search: string;
 	type: string;
 	urgent: boolean;
+	status: string[];
 	minWeight: number | undefined;
 	maxWeight: number | undefined;
+	pickupAt: string | undefined;
+	deliveryAt: string | undefined;
 }
 
 export interface Offer {

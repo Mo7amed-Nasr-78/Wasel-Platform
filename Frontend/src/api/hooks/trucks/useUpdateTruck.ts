@@ -25,24 +25,30 @@ export function useUpdateTruck() {
 			const updatedTruckId = updatedTruck.id;
 			if (!updatedTruckId) return;
 
-			queryClient.setQueryData(
-				["trucks"],
-				(oldData?: TrucksQueryData) => {
-					if (!oldData || !Array.isArray(oldData.data))
-						return oldData;
+			// queryClient.setQueryData(
+			// 	// ["trucks"],
+			// 	// (oldData?: TrucksQueryData) => {
+			// 	// 	if (!oldData || !Array.isArray(oldData.data))
+			// 	// 		return oldData;
 
-					return {
-						...oldData,
-						data: oldData.data.map((truck) => {
-							const truckId = truck.id;
+			// 	// 	return {
+			// 	// 		...oldData,
+			// 	// 		data: oldData.data.map((truck) => {
+			// 	// 			const truckId = truck.id;
 
-							return truckId === updatedTruckId
-								? updatedTruck
-								: truck;
-						}),
-					};
-				},
-			);
+			// 	// 			return truckId === updatedTruckId
+			// 	// 				? updatedTruck
+			// 	// 				: truck;
+			// 	// 		}),
+			// 	// 	};
+			// 	// },
+			// );
+			queryClient.invalidateQueries({ queryKey: ["trucks"] });
+			// onSuccess: (res) => {
+			// 	toast.success(
+			// 		t(res.data?.message || "تم توثيق الشاحنة بنجاح"),
+			// 	);
+			// },
 		},
 	});
 }

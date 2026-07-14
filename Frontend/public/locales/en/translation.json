@@ -35,5 +35,6 @@
     "السواق غير متوفر": "Driver is not available",
     "الحمولات المتأخرة": "delayed shipments",
     "الحمولات النشطة": "active shipments",
-	"الحمولات المتكملة": "completed shipments"
+	"الحمولات المتكملة": "completed shipments",
+    "تم توثيق الشاحنة بنجاح": "Truck verified successfully"
 }   

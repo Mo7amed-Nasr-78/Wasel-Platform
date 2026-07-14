@@ -20,6 +20,7 @@ import { UpdateDriverDto } from './dto/updateDriverDto';
 import { DriverAttachments } from '@/shared/interfaces/interfaces';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { RolesGuard } from '@/common/guards/rolesGuard';
+import { Role } from '@prisma/client';
 
 @Roles(['CARRIER_COMPANY'])
 @Controller('drivers')
@@ -103,11 +104,10 @@ export class DriversController {
   }
 
 
-  @Post(':id/approve')
-  @Roles(["ADMIN"])
+  @Roles([Role.ADMIN])
+  @Post(':id/verify')
   @UseGuards(AuthGuard, RolesGuard)
-  approveDriver(@Param("id") driverId: string, @Request() req) {
-    const { role } = req.user;
-    return this.driversService.approveDriver(driverId, role)
+  verifyDriver(@Param("id") driverId: string) {
+    return this.driversService.verifyDriver(driverId)
   }
 }

@@ -26,9 +26,9 @@ class DriversService {
 		});
 	}
 
-	approveDriver(driverId: string) {
+	verifyDriver(driverId: string) {
 		return privateHttpClient.post(
-			`/drivers/${driverId}/approve`,
+			`/drivers/${driverId}/verify`,
 			undefined,
 		);
 	}

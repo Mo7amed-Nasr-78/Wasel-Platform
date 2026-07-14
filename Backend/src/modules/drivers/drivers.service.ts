@@ -407,17 +407,13 @@ export class DriversService {
     };
   }
 
-  async approveDriver(
+  async verifyDriver(
     driverId: string,
-    role: Role,
   ): Promise<{
     status: HttpStatus;
     message: string;
     driver: Driver;
   }> {
-    if (!Role.ADMIN.includes(role))
-      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-
     const driver = await this.prisma.driver.findUnique({
       where: {
         id: driverId,

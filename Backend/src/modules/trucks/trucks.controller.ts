@@ -21,8 +21,9 @@ import { AddTruckDto } from './dto/addTruckDto';
 import { UpdateTruckDto } from './dto/updateTruckDto';
 import { TruckAttachments } from '@/shared/interfaces/interfaces';
 import { Roles } from '@/common/decorators/roles.decorator';
+import { Role } from '@prisma/client';
+import { RolesGuard } from '@/common/guards/rolesGuard';
 
-@Roles(['CARRIER_COMPANY'])
 @Controller('trucks')
 export class TrucksController {
   constructor(private readonly trucksService: TrucksService) {}
@@ -104,5 +105,13 @@ export class TrucksController {
       data,
       truckAttachments,
     );
+  }
+
+  @Post(':id/verify')
+  @Roles([Role.ADMIN])
+  @UseGuards(AuthGuard, RolesGuard)
+  verifyTruck(@Param("id") truckId: string) {
+    console.log(truckId);
+    return this.trucksService.verifyTruck(truckId);
   }
 }

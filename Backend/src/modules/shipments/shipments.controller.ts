@@ -46,9 +46,30 @@ export class ShipmentsController {
     query: {
       search: string;
       type: string;
+      status: string | string[];
+      goodsType: string;
+      packaging: string;
+      budgetType: string;
+      paymentType: string;
       minWeight: number | undefined;
       maxWeight: number | undefined;
+      minLength: number | undefined;
+      maxLength: number | undefined;
+      minWidth: number | undefined;
+      maxWidth: number | undefined;
+      minHeight: number | undefined;
+      maxHeight: number | undefined;
+      pickupAt: string;
+      deliveryAt: string;
       urgent: boolean;
+      stacking: boolean;
+      additionalInsurance: boolean;
+      twoDrivers: boolean;
+      noFriday: boolean;
+      page: number | undefined;
+        limit: number | undefined;
+      sortBy: string;
+      sortOrder: string;
     },
   ) {
     return this.shipmentsService.getShipments(query);
@@ -93,6 +114,14 @@ export class ShipmentsController {
     @Body() body: UpdateShipmentDto,
   ) {
     return this.shipmentsService.updateShipment(shipmentId, body);
+  }
+
+  @Patch(':id/deliver')
+  @Roles(['CARRIER_COMPANY', 'INDEPENDENT_CARRIER'])
+  @UseGuards(AuthGuard, RolesGuard)
+  deliverShipment(@Param('id') shipmentId: string, @Request() req) {
+    const user = req.user;
+    return this.shipmentsService.deliverShipment(user, shipmentId);
   }
 
   @Post(':id/assign')

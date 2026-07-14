@@ -8,7 +8,6 @@ import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useEffect, useState, type FormEvent } from "react";
 // Components
 import { useNotification } from "../../components/NotificationContext";
-import { useTranslation } from "react-i18next";
 import Main from "@/components/Main";
 import { signupSchema } from "@/shared/validation/schemas";
 import toast from "react-hot-toast";

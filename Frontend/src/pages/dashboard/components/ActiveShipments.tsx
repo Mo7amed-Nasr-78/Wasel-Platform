@@ -1,4 +1,5 @@
 import { useAssignShipment } from "@/api/hooks/shipments/useAssignShipment";
+import { useDeliverShipment } from "@/api/hooks/shipments/useDeliverShipment";
 import { useUserShipments } from "@/api/hooks/user/useUserShipments";
 import { useProps } from "@/components/PropsProvider";
 import { Button } from "@/components/ui/button";
@@ -27,7 +28,7 @@ import {
 } from "@/components/ui/table";
 import type { Driver, Shipment, Truck } from "@/shared/interfaces/Interfaces";
 import { useMemo, useState } from "react";
-import { PiEye, PiMapPin, PiTruck } from "react-icons/pi";
+import { PiCheckCircle, PiEye, PiMapPin, PiTruck } from "react-icons/pi";
 import { Link } from "react-router-dom";
 import { useDrivers } from "@/api/hooks/drivers/useDrivers";
 import { useTrucks } from "@/api/hooks/trucks/useTrucks";
@@ -59,6 +60,12 @@ const getStatusBadgeColor = (
 				text: "text-blue-700",
 				label: "قيد التنفيذ",
 			};
+		case "IN_TRANSIT":
+			return {
+				bg: "bg-blue-500/10",
+				text: "text-blue-700",
+				label: "قيد التوصيل",
+			};
 		case "DELIVERED":
 			return {
 				bg: "bg-green-500/10",
@@ -69,6 +76,26 @@ const getStatusBadgeColor = (
 			return { bg: "", text: "", label: "" };
 	}
 };
+
+function DeliverButton({
+	shipmentId,
+}: {
+	shipmentId: string | undefined;
+}) {
+	const { mutate: deliverShipment, isPending } =
+		useDeliverShipment(shipmentId);
+
+	return (
+		<Button
+			size="sm"
+			className="h-9 px-3 rounded-8"
+			onClick={() => deliverShipment()}
+			disabled={isPending}
+		>
+			<PiCheckCircle className="text-lg" />
+		</Button>
+	);
+}
 
 function ActiveShipments() {
 	const { user } = useProps();
@@ -91,9 +118,6 @@ function ActiveShipments() {
 		() => (trucksData?.data || []) as Truck[],
 		[trucksData],
 	);
-
-	console.log(drivers);
-	console.log(trucks);
 
 	const isIndependentCarrier = user?.role === "INDEPENDENT_CARRIER";
 	const isCarrierCompany = user?.role === "CARRIER_COMPANY";
@@ -269,16 +293,29 @@ function ActiveShipments() {
 										</TableCell>
 										<TableCell className="text-right">
 											<div className="flex items-center justify-start gap-2">
+												{isCarrierCompany &&
+													shipment.status ===
+														"IN_TRANSIT" && (
+														<DeliverButton
+															shipmentId={
+																shipment.id
+															}
+														/>
+													)}
 												{canAssignShipment && (
 													<Button
 														size="sm"
 														variant="outline"
 														className="h-9 px-3 rounded-8"
-														onClick={() => openAssignDialog(shipment.id)}
+														onClick={() =>
+															openAssignDialog(
+																shipment.id,
+															)
+														}
 													>
 														<PiTruck className="text-lg" />
 													</Button>
-												) }
+												)}
 												<Link
 													to={{
 														pathname: `/dashboard/shipments/${shipment.id}`,

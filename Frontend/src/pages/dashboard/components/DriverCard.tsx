@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { Driver } from "@/shared/interfaces/Interfaces";
 import { useDeleteDriver } from "@/api/hooks/drivers/useDeleteDriver";
 import { useUpdateDriver } from "@/api/hooks/drivers/useUpdateDriver";
-import { useApproveDriver } from "@/api/hooks/drivers/useApproveDriver";
+import { useVerifyDriver } from "@/api/hooks/drivers/useVerifyDriver";
 import { useCommentDriver } from "@/api/hooks/drivers/useCommentDriver";
 import { useProps } from "@/components/PropsProvider";
 import { Trash2, Edit } from "lucide-react";
@@ -37,6 +37,7 @@ function DriverCard({ driver, onDelete }: DriverCardProps) {
 	const [selectedImage, setSelectedImage] = useState<ImageModal | null>(
 		null,
 	);
+	const [imageVersion, setImageVersion] = useState(0);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 	const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 	const [editFormData, setEditFormData] = useState({
@@ -59,7 +60,7 @@ function DriverCard({ driver, onDelete }: DriverCardProps) {
 	const { mutate: deleteDriver, isPending: isDeleting } = useDeleteDriver();
 	const { mutate: updateDriver, isPending: isUpdating } = useUpdateDriver();
 	const { mutate: approveDriver, isPending: isApproving } =
-		useApproveDriver();
+		useVerifyDriver();
 	const { mutate: commentDriver, isPending: isCommenting } =
 		useCommentDriver();
 	const isAdmin = user?.role?.toUpperCase() === "ADMIN";
@@ -142,6 +143,7 @@ function DriverCard({ driver, onDelete }: DriverCardProps) {
 			{
 				onSuccess: () => {
 					setIsEditDialogOpen(false);
+					setImageVersion((v) => v + 1);
 				},
 			},
 		);
@@ -172,7 +174,7 @@ function DriverCard({ driver, onDelete }: DriverCardProps) {
 				<div className="flex items-center justify-between gap-3 mb-2">
 					<div className="flex items-center gap-3 flex-1">
 						<img
-							src={driver.picture}
+							src={`${driver.picture}?v=${imageVersion}`}
 							alt={`${driver.first_name} ${driver.last_name}`}
 							className="w-16 h-16 rounded-full object-cover"
 						/>
@@ -297,20 +299,18 @@ function DriverCard({ driver, onDelete }: DriverCardProps) {
 							<Tooltip>
 								<TooltipTrigger asChild>
 									<div className="flex flex-col items-center cursor-pointer">
-										<img
-											src={
-												driver.license_front
-											}
-											alt="رخصة القيادة - الأمام"
-											className="w-full h-20 object-cover rounded transition-all duration-300 hover:scale-105 hover:shadow-lg"
-											onClick={() =>
-												setSelectedImage(
-													{
-														src: driver.license_front,
-														alt: "رخصة القيادة - الأمام",
-													},
-												)
-											}
+									<img
+										src={`${driver.license_front}?v=${imageVersion}`}
+										alt="رخصة القيادة - الأمام"
+										className="w-full h-20 object-cover rounded transition-all duration-300 hover:scale-105 hover:shadow-lg"
+										onClick={() =>
+											setSelectedImage(
+												{
+													src: `${driver.license_front}?v=${imageVersion}`,
+													alt: "رخصة القيادة - الأمام",
+												},
+											)
+										}
 										/>
 									</div>
 								</TooltipTrigger>
@@ -323,20 +323,18 @@ function DriverCard({ driver, onDelete }: DriverCardProps) {
 							<Tooltip>
 								<TooltipTrigger asChild>
 									<div className="flex flex-col items-center cursor-pointer">
-										<img
-											src={
-												driver.license_back
-											}
-											alt="رخصة القيادة - الخلف"
-											className="w-full h-20 object-cover rounded transition-all duration-300 hover:scale-105 hover:shadow-lg"
-											onClick={() =>
-												setSelectedImage(
-													{
-														src: driver.license_back,
-														alt: "رخصة القيادة - الخلف",
-													},
-												)
-											}
+									<img
+										src={`${driver.license_back}?v=${imageVersion}`}
+										alt="رخصة القيادة - الخلف"
+										className="w-full h-20 object-cover rounded transition-all duration-300 hover:scale-105 hover:shadow-lg"
+										onClick={() =>
+											setSelectedImage(
+												{
+													src: `${driver.license_back}?v=${imageVersion}`,
+													alt: "رخصة القيادة - الخلف",
+												},
+											)
+										}
 										/>
 									</div>
 								</TooltipTrigger>
@@ -349,20 +347,18 @@ function DriverCard({ driver, onDelete }: DriverCardProps) {
 							<Tooltip>
 								<TooltipTrigger asChild>
 									<div className="flex flex-col items-center cursor-pointer">
-										<img
-											src={
-												driver.national_id_card_front
-											}
-											alt="بطاقة الهوية - الأمام"
-											className="w-full h-20 object-cover rounded transition-all duration-300 hover:scale-105 hover:shadow-lg"
-											onClick={() =>
-												setSelectedImage(
-													{
-														src: driver.national_id_card_front,
-														alt: "بطاقة الهوية - الأمام",
-													},
-												)
-											}
+									<img
+										src={`${driver.national_id_card_front}?v=${imageVersion}`}
+										alt="بطاقة الهوية - الأمام"
+										className="w-full h-20 object-cover rounded transition-all duration-300 hover:scale-105 hover:shadow-lg"
+										onClick={() =>
+											setSelectedImage(
+												{
+													src: `${driver.national_id_card_front}?v=${imageVersion}`,
+													alt: "بطاقة الهوية - الأمام",
+												},
+											)
+										}
 										/>
 									</div>
 								</TooltipTrigger>
@@ -375,20 +371,18 @@ function DriverCard({ driver, onDelete }: DriverCardProps) {
 							<Tooltip>
 								<TooltipTrigger asChild>
 									<div className="flex flex-col items-center cursor-pointer">
-										<img
-											src={
-												driver.national_id_card_back
-											}
-											alt="بطاقة الهوية - الخلف"
-											className="w-full h-20 object-cover rounded transition-all duration-300 hover:scale-105 hover:shadow-lg"
-											onClick={() =>
-												setSelectedImage(
-													{
-														src: driver.national_id_card_back,
-														alt: "بطاقة الهوية - الخلف",
-													},
-												)
-											}
+									<img
+										src={`${driver.national_id_card_back}?v=${imageVersion}`}
+										alt="بطاقة الهوية - الخلف"
+										className="w-full h-20 object-cover rounded transition-all duration-300 hover:scale-105 hover:shadow-lg"
+										onClick={() =>
+											setSelectedImage(
+												{
+													src: `${driver.national_id_card_back}?v=${imageVersion}`,
+													alt: "بطاقة الهوية - الخلف",
+												},
+											)
+										}
 										/>
 									</div>
 								</TooltipTrigger>

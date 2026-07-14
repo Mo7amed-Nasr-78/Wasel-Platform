@@ -25,6 +25,19 @@ class TrucksService {
 		});
 	}
 
+	verifyTruck(truckId: string) {
+		return privateHttpClient.post(
+			`/trucks/${truckId}/verify`,
+			undefined,
+		);
+	}
+
+	commentTruck(truckId: string, comment: string) {
+		return privateHttpClient.post(`/trucks/${truckId}/comment`, {
+			comment,
+		});
+	}
+
 	deleteTruck(truckId: string) {
 		return privateHttpClient.delete(`/trucks/${truckId}`);
 	}

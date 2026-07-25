@@ -346,7 +346,7 @@ export class ShipmentsService {
         additionalInsurance,
         noFriday,
         budgetType,
-        paymentType,
+        ...(paymentType? { paymentType } : { paymentType: "ON_DELIVER" }),
         suggestedBudget,
         offerCount: 0,
         ETA,

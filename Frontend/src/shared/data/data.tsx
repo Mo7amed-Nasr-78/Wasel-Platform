@@ -76,30 +76,37 @@ export const shipmentTypesFilter = [
 export const newShipmentSections = [
     {
         title: "نوع الشحنة",
+        sectionId: "shipment-type",
         path: ""
     },
     {
         title: "تفاصيل الشحنة",
+        sectionId: "shipment-details",
         path: ""
     },
     {
         title: "البيانات الرئيسية",
+        sectionId: "basic-data",
         path: ""
     },
     {
         title: "نقط التحميل والتفريغ",
+        sectionId: "journeyPath",
         path: ""
     },
     {
         title: "الصور والمرفقات",
+        sectionId: "shipment-images",
         path: ""
     },
     {
         title: "خيارات إضافية",
+        sectionId: "additional-options",
         path: ""
     },
     {
         title: "الدفع والمزانية",
+        sectionId: "payment-budget",
         path: ""
     },
 ]

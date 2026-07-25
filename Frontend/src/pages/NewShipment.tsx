@@ -80,6 +80,7 @@ function NewShipment() {
 	const [shipmentImgs, setShipmentImgs] = useState<File[]>([]);
 	const [shipmentDocs, setShipmentDocs] = useState<File[]>([]);
 	const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+	const [isCustomShipmentType, setIsCustomShipmentType] = useState(false);
 
 	useEffect(() => {
 		if (!user) {
@@ -106,7 +107,11 @@ function NewShipment() {
 	useEffect(() => {
 		if (isSuccess) {
 			addNotification(t(data.data?.message), "success", 5000);
-			setNewShipment(newShipmentObject);			
+			setNewShipment(newShipmentObject);
+			setShipmentImgs([]);
+			setShipmentDocs([]);
+			setPreviewUrls([]);
+			setIsCustomShipmentType(false);
 		}
 
 		if (isError) {
@@ -281,7 +286,14 @@ function NewShipment() {
 							{newShipmentSections.map(
 								(sec, idx) => {
 									return (
-										<li className="w-full py-2 flex items-center gap-3 text-xl text-(--scondary-color) p-3 bg-(--primary-color)/6 rounded-20 border border-transparent hover:border-(--primary-color) cursor-pointer">
+										<li
+											key={idx}
+											onClick={() => {
+												const el = document.getElementById(sec.sectionId);
+												if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+											}}
+											className="w-full py-2 flex items-center gap-3 text-xl text-(--scondary-color) p-3 bg-(--primary-color)/6 rounded-20 border border-transparent hover:border-(--primary-color) cursor-pointer"
+										>
 											<div className="w-12 h-12 flex items-center justify-center rounded-full border border-(--primary-color)">
 												<span className="font-main font-medium text-2xl text-(--primary-color)">
 													{idx +
@@ -305,7 +317,7 @@ function NewShipment() {
 							onSubmit={handleSubmit}
 							className="flex flex-col"
 						>
-							<div className="w-full rounded-20 bg-(--secondary-color) p-5 mb-5">
+							<div id="shipment-type" className="w-full rounded-20 bg-(--secondary-color) p-5 mb-5">
 								<div className="flex items-center gap-3 mb-4">
 									<div className="w-8 h-8 flex items-center justify-center rounded-full bg-(--primary-color) text-(--secondary-color)">
 										<span className="font-main font-medium text-xl">
@@ -337,9 +349,10 @@ function NewShipment() {
 														</h5>
 														<input
 															type="radio"
-															onChange={
-																handleChange
-															}
+															onChange={(e) => {
+																setIsCustomShipmentType(false);
+																handleChange(e);
+															}}
 															value={
 																i.type
 															}
@@ -352,18 +365,36 @@ function NewShipment() {
 											);
 										},
 									)}
-									<div className="col-span-3 h-36 flex flex-col items-center justify-center gap-2 border border-(--secondary-text) rounded-20 transition-colors duration-300 hover:border-transparent hover:bg-(--tertiary-color)/25 cursor-pointer">
+									<label className="col-span-3 h-36 flex flex-col items-center justify-center gap-2 border border-(--secondary-text) rounded-20 transition-colors duration-200 has-[input:checked]:border-transparent has-[input:checked]:bg-(--tertiary-color)/25 hover:bg-(--tertiary-color)/25 cursor-pointer">
 										<div className="w-14 h-14 flex items-center justify-center rounded-full bg-(--primary-color)/10">
 											<PiDotsThree className="text-3xl text-(--primary-color)" />
 										</div>
 										<h5 className="font-main font-medium text-lg text-(--primary-text)">
 											أخري
 										</h5>
-									</div>
+										<input
+											type="radio"
+											onChange={() => setIsCustomShipmentType(true)}
+											value="OTHER"
+											name="shipmentType"
+											className="hidden"
+										/>
+									</label>
 								</div>
+								{isCustomShipmentType && (
+									<div className="mt-4">
+										<input
+											type="text"
+											onChange={handleChange}
+											name="shipmentType"
+											placeholder="الرجاء كتابة نوع الشحنة"
+											className="w-full h-12 border border-(--primary-color) rounded-10 font-main font-medium text-base text-(--primary-text) focus:outline-none px-3"
+										/>
+									</div>
+								)}
 							</div>
 
-							<div className="w-full rounded-20 bg-(--secondary-color) p-5 mb-5">
+							<div id="shipment-details" className="w-full rounded-20 bg-(--secondary-color) p-5 mb-5">
 								<div className="flex items-center gap-3 mb-4">
 									<div className="w-8 h-8 flex items-center justify-center rounded-full bg-(--tertiary-color)/10 text-(--primary-text)">
 										<span className="font-main font-medium text-xl">
@@ -454,7 +485,7 @@ function NewShipment() {
 								</div>
 							</div>
 
-							<div className="w-full rounded-20 bg-(--secondary-color) p-5 mb-5">
+							<div id="basic-data" className="w-full rounded-20 bg-(--secondary-color) p-5 mb-5">
 								<div className="flex items-center gap-3 mb-4">
 									<div className="w-8 h-8 flex items-center justify-center rounded-full bg-(--tertiary-color)/10 text-(--primary-text)">
 										<span className="font-main font-medium text-xl">
@@ -998,7 +1029,7 @@ function NewShipment() {
 							</div>
 
 							<div className="flex items-stretch gap-5">
-								<div className="w-full h-full rounded-20 bg-(--secondary-color) p-5 mb-5">
+								<div id="shipment-images" className="w-full h-full rounded-20 bg-(--secondary-color) p-5 mb-5">
 									<div className="flex items-center gap-3 mb-4">
 										<div className="w-8 h-8 flex items-center justify-center rounded-full bg-(--tertiary-color)/10 text-(--primary-text)">
 											<span className="font-main font-medium text-xl">
@@ -1242,7 +1273,7 @@ function NewShipment() {
 								</div>
 							</div>
 
-							<div className="w-full rounded-20 bg-(--secondary-color) p-5 mb-5">
+							<div id="additional-options" className="w-full rounded-20 bg-(--secondary-color) p-5 mb-5">
 								<div className="flex items-center gap-3 mb-4">
 									<div className="w-8 h-8 flex items-center justify-center rounded-full bg-(--tertiary-color)/10 text-(--primary-text)">
 										<span className="font-main font-medium text-xl">
@@ -1327,7 +1358,7 @@ function NewShipment() {
 								</div>
 							</div>
 
-							<div className="w-full rounded-20 bg-(--secondary-color) p-5 mb-5">
+							<div id="payment-budget" className="w-full rounded-20 bg-(--secondary-color) p-5 mb-5">
 								<div className="flex items-center gap-3 mb-4">
 									<div className="w-8 h-8 flex items-center justify-center rounded-full bg-(--tertiary-color)/10 text-(--primary-text)">
 										<span className="font-main font-medium text-xl">

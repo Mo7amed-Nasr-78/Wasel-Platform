@@ -118,10 +118,10 @@ function RecentOffers() {
 								>
 									<div className="flex flex-col items-start justify-between">
 										<div className="w-full flex items-center justify-between mb-3">
-											<Link to={`/dashboard/shipments/${offer.shipment.id}`}>
+											<Link to={`/dashboard/shipments/${offer.shipment?.id}`}>
 												<p className="font-bold text-(--primary-text) hover:text-(--primary-color) underline">
 													{
-														offer.shipment.shipmentId
+														offer.shipment?.shipmentId
 													}
 												</p>
 											</Link>
@@ -186,7 +186,7 @@ function RecentOffers() {
 													</p>
 													<p className="font-bold text-(--primary-text)">
 														{
-															offer.shipment.ETA
+															offer.shipment?.ETA
 														}
 													</p>
 												</div>
@@ -195,7 +195,7 @@ function RecentOffers() {
 														الوجهة
 													</p>
 													<p className="font-semibold text-(--primary-text)">
-														{ offer.shipment.origin } / { offer.shipment.destination }
+														{ offer.shipment?.origin } / { offer.shipment?.destination }
 													</p>
 												</div>
 											</div>

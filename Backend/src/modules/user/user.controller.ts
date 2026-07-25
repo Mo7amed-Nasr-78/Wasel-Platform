@@ -1,4 +1,4 @@
-import { Controller, Param, Delete, Get, UseGuards, Req } from '@nestjs/common';
+import { Controller, Param, Delete, Get, UseGuards, Req, Query } from '@nestjs/common';
 import { UserService } from './user.service';
 import { AuthGuard } from '@/common/guards/jwtAuthGuard';
 
@@ -8,9 +8,40 @@ export class UserController {
 
   @Get('/shipments')
   @UseGuards(AuthGuard)
-  getUserShipments(@Req() req) {
+  getUserShipments(
+    @Req() req,
+    @Query()
+    query: {
+      search: string;
+      type: string;
+      status: string | string[];
+      goodsType: string;
+      packaging: string;
+      budgetType: string;
+      paymentType: string;
+      minWeight: number | undefined;
+      maxWeight: number | undefined;
+      minLength: number | undefined;
+      maxLength: number | undefined;
+      minWidth: number | undefined;
+      maxWidth: number | undefined;
+      minHeight: number | undefined;
+      maxHeight: number | undefined;
+      pickupAt: string;
+      deliveryAt: string;
+      urgent: boolean;
+      stacking: boolean;
+      additionalInsurance: boolean;
+      twoDrivers: boolean;
+      noFriday: boolean;
+      page: number | undefined;
+        limit: number | undefined;
+      sortBy: string;
+      sortOrder: string;
+    },
+  ) {
     const { sub, role } = req.user;
-    return this.userService.getUserShipments(sub, role);
+    return this.userService.getUserShipments(sub, role, query);
   }
 
   @Get('/offers')

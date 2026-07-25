@@ -2,8 +2,8 @@ import { privateHttpClient } from "../client/HttpClient";
 
 class UserService {
 
-	userShipments() {
-		return privateHttpClient.get('/user/shipments')
+	userShipments(params?: Record<string, unknown>) {
+		return privateHttpClient.get('/user/shipments', { params })
 	}
 
 	logout() {

@@ -33,7 +33,7 @@ dayjs.extend(utc);
 import { PiCaretLeft, PiCaretRight, PiWarningCircle, PiCheckCircle } from "react-icons/pi";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useShipments } from "@/api/hooks/shipments/useShipments";
+import { useUserShipments } from "@/api/hooks/user/useUserShipments";
 import { isAxiosError } from "axios";
 import { useNotification } from "@/components/NotificationContext";
 import { useProps } from "@/components/PropsProvider";
@@ -85,8 +85,8 @@ export function ShipmentsDataTable() {
 		isLoading,
 		isError,
 		error,
-	} = useShipments(filters);
-	const shipments: Shipment[] = response?.data?.shipments || [];
+	} = useUserShipments(filters);
+	const shipments: Shipment[] = response?.data || [];
 
 	useEffect(() => {
 		if (isError) {

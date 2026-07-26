@@ -57,6 +57,20 @@ body {
 	min-width: calc((100% - 28px) / 2);
 }
 
+@media (max-width: 1023px) {
+	.review-card {
+		width: 85vw;
+		min-width: 85vw;
+	}
+}
+
+@media (max-width: 639px) {
+	.review-card {
+		width: 80vw;
+		min-width: 80vw;
+	}
+}
+
 .scrollbar-hidden {
 	scrollbar-width: none;
 }

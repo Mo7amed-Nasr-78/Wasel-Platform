@@ -379,15 +379,16 @@ export class OffersService {
     offerId: string,
   ): Promise<{
     message: string;
-    deletedOffer: Offer;
+    offer: Offer;
   }> {
     const offer = await this.prisma.offer.findUnique({
       where: {
         id: offerId,
-        OR: [
-          { status: "PENDING" },
-          { status: "REJECTED" }
-        ],
+        status: "PENDING",
+        // OR: [
+        //   { status: "PENDING" },
+        //   { status: "REJECTED" }
+        // ],
         profile: {
           userId
         }
@@ -401,10 +402,10 @@ export class OffersService {
     const deletedOffer = await this.prisma.offer.delete({
       where: {
         id: offerId,
-        OR: [
-          { status: "PENDING" },
-          { status: "REJECTED" }
-        ],
+        status: "PENDING",
+        // OR: [
+        //   { status: "REJECTED" }
+        // ],
         profile: {
           userId
         }
@@ -412,8 +413,8 @@ export class OffersService {
     });
 
     return {
-      message: 'Offer deleted successfully',
-      deletedOffer: deletedOffer,
+      message: 'Offer cancelled and deleted successfully',
+      offer: deletedOffer,
     };
   }
 }

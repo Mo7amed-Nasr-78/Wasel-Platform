@@ -22,7 +22,35 @@ export class UserService {
 
   async getUserShipments(
     userId: string,
-    role: Role
+    role: Role,
+    query?: {
+      search: string;
+      type: string;
+      status: string | string[];
+      goodsType: string;
+      packaging: string;
+      budgetType: string;
+      paymentType: string;
+      minWeight: number | undefined;
+      maxWeight: number | undefined;
+      minLength: number | undefined;
+      maxLength: number | undefined;
+      minWidth: number | undefined;
+      maxWidth: number | undefined;
+      minHeight: number | undefined;
+      maxHeight: number | undefined;
+      pickupAt: string;
+      deliveryAt: string;
+      urgent: boolean;
+      stacking: boolean;
+      additionalInsurance: boolean;
+      twoDrivers: boolean;
+      noFriday: boolean;
+      page: number | undefined;
+      limit: number | undefined;
+      sortBy: string;
+      sortOrder: string;
+    },
   ): Promise<Shipment[] | HttpException> {
 
     let res = [];

@@ -8,7 +8,7 @@ function DashLayout() {
     return (
         <section className="h-screen flex items-center justify-center bg-(--bg-color) overflow-hidden">
             <DashSidebar closeSidebar={closeSidebar} setCloseSidebar={setCloseSidebar} />
-            <div className={`${closeSidebar? "w-full" : "w-4/5"} h-full duration-300 py-5 pl-5 pr-7 overflow-hidden`}>
+            <div className={`${closeSidebar? "w-full" : "w-4/5"} relative h-full duration-300 py-5 pl-5 pr-7 overflow-hidden`}>
                 <Outlet />
             </div>
         </section>

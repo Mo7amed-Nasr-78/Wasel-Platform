@@ -1,4 +1,4 @@
-import { Star } from "lucide-react";
+import { PiStar, PiStarFill } from "react-icons/pi";
 
 interface Review {
 	id: string;
@@ -40,78 +40,82 @@ function ProfileReviews() {
 			companyName: "مصنع القاهرة للمنسوجات",
 			rating: 5,
 			date: "12 أبريل 2026",
-			reviewText: "خدمة ممتازة وأسعار تنافسية، شكراً لفريق العمل.",
+			reviewText:
+				"خدمة ممتازة وأسعار تنافسية، شكراً لفريق العمل.",
 		},
 		{
 			id: "3",
 			companyName: "مجموعة النيل الدولية",
 			rating: 4,
 			date: "14 أبريل 2026",
-			reviewText: "تجربة جيدة، شحنات تصل في الوقت المحدد.",
+			reviewText:
+				"تجربة جيدة، شحنات تصل في الوقت المحدد.",
 		},
 	];
 
-	const renderStars = (rating: number, size: string = "w-5 h-5") => {
+	const renderStars = (rating: number) => {
 		return (
-			<div className="flex items-center gap-1">
-				{Array.from({ length: 5 }).map((_, i) => (
-					<Star
-						key={i}
-						className={`${size} ${
-							i < rating
-								? "fill-[#f5b400] text-[#f5b400]"
-								: "text-[#e5e7eb]"
-						}`}
-					/>
-				))}
+			<div className="flex items-center gap-0.5">
+				{Array.from({ length: 5 }).map((_, i) =>
+					i < rating ? (
+						<PiStarFill
+							key={i}
+							className="w-4 h-4 text-amber-400"
+						/>
+					) : (
+						<PiStar
+							key={i}
+							className="w-4 h-4 text-gray-200"
+						/>
+					),
+				)}
 			</div>
 		);
 	};
 
 	return (
-		<div className="space-y-8">
+		<div className="space-y-5">
 			{/* Rating Overview */}
-			<div className="rounded-[28px] border border-(--border-color) bg-(--secondary-color) p-8 shadow-sm">
-				<div className="grid gap-8 md:grid-cols-2">
-					{/* Left: Rating Distribution */}
-					<div className="space-y-6">
+			<div className="rounded-xl border border-(--tertiary-color)/30 bg-(--secondary-color) p-5 shadow-xs">
+				<div className="grid gap-6 sm:grid-cols-2">
+					{/* Distribution */}
+					<div className="space-y-3">
+						<h3 className="text-sm font-semibold text-(--primary-text)">
+							توزيع التقييمات
+						</h3>
 						{ratingDistribution.map((item) => (
 							<div
 								key={item.stars}
-								className="flex items-center gap-4"
+								className="flex items-center gap-3"
 							>
-								<div className="flex items-center gap-1 w-12">
-									<span className="text-sm font-medium text-(--main-text)">
+								<div className="flex items-center gap-1 w-10 shrink-0">
+									<span className="text-xs font-medium text-(--primary-text)">
 										{item.stars}
 									</span>
-									<Star className="w-4 h-4 fill-[#f5b400] text-[#f5b400]" />
+									<PiStarFill className="w-3 h-3 text-amber-400" />
 								</div>
-								<div className="flex-1 h-2 bg-(--background) rounded-full overflow-hidden">
+								<div className="flex-1 h-2 rounded-full bg-(--bg-color) overflow-hidden">
 									<div
-										className="h-full bg-[#f5b400] rounded-full transition-all duration-300"
+										className="h-full rounded-full bg-amber-400 transition-all"
 										style={{
 											width: `${item.percentage}%`,
 										}}
 									/>
 								</div>
-								<span className="text-xs text-(--secondary-text) w-8 text-right">
+								<span className="text-xs text-(--secondary-text) w-6 text-right">
 									{item.count}
 								</span>
 							</div>
 						))}
 					</div>
 
-					{/* Right: Overall Rating */}
-					<div className="flex flex-col items-center justify-center py-6">
-						<div className="text-6xl font-bold text-(--primary-color) mb-3">
+					{/* Overall */}
+					<div className="flex flex-col items-center justify-center py-4 border-t sm:border-t-0 sm:border-r border-(--tertiary-color)/30">
+						<div className="text-5xl font-bold text-(--primary-text)">
 							{averageRating}
 						</div>
-						<div className="mb-4">
-							{renderStars(
-								Math.round(averageRating),
-							)}
-						</div>
-						<p className="text-sm text-(--secondary-text)">
+						<div className="mt-2">{renderStars(Math.round(averageRating))}</div>
+						<p className="mt-2 text-xs text-(--secondary-text)">
 							بناء على {totalReviews} تقييمات
 						</p>
 					</div>
@@ -119,37 +123,40 @@ function ProfileReviews() {
 			</div>
 
 			{/* Reviews List */}
-			<div className="space-y-4">
-				{reviews.map((review) => (
-					<div
-						key={review.id}
-						className="rounded-[24px] border border-(--border-color) bg-(--secondary-color) p-6 shadow-sm hover:shadow-md transition-shadow duration-300"
-					>
-						<div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-							<div className="flex-1">
-								<div className="flex flex-col gap-3">
-									<h3 className="text-lg font-semibold text-(--main-text)">
+			{reviews.length > 0 ? (
+				<div className="space-y-3">
+					{reviews.map((review) => (
+						<div
+							key={review.id}
+							className="rounded-xl border border-(--tertiary-color)/30 bg-(--secondary-color) p-5 shadow-xs transition hover:shadow-sm"
+						>
+							<div className="flex items-start justify-between gap-4">
+								<div className="min-w-0">
+									<h3 className="text-sm font-semibold text-(--primary-text)">
 										{review.companyName}
 									</h3>
-									<div className="flex items-center gap-2">
-										{renderStars(
-											review.rating,
-											"w-4 h-4",
-										)}
+									<div className="mt-1">
+										{renderStars(review.rating)}
 									</div>
 								</div>
+								<p className="text-xs text-(--secondary-text) shrink-0">
+									{review.date}
+								</p>
 							</div>
-							<p className="text-sm text-(--secondary-text) md:text-right">
-								{review.date}
+							<p className="mt-3 text-sm leading-relaxed text-(--secondary-text)">
+								{review.reviewText}
 							</p>
 						</div>
-
-						<p className="mt-5 text-sm leading-relaxed text-(--secondary-text)">
-							{review.reviewText}
-						</p>
-					</div>
-				))}
-			</div>
+					))}
+				</div>
+			) : (
+				<div className="rounded-xl border-2 border-dashed border-(--tertiary-color)/50 bg-(--bg-color) p-10 text-center">
+					<PiStar className="w-10 h-10 mx-auto text-(--secondary-text) mb-3" />
+					<p className="text-sm text-(--secondary-text)">
+						لا توجد تقييمات حتى الآن
+					</p>
+				</div>
+			)}
 		</div>
 	);
 }

@@ -146,7 +146,7 @@ export interface ShipmentFilter {
 	search: string;
 	type: string;
 	urgent: boolean;
-	status: string[];
+	status: string[] | undefined;
 	minWeight: number | undefined;
 	maxWeight: number | undefined;
 	pickupAt: string | undefined;
@@ -180,6 +180,17 @@ export interface StatsResponse {
 }
 
 // Driver
+export interface Vacation {
+	id: string;
+	driverId: string;
+	from_date: string;
+	to_date: string;
+	status: string;
+	returning: boolean;
+	createdAt: string;
+	updatedAt: string;
+}
+
 export interface Driver {
 	id: string;
 	driverId: string;
@@ -196,6 +207,7 @@ export interface Driver {
 	status: "PENDING" | "AVAILABLE" | "IN_WORK" | "IN_REST";
 	verificationStatus: "PENDING" | "VERIFIED";
 	profileId: string;
+	vacations?: Vacation[];
 }
 
 export interface CreateDriverForm {

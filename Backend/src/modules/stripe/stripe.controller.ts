@@ -5,25 +5,26 @@ import {
   Headers,
   Req,
   RawBodyRequest,
+  Logger,
 } from '@nestjs/common';
 import { StripeService } from './stripe.service';
 import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
 
 @Controller('stripe')
 export class StripeController {
+  private readonly logger = new Logger(StripeController.name);
+
   constructor(private readonly stripeService: StripeService) {}
 
   @Post('create-payment-intent')
   async createPaymentIntent(@Body() dto: CreatePaymentIntentDto) {
-    console.log(dto);
     const paymentIntent = await this.stripeService.createPaymentIntent(
       dto.amount,
       dto.currency,
+      dto.metadata,
     );
 
-    return {
-      clientSecret: paymentIntent.client_secret,
-    };
+    return { clientSecret: paymentIntent.client_secret };
   }
 
   @Post('webhook')
@@ -36,12 +37,8 @@ export class StripeController {
       signature,
     );
 
-    switch (event.type) {
-      case 'payment_intent.succeeded':
-        break;
-      case 'payment_intent.payment_failed':
-        break;
-    }
+    this.logger.log(`Webhook received: ${event.type}`);
+    await this.stripeService.handleWebhookEvent(event);
 
     return { received: true };
   }

@@ -1,6 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from '@/database/prisma/prisma.service';
 import { Invoice, Offer, Profile, Role, Shipment } from '@prisma/client';
+import { buildShipmentFilter, ShipmentQueryParams } from '@/shared/filters';
 
 @Injectable()
 export class UserService {
@@ -23,45 +24,19 @@ export class UserService {
   async getUserShipments(
     userId: string,
     role: Role,
-    query?: {
-      search: string;
-      type: string;
-      status: string | string[];
-      goodsType: string;
-      packaging: string;
-      budgetType: string;
-      paymentType: string;
-      minWeight: number | undefined;
-      maxWeight: number | undefined;
-      minLength: number | undefined;
-      maxLength: number | undefined;
-      minWidth: number | undefined;
-      maxWidth: number | undefined;
-      minHeight: number | undefined;
-      maxHeight: number | undefined;
-      pickupAt: string;
-      deliveryAt: string;
-      urgent: boolean;
-      stacking: boolean;
-      additionalInsurance: boolean;
-      twoDrivers: boolean;
-      noFriday: boolean;
-      page: number | undefined;
-      limit: number | undefined;
-      sortBy: string;
-      sortOrder: string;
-    },
+    query?: ShipmentQueryParams,
   ): Promise<Shipment[] | HttpException> {
+
+    const { where: baseWhere, orderBy, skip, take } = buildShipmentFilter(query || {});
 
     let res = [];
 
     if (Role.MANUFACTURER.includes(role)) {
       const shipments = await this.prisma.shipment.findMany({
-        where: {
-          profile: {
-            userId
-          }
-        }
+        where: { ...baseWhere, profile: { userId } },
+        orderBy,
+        skip,
+        take,
       });
 
       res = shipments;
@@ -69,30 +44,33 @@ export class UserService {
 
     if (Role.CARRIER_COMPANY.includes(role) || Role.INDEPENDENT_CARRIER.includes(role)) {
       const shipments = await this.prisma.shipment.findMany({
-        where: {
-          acceptedOffer: {
-            profile: {
-              userId
-            }
-          }
-        },
+        where: { ...baseWhere, acceptedOffer: { profile: { userId } } },
+        orderBy,
+        skip,
+        take,
         include: {
           acceptedOffer: {
             select: {
               id: true,
               price: true,
               proposal: true,
-              createdAt: true
-            }
-          }
-        }
+              createdAt: true,
+            },
+          },
+        },
       });
 
       res = shipments;
     }
 
     if (Role.ADMIN.includes(role)) {
-      const shipments = await this.prisma.shipment.findMany();
+      const shipments = await this.prisma.shipment.findMany({
+        where: baseWhere,
+        orderBy,
+        skip,
+        take,
+      });
+
       res = shipments;
     }
 

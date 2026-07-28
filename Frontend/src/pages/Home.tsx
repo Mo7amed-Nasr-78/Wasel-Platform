@@ -33,43 +33,43 @@ function Home() {
 	return (
 		<Main>
 			<section className="pt-26 min-h-screen lg:h-screen">
-					<div className="relative w-full h-full container mx-auto px-4 sm:px-0 flex flex-col-reverse lg:flex-row items-center justify-between gap-10 lg:gap-0">
-						<div className="w-full lg:w-1/2 flex flex-col items-center lg:items-start text-center lg:text-start">
-							<h1 className="w-full lg:w-4/5 font-main text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-[80px] font-extrabold text-(--primary-text) capitalize leading-10 sm:leading-12 md:leading-16 lg:leading-18 xl:leading-24 mb-4">
-								وصل <span className="text-(--primary-color)">حمولتك</span> بأمان وسرعة
-							</h1>
-							<h2 className="w-full lg:w-4/5 font-main font-medium text-sm sm:text-base md:text-base lg:text-lg xl:text-xl text-(--secondary-text) leading-6 sm:leading-7 lg:leading-8 xl:leading-9 mb-8 lg:mb-10 xl:mb-12">
-								سواء كنت صاحب حمولة تبحث عن أفضل عروض الشحن، أو ناقلًا تريد زيادة دخلك،موقعنا يوفر لك المنصة المثالية لتوصيل الحمولات بكل سهولة وأمان.
-							</h2>
-							<div className="flex items-center gap-5 mb-12">
-								<Link to={{ pathname: "/shipments" }}>
-									<Button size={"xl"}>
-										شحن حمولة
-									</Button>
-								</Link>
-								<Button size={"xl"} className="bg-transparent text-(--primary-color) border border-(--primary-color)">
-									رفح حمولة
-								</Button>
-							</div>
+				<div className="relative w-full h-full container mx-auto px-4 sm:px-0 flex flex-col-reverse lg:flex-row items-center justify-between gap-10 lg:gap-0">
+					<div className="relative lg:absolute lg:bottom-6 lg:right-0 flex items-center justify-center gap-6 sm:-mt-10 lg:mt-0">
+						<div className="w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center rounded-full border border-(--primary-color) text-(--primary-color) duration-300 ease-in-out hover:bg-(--primary-color) hover:text-(--secondary-color) cursor-pointer">
+							<PiFacebookLogo className="text-xl lg:text-2xl"/>
 						</div>
-						<div className="w-full sm:w-4/5 lg:w-[42%]">
-							<img src="/assets/main.png" alt="image" className="h-full ms-auto"/>
-						</div>
-						<div className="relative lg:absolute bottom-6 right-0 flex items-center justify-center gap-6 mt-6 lg:mt-0">
-							<div className="w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center rounded-full border border-(--primary-color) text-(--primary-color) duration-300 ease-in-out hover:bg-(--primary-color) hover:text-(--secondary-color) cursor-pointer">
-								<PiFacebookLogo className="text-xl lg:text-2xl"/>
-							</div>
-							<div className="w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center rounded-full border border-(--primary-color) text-(--primary-color) duration-300 ease-in-out hover:bg-(--primary-color) hover:text-(--secondary-color) cursor-pointer">
-								<PiInstagramLogo className="text-xl lg:text-2xl"/> 
-							</div> 
-							<div className="w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center rounded-full border border-(--primary-color) text-(--primary-color) duration-300 ease-in-out hover:bg-(--primary-color) hover:text-(--secondary-color) cursor-pointer">
-								<PiWhatsappLogo className="text-xl lg:text-2xl"/> 
-							</div> 
-							<div className="w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center rounded-full border border-(--primary-color) text-(--primary-color) duration-300 ease-in-out hover:bg-(--primary-color) hover:text-(--secondary-color) cursor-pointer">
-								<PiXLogo className="text-xl lg:text-2xl"/>
-							</div>
+						<div className="w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center rounded-full border border-(--primary-color) text-(--primary-color) duration-300 ease-in-out hover:bg-(--primary-color) hover:text-(--secondary-color) cursor-pointer">
+							<PiInstagramLogo className="text-xl lg:text-2xl"/> 
+						</div> 
+						<div className="w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center rounded-full border border-(--primary-color) text-(--primary-color) duration-300 ease-in-out hover:bg-(--primary-color) hover:text-(--secondary-color) cursor-pointer">
+							<PiWhatsappLogo className="text-xl lg:text-2xl"/> 
+						</div> 
+						<div className="w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center rounded-full border border-(--primary-color) text-(--primary-color) duration-300 ease-in-out hover:bg-(--primary-color) hover:text-(--secondary-color) cursor-pointer">
+							<PiXLogo className="text-xl lg:text-2xl"/>
 						</div>
 					</div>
+					<div className="w-full lg:w-1/2 flex flex-col items-center lg:items-start text-center lg:text-start">
+						<h1 className="w-full lg:w-4/5 font-main text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-[80px] font-extrabold text-(--primary-text) capitalize leading-10 sm:leading-12 md:leading-16 lg:leading-18 xl:leading-24 mb-4">
+							وصل <span className="text-(--primary-color)">حمولتك</span> بأمان وسرعة
+						</h1>
+						<h2 className="w-full lg:w-4/5 font-main font-medium text-sm sm:text-base md:text-base lg:text-lg xl:text-xl text-(--secondary-text) leading-6 sm:leading-7 lg:leading-8 xl:leading-9 mb-8 lg:mb-10 xl:mb-12">
+							سواء كنت صاحب حمولة تبحث عن أفضل عروض الشحن، أو ناقلًا تريد زيادة دخلك،موقعنا يوفر لك المنصة المثالية لتوصيل الحمولات بكل سهولة وأمان.
+						</h2>
+						<div className="flex items-center gap-5 mb-12">
+							<Link to={{ pathname: "/shipments" }}>
+								<Button size={"xl"}>
+									شحن حمولة
+								</Button>
+							</Link>
+							<Button size={"xl"} className="bg-transparent text-(--primary-color) border border-(--primary-color)">
+								رفح حمولة
+							</Button>
+						</div>
+					</div>
+					<div className="w-full sm:w-4/5 lg:w-[42%]">
+						<img src="/assets/main.png" alt="image" className="h-full ms-auto"/>
+					</div>
+				</div>
 			</section>
 			<section>
 				<div className="container mx-auto mt-14 px-4 sm:px-0">
@@ -286,19 +286,20 @@ function Home() {
 			<section>
 				<div className="container mx-auto px-4 sm:px-0 mb-24">
 					<div className="relative w-full min-h-fit lg:h-120 flex flex-col lg:flex-row items-center justify-between rounded-30 p-6 sm:p-10 lg:p-16 bg-linear-to-r from-[#3374FF] to-[#2451B2] overflow-hidden">
+							<img src="/assets/banner.png" className="absolute top-0 left-0 w-1/2 object-cover"/>
 						<div className="w-full lg:w-1/2 flex flex-col gap-8 lg:gap-0 lg:justify-between z-10">
 							<div className="flex flex-col items-center lg:items-start text-center lg:text-start">
-								<h2 className="font-main font-bold text-3xl sm:text-4xl lg:text-6xl text-(--secondary-color) capitalize mb-6">تابع أحدث أخبار النقل</h2>
-								<p className="w-full lg:w-4/5 font-main font-light text-lg sm:text-xl lg:text-2xl text-(--secondary-color)/75 leading-8 lg:leading-10">اشترك ببريدك الإلكتروني لتصلك أحدث الأخبار والتحديثات في عالم النقل والحمولات، وكن دائمًا أول من يعرف عن العروض والخدمات الجديدة.</p>
+								<h2 className="font-main font-bold text-3xl sm:text-4xl lg:text-6xl text-(--secondary-color) capitalize mb-5">تابع أحدث أخبار النقل</h2>
+								<p className="w-full lg:min-w-11/12 font-main font-light text-lg sm:text-xl lg:text-2xl text-(--secondary-color)/75 leading-8 lg:leading-10">اشترك ببريدك الإلكتروني لتصلك أحدث الأخبار والتحديثات في عالم النقل والحمولات، وكن دائمًا أول من يعرف عن العروض والخدمات الجديدة.</p>
 							</div>
-							<div className="h-14 sm:h-18 w-full flex items-center gap-2 bg-(--secondary-color) p-2 rounded-20">
+							<div className="h-14 sm:h-18 w-full flex items-center gap-2 bg-(--secondary-color) p-2 rounded-20 mt-8">
 								<input onChange={(e) => setEmail(e.target.value)} type="text" placeholder="البريد الإلكتروني" className="w-full h-full font-main font-medium text-base sm:text-xl text-(--primary-text) px-4 focus:outline-none placeholder:text-(--secondary-text)"/>
 								<button onClick={handleClick} className="px-6 sm:px-8 h-full bg-(--primary-color) font-main font-semibold text-base sm:text-xl text-(--secondary-color) capitalize rounded-10 duration-300 hover:scale-95 cursor-pointer whitespace-nowrap">
 									إشترك
 								</button>
 							</div>
 						</div>
-						<div className="w-full lg:w-1/2 h-40 lg:h-full mt-6 lg:mt-0"></div>
+						<div className="w-full lg:w-1/2 h-40 lg:h-full mt-6 lg:mt-0	"></div>
 					</div>
 				</div>
 			</section>

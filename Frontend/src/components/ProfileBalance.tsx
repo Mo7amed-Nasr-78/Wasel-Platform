@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Wallet, ArrowUpRight, ArrowDownLeft } from "lucide-react";
+import { ArrowUpRight, ArrowDownLeft } from "lucide-react";
+import { PiWallet, PiArrowUp, PiArrowDown } from "react-icons/pi";
 import PaymentDialog from "./PaymentDialog";
 
 interface Transaction {
@@ -45,39 +46,33 @@ function ProfileBalance() {
 	};
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-5">
 			{/* Balance Card */}
-			<div className="rounded-[28px] bg-linear-to-l from-[#3b5bdb] to-[#4568e2] p-8 text-white shadow-lg">
-				<div className="flex flex-col gap-6">
-					<div>
-						<p className="text-sm font-medium text-white/80 mb-2">
-							الرصيد الإجمالي
-						</p>
-						<h2 className="text-4xl sm:text-5xl font-bold mb-8">
-							{totalBalance.toLocaleString("ar-SA")}
-							<span className="text-2xl mr-2">
-								ر.ص
-							</span>
-						</h2>
+			<div className="relative overflow-hidden rounded-xl bg-linear-to-br from-[#3b5bdb] to-[#1e3a8a] p-6 shadow-md">
+				<div className="absolute top-0 right-0 h-40 w-40 translate-x-10 -translate-y-10 rounded-full bg-white/5" />
+				<div className="absolute bottom-0 left-0 h-24 w-24 -translate-x-6 translate-y-6 rounded-full bg-white/5" />
+				<div className="relative">
+					<div className="flex items-center gap-2 text-white/70 mb-3">
+						<PiWallet className="w-4 h-4" />
+						<span className="text-sm">الرصيد الإجمالي</span>
 					</div>
-
-					<div className="flex gap-4 sm:text-right">
+					<h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
+						{totalBalance.toLocaleString("ar-SA")}
+						<span className="text-lg mr-2 font-medium text-white/70">
+							ر.ص
+						</span>
+					</h2>
+					<div className="flex gap-6">
 						<div>
-							<p className="text-sm text-white/70 mb-1">
-								معلق
-							</p>
-							<p className="text-2xl font-semibold">
+							<p className="text-xs text-white/60 mb-0.5">معلق</p>
+							<p className="text-lg font-semibold text-white">
 								{formatCurrency(pendingBalance)}
 							</p>
 						</div>
 						<div>
-							<p className="text-sm text-white/70 mb-1">
-								محول
-							</p>
-							<p className="text-2xl font-semibold">
-								{formatCurrency(
-									transferredBalance,
-								)}
+							<p className="text-xs text-white/60 mb-0.5">محول</p>
+							<p className="text-lg font-semibold text-white">
+								{formatCurrency(transferredBalance)}
 							</p>
 						</div>
 					</div>
@@ -85,79 +80,74 @@ function ProfileBalance() {
 			</div>
 
 			{/* Action Buttons */}
-			<div className="grid grid-cols-2 gap-4 sm:gap-6">
+			<div className="grid grid-cols-2 gap-3">
 				<button
 					onClick={() => setIsPaymentDialogOpen(true)}
-					className="rounded-full border-2 border-(--primary-color) py-4 px-6 font-semibold text-(--primary-color) transition duration-300 hover:bg-(--primary-color)/5"
+					className="flex items-center justify-center gap-2 rounded-lg border border-(--primary-color) py-3 text-sm font-semibold text-(--primary-color) transition hover:bg-(--primary-color)/5"
 				>
-					<span className="flex items-center justify-center gap-2">
-						<Wallet className="w-5 h-5" />
-						شحن المحفظة
-					</span>
+					<PiArrowDown className="w-4 h-4" />
+					شحن المحفظة
 				</button>
-				<button className="rounded-full bg-(--primary-color) py-4 px-6 font-semibold text-(--secondary-color) transition duration-300 hover:opacity-90">
-					<span className="flex items-center justify-center gap-2">
-						<ArrowUpRight className="w-5 h-5" />
-						سحب رصيد
-					</span>
+				<button className="flex items-center justify-center gap-2 rounded-lg bg-(--primary-color) py-3 text-sm font-semibold text-white transition hover:opacity-90">
+					<PiArrowUp className="w-4 h-4" />
+					سحب رصيد
 				</button>
 			</div>
 
 			{/* Transaction History */}
-			<div className="rounded-[28px] border border-(--border-color) bg-(--secondary-color) p-6 shadow-sm">
-				<h3 className="text-xl font-semibold text-(--main-text) mb-6">
-					سجل المعاملات
-				</h3>
-
-				<div className="space-y-0 divide-y divide-[#e5e7eb]">
-					{transactions.map((transaction) => (
-						<div
-							key={transaction.id}
-							className="flex items-center justify-between py-5 first:pt-0 last:pb-0"
-						>
-							<div className="flex items-center gap-3">
-								<div
-									className={`flex h-10 w-10 items-center justify-center rounded-full ${
-										transaction.type ===
-										"credit"
-											? "bg-green-100"
-											: "bg-(--primary-color)/10"
+			<div className="rounded-xl border border-(--tertiary-color)/30 bg-(--secondary-color) shadow-xs">
+				<div className="px-5 py-4 border-b border-(--tertiary-color)/30">
+					<h3 className="text-sm font-semibold text-(--primary-text)">
+						سجل المعاملات
+					</h3>
+				</div>
+				<div className="divide-y divide-(--tertiary-color)/20">
+					{transactions.length > 0 ? (
+						transactions.map((transaction) => (
+							<div
+								key={transaction.id}
+								className="flex items-center justify-between px-5 py-4"
+							>
+								<div className="flex items-center gap-3 min-w-0">
+									<div
+										className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
+											transaction.type === "credit"
+												? "bg-green-50 text-green-600"
+												: "bg-red-50 text-red-600"
+										}`}
+									>
+										{transaction.type === "credit" ? (
+											<ArrowDownLeft className="w-4 h-4" />
+										) : (
+											<ArrowUpRight className="w-4 h-4" />
+										)}
+									</div>
+									<div className="min-w-0">
+										<p className="text-sm font-medium text-(--primary-text) truncate">
+											{transaction.title}
+										</p>
+										<p className="text-xs text-(--secondary-text)">
+											{transaction.date}
+										</p>
+									</div>
+								</div>
+								<p
+									className={`text-sm font-semibold shrink-0 ${
+										transaction.type === "credit"
+											? "text-green-600"
+											: "text-red-600"
 									}`}
 								>
-									{transaction.type ===
-									"credit" ? (
-										<ArrowDownLeft className="w-5 h-5 text-green-600" />
-									) : (
-										<ArrowUpRight className="w-5 h-5 text-(--primary-color)" />
-									)}
-								</div>
-								<div>
-									<p className="font-medium text-(--main-text)">
-										{transaction.title}
-									</p>
-									<p className="text-sm text-(--secondary-text)">
-										{transaction.date}
-									</p>
-								</div>
+									{transaction.type === "credit" ? "+" : "-"}
+									{formatCurrency(transaction.amount)}
+								</p>
 							</div>
-
-							<p
-								className={`text-lg font-semibold ${
-									transaction.type ===
-									"credit"
-										? "text-green-600"
-										: "text-red-600"
-								} text-right`}
-							>
-								{transaction.type === "credit"
-									? "+"
-									: "-"}
-								{formatCurrency(
-									transaction.amount,
-								)}
-							</p>
+						))
+					) : (
+						<div className="px-5 py-8 text-center text-sm text-(--secondary-text)">
+							لا توجد معاملات حتى الآن
 						</div>
-					))}
+					)}
 				</div>
 			</div>
 

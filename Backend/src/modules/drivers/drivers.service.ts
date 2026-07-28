@@ -1,6 +1,6 @@
 import { PrismaService } from '@/database/prisma/prisma.service';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Driver, DriverStatus, Role, VerificationStatus } from '@prisma/client';
+import { Driver, DriverStatus, Role, Vacations, VerificationStatus } from '@prisma/client';
 import { CreateDriverDto } from './dto/createDriverDto';
 import { UpdateDriverDto } from './dto/updateDriverDto';
 import { DriverAttachments } from '@/shared/interfaces/interfaces';
@@ -55,8 +55,6 @@ export class DriversService {
     const { status, verificationStatus }: { status: Role, verificationStatus: VerificationStatus } = req.query;
     const { sub: userId, role } = req.user;
 
-    console.log(verificationStatus);
-
     if (status && status.toUpperCase() as DriverStatus)
       throw new HttpException("Invalid driver status", HttpStatus.BAD_REQUEST);
     
@@ -75,6 +73,17 @@ export class DriversService {
             userId,
           },
         },
+        include: {
+          vacations: {
+            where: {
+              returning: false,
+            },
+            orderBy: {
+              updatedAt: "desc",
+            }, 
+            take: 1
+          }
+        }
       });
 
       const pending = await this.prisma.driver.count({
@@ -424,6 +433,94 @@ export class DriversService {
       message: 'Driver has been updated successfully',
       updatedDriver,
     };
+  }
+
+  async addVacation(
+    driverId: string,
+    from_date: string,
+    to_date: string,
+  ): Promise<Vacations> {
+    const driver = await this.prisma.driver.findUnique({
+      where: { id: driverId },
+    });
+
+    if (!driver) {
+      throw new HttpException('No driver found', HttpStatus.NO_CONTENT);
+    }
+
+    if (driver.status !== DriverStatus.AVAILABLE) {
+      throw new HttpException(
+        'Driver must be AVAILABLE to start vacation',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const [vacation] = await this.prisma.$transaction([
+      this.prisma.vacations.create({
+        data: {
+          driverId,
+          from_date: new Date(from_date),
+          to_date: new Date(to_date),
+        },
+      }),
+      this.prisma.driver.update({
+        where: { id: driverId },
+        data: { status: DriverStatus.IN_REST },
+      }),
+    ]);
+
+    return vacation;
+  }
+
+  async returnFromVacation(vacationId: string): Promise<Vacations> {
+    const vacation = await this.prisma.vacations.findUnique({
+      where: { id: vacationId },
+      include: { driver: true },
+    });
+
+    if (!vacation) {
+      throw new HttpException('Vacation not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (vacation.driver.status !== DriverStatus.IN_REST) {
+      throw new HttpException(
+        'Driver is not currently on vacation',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const [updatedVacation] = await this.prisma.$transaction([
+      this.prisma.vacations.update({
+        where: { id: vacationId },
+        data: { returning: true },
+      }),
+      this.prisma.driver.update({
+        where: { id: vacation.driverId },
+        data: { status: DriverStatus.AVAILABLE },
+      }),
+    ]);
+
+    return updatedVacation;
+  }
+
+  async extendVacation(
+    vacationId: string,
+    new_to_date: string,
+  ): Promise<Vacations> {
+    const vacation = await this.prisma.vacations.findUnique({
+      where: { id: vacationId },
+    });
+
+    if (!vacation) {
+      throw new HttpException('Vacation not found', HttpStatus.NOT_FOUND);
+    }
+
+    const updatedVacation = await this.prisma.vacations.update({
+      where: { id: vacationId },
+      data: { to_date: new Date(new_to_date) },
+    });
+
+    return updatedVacation;
   }
 
   async verifyDriver(

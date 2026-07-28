@@ -37,11 +37,11 @@ function DashTrucks() {
 	}
 
 	return (
-		<div className="w-full h-full overflow-hidden flex flex-col">
+		<div className="w-full h-full flex flex-col">
 			<DashHeader title="الشاحنات" />
 
 			{/* Stats Cards */}
-			<div className="flex items-stretch gap-4 mb-6">
+			<div className="flex items-stretch gap-4 mb-4">
 				<div className="relative flex flex-col basis-full gap-4 rounded-2xl bg-(--secondary-color) p-5 after:absolute after:w-20 after:h-20 after:bg-(--primary-color) after:-top-10 after:-left-10 after:rounded-full after:blur-3xl overflow-hidden">
 					<div className="flex items-center gap-2">
 						<PiTruckTrailer className="text-2xl text-(--primary-color)" />
@@ -78,15 +78,14 @@ function DashTrucks() {
 			</div>
 
 			{/* Trucks Section */}
-			<div className="flex-1 rounded-xl border border-(--tertiary-color)/20 bg-(--secondary-color) overflow-hidden flex flex-col">
-				<div className="px-5 py-4 border-b border-(--tertiary-color)/10 flex items-center justify-between">
-					<h3 className="font-main font-semibold text-base text-(--primary-text)">
-						الشاحنات
+			<div className="flex-1 rounded-xl bg-transparent flex flex-col overflow-y-auto">
+				<div className="py-2 border-b border-(--tertiary-color) flex items-center justify-between">
+					<h3 className="font-main font-semibold text-lg text-(--primary-text)">
+						عرض الشاحنات
 					</h3>
 					<Button
-						size="sm"
 						onClick={() => setIsDialogOpen(true)}
-						className="flex items-center gap-1.5 whitespace-nowrap"
+						className="flex items-center gap-1.5 whitespace-nowrap text-base"
 					>
 						<Plus className="w-4 h-4" />
 						إضافة شاحنة جديدة
@@ -94,16 +93,16 @@ function DashTrucks() {
 				</div>
 
 				{trucks.length === 0 ? (
-					<div className="flex-1 flex items-center justify-center">
+					<div className="flex-1 flex flex-col items-center justify-center">
 						<p className="text-gray-500 text-lg mb-4">
 							لا توجد شاحنات حالياً
 						</p>
-						<Button onClick={() => setIsDialogOpen(true)}>
+						{/* <Button className="text-base" onClick={() => setIsDialogOpen(true)}>
 							إضافة أول شاحنة
-						</Button>
+						</Button> */}
 					</div>
 				) : (
-					<div className="flex-1 overflow-y-auto p-4">
+					<div className="flex-1 overflow-y-auto py-4">
 						<div className="grid grid-cols-12 gap-4">
 							{trucks.map((truck) => (
 								<TruckCard key={truck.id} truck={truck} />

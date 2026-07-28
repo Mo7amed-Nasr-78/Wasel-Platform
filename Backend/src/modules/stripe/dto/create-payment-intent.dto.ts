@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
+import { IsNotEmpty, IsNumber, IsOptional, IsString, IsObject } from 'class-validator';
 
 export class CreatePaymentIntentDto {
   @IsNumber()
@@ -8,4 +8,8 @@ export class CreatePaymentIntentDto {
   @IsString()
   @IsOptional()
   currency?: string;
+
+  @IsObject()
+  @IsOptional()
+  metadata?: Record<string, string>;
 }

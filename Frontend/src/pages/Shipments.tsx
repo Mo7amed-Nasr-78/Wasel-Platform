@@ -47,6 +47,9 @@ function Shipments() {
         urgent: false,
         minWeight: undefined,
         maxWeight: undefined,
+        deliveryAt: "",
+        pickupAt: "",
+        status: undefined
     })
 
     const { data, isLoading, isError, error } = useShipments(query);
@@ -70,10 +73,10 @@ function Shipments() {
                 <div className="flex items-center justify-between">
                     <PageTitle 
                         title='الحمولات المتاحة'
-                        subTitle='تصفح الحمولات المتاحة أو قم بتقديم عروضك لنقلها بأمان وسرعة'
+                        // subTitlze='تصفح الحمولات المتاحة أو قم بتقديم عروضك لنقلها بأمان وسرعة'
                     />
                     <Link to={"/newShipment"} className={user && ["MANUFACTURER", "ADMIN"].includes(user.role)? 'block': 'hidden' }>
-                        <Button size={"xl"} className="px-8">
+                        <Button size={"lg"} className="px-8">
                             إضافة حمولة
                         </Button>
                     </Link>

@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Put,
   Req,
@@ -21,6 +22,7 @@ import { DriverAttachments } from '@/shared/interfaces/interfaces';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { RolesGuard } from '@/common/guards/rolesGuard';
 import { Role } from '@prisma/client';
+import { createDriverVacationDto } from './dto/createDriverVacationDto';
 
 @Roles(['CARRIER_COMPANY'])
 @Controller('drivers')
@@ -103,6 +105,32 @@ export class DriversController {
     return this.driversService.updateDriver(user, driverId, data, attachments);
   }
 
+  @Roles([Role.CARRIER_COMPANY, Role.ADMIN])
+  @Post(':driverId/vacations/add')
+  @UseGuards(AuthGuard, RolesGuard)
+  addVacation(
+    @Param('driverId') driverId: string,
+    @Body() dto: createDriverVacationDto,
+  ) {
+    return this.driversService.addVacation(driverId, dto.from_date, dto.to_date);
+  }
+
+  @Roles([Role.CARRIER_COMPANY, Role.ADMIN])
+  @Patch('vacations/:vacationId/return')
+  @UseGuards(AuthGuard, RolesGuard)
+  returnFromVacation(@Param('vacationId') vacationId: string) {
+    return this.driversService.returnFromVacation(vacationId);
+  }
+
+  @Roles([Role.CARRIER_COMPANY, Role.ADMIN])
+  @Patch('vacations/:vacationId/extend')
+  @UseGuards(AuthGuard, RolesGuard)
+  extendVacation(
+    @Param('vacationId') vacationId: string,
+    @Body() dto: { to_date: string },
+  ) {
+    return this.driversService.extendVacation(vacationId, dto.to_date);
+  }
 
   @Roles([Role.ADMIN])
   @Post(':id/verify')

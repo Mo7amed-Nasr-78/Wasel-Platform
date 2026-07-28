@@ -1,83 +1,124 @@
 import { Link } from "react-router-dom";
 import { useProps } from "./PropsProvider";
 import {
-    PiTruckTrailer,
-    PiArrowsClockwise,
-    PiStar,
-    PiCheck,
+	PiTruck,
+	PiArrowsClockwise,
+	PiStar,
+	PiCheckCircle,
+	PiBuilding,
+	PiUser,
+	PiPackage,
+	PiArrowRight,
 } from "react-icons/pi";
 
 function ProfileLook() {
-    const { user } = useProps();
+	const { user } = useProps();
 
-    const isManufacturer = user?.role === "MANUFACTURER";
-    const companyName = isManufacturer
-        ? "شركة الخبر للإنتاج الحيواني"
-        : user?.username || "العميل";
+	const isManufacturer = user?.role === "MANUFACTURER";
+	const isCarrierCompany = user?.role === "CARRIER_COMPANY";
+	const companyName = isManufacturer
+		? "شركة الخبر للإنتاج الحيواني"
+		: user?.company_name || user?.username || "العميل";
 
-    const accountType = isManufacturer ? "شركة مصنعة" : "مستخدم";
-    const industry = isManufacturer ? "إنتاج حيواني" : user?.bio || "قطاع عام";
-    const publishedShipments = isManufacturer ? 12 : 0;
+	const accountType = isManufacturer
+		? "شركة مصنعة"
+		: isCarrierCompany
+			? "شركة شحن"
+			: "مستخدم";
+	const industry = isManufacturer
+		? "إنتاج حيواني"
+		: user?.bio || "قطاع الخدمات اللوجستية";
+	const publishedShipments = isManufacturer ? 12 : 0;
 
-    return (
-        <>
-            <div className="grid gap-4 xl:grid-cols-4 lg:grid-cols-2">
-                {[
-                    { label: "عدد الشحنات", value: 45, icon: PiTruckTrailer },
-                    { label: "الحمولات النشطة", value: 45, icon: PiArrowsClockwise },
-                    { label: "التقييم", value: "4/5", icon: PiStar },
-                    { label: "الحمولات المكتملة", value: 45, icon: PiCheck },
-                ].map((item) => (
-                    <div key={item.label} className="rounded-3xl p-5 text-center">
-                        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-(--primary-color)/10 text-(--primary-color)">
-                            <item.icon className="w-6 h-6" />
-                        </div>
-                        <p className="text-2xl font-semibold text-(--main-text)">{item.value}</p>
-                        <p className="mt-2 text-base text-(--secondary-text)">{item.label}</p>
-                    </div>
-                ))}
-            </div>
+	const stats = [
+		{ label: "عدد الشحنات", value: 45, icon: PiPackage, color: "text-blue-500 bg-blue-50" },
+		{ label: "الحمولات النشطة", value: 12, icon: PiArrowsClockwise, color: "text-emerald-500 bg-emerald-50" },
+		{ label: "التقييم", value: "4.7/5", icon: PiStar, color: "text-amber-500 bg-amber-50" },
+		{ label: "الحمولات المكتملة", value: 33, icon: PiCheckCircle, color: "text-green-500 bg-green-50" },
+	];
 
-            <div className="mt-8">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 mb-6 border-b border-(--tertiary-color)/25">
-                    <h2 className="text-2xl font-semibold text-(--main-text)">معلومات الحساب</h2>
-                </div>
+	return (
+		<div className="space-y-6">
+			{/* Stats Grid */}
+			<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+				{stats.map((item) => (
+					<div
+						key={item.label}
+						className="rounded-xl border border-(--tertiary-color)/30 bg-(--secondary-color) p-5 shadow-xs"
+					>
+						<div className="flex items-center gap-3">
+							<div className={`flex h-11 w-11 items-center justify-center rounded-lg ${item.color}`}>
+								<item.icon className="w-5 h-5" />
+							</div>
+							<div>
+								<p className="text-2xl font-bold text-(--primary-text)">
+									{item.value}
+								</p>
+								<p className="text-xs text-(--secondary-text)">
+									{item.label}
+								</p>
+							</div>
+						</div>
+					</div>
+				))}
+			</div>
 
-                <div className="grid gap-4 md:grid-cols-2">
-                    <div className="flex items-center justify-between rounded-xl bg-(--primary-color)/8 p-4">
-                        <span className="text-lg text-(--secondary-text)">اسم الشركة:</span>
-                        <span className="font-medium text-(--main-text)">{companyName}</span>
-                    </div>
-                    <div className="flex items-center justify-between rounded-xl bg-(--primary-color)/8 p-4">
-                        <span className="text-lg text-(--secondary-text)">نوع الحساب:</span>
-                        <span className="font-medium text-(--main-text)">{accountType}</span>
-                    </div>
-                    <div className="flex items-center justify-between rounded-xl bg-(--primary-color)/8 p-4">
-                        <span className="text-lg text-(--secondary-text)">الحمولات المنشورة:</span>
-                        <span className="font-medium text-(--main-text)">{publishedShipments}</span>
-                    </div>
-                    <div className="flex items-center justify-between rounded-xl bg-(--primary-color)/8 p-4">
-                        <span className="text-lg text-(--secondary-text)">مجال الصناعة:</span>
-                        <span className="font-medium text-(--main-text)">{industry}</span>
-                    </div>
-                </div>
-            </div>
+			{/* Account Info */}
+			<div className="rounded-xl border border-(--tertiary-color)/30 bg-(--secondary-color) p-6 shadow-xs">
+				<h2 className="text-lg font-semibold text-(--primary-text) mb-5">
+					معلومات الحساب
+				</h2>
+				<div className="grid gap-3 sm:grid-cols-2">
+					{[
+						{ label: "اسم الشركة", value: companyName, icon: PiBuilding },
+						{ label: "نوع الحساب", value: accountType, icon: PiUser },
+						{ label: "الحمولات المنشورة", value: publishedShipments, icon: PiPackage },
+						{ label: "مجال الصناعة", value: industry, icon: PiTruck },
+					].map((item) => (
+						<div
+							key={item.label}
+							className="flex items-center gap-3 rounded-lg bg-(--bg-color) px-4 py-3"
+						>
+							<div className="flex h-9 w-9 items-center justify-center rounded-lg bg-(--primary-color)/10 text-(--primary-color)">
+								<item.icon className="w-4 h-4" />
+							</div>
+							<div className="min-w-0">
+								<p className="text-xs text-(--secondary-text)">{item.label}</p>
+								<p className="text-sm font-medium text-(--primary-text) truncate">
+									{item.value}
+								</p>
+							</div>
+						</div>
+					))}
+				</div>
+			</div>
 
-            <div className="mt-8 rounded-[28px] bg-(--primary-color) p-6 text-white shadow-xl">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <h3 className="text-2xl font-semibold">ابدأ الآن في توصيل بضاعتك</h3>
-                        <p className="mt-2 max-w-3xl text-sm text-white/80">
-                            نحن منصة رائدة في مجال نقل الحمولات. نهدف إلى تسهيل عملية النقل من خلال ربط أصحاب الحمولات بشركات الشحن والأفراد الناقلين. قم بتجربة خدماتنا الآن ووسع نشاطك بأمان وكفاءة.
-                        </p>
-                    </div>
-                    <Link to="/shipments" className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-(--primary-color) transition hover:bg-white/90">
-                        تصفح الشحنات
-                    </Link>
-                </div>
-            </div>
-        </>
-    )
+			{/* CTA Banner */}
+			<div className="relative overflow-hidden rounded-xl bg-linear-to-r from-(--primary-color) to-(--primary-color)/80 p-6 shadow-md">
+				<div className="absolute -top-6 -right-6 h-32 w-32 rounded-full bg-white/5" />
+				<div className="absolute -bottom-4 -left-4 h-24 w-24 rounded-full bg-white/5" />
+				<div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+					<div>
+						<h3 className="text-xl font-bold text-white">
+							ابدأ الآن في توصيل بضاعتك
+						</h3>
+						<p className="mt-1 max-w-xl text-sm text-white/75">
+							نحن منصة رائدة في مجال نقل الحمولات. نهدف إلى تسهيل عملية
+							النقل من خلال ربط أصحاب الحمولات بشركات الشحن والأفراد
+							الناقلين.
+						</p>
+					</div>
+					<Link
+						to="/shipments"
+						className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-(--primary-color) transition hover:bg-white/90 shrink-0"
+					>
+						تصفح الشحنات
+						<PiArrowRight className="w-4 h-4" />
+					</Link>
+				</div>
+			</div>
+		</div>
+	);
 }
 
 export default ProfileLook;

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { MapPin, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
+import { PiPackage, PiMapPin, PiArrowLeft } from "react-icons/pi";
 
 interface Shipment {
 	id: string;
@@ -10,6 +11,16 @@ interface Shipment {
 	fromLocation: string;
 	toLocation: string;
 }
+
+const statusConfig: Record<string, { label: string; color: string }> = {
+	جاهز: { label: "جاهز", color: "bg-blue-100 text-blue-700" },
+	مكتمل: { label: "مكتمل", color: "bg-green-100 text-green-700" },
+	"قيد المراجعة": {
+		label: "قيد المراجعة",
+		color: "bg-yellow-100 text-yellow-700",
+	},
+	ملغى: { label: "ملغى", color: "bg-red-100 text-red-700" },
+};
 
 function ProfileShipments() {
 	const shipments: Shipment[] = [
@@ -51,132 +62,105 @@ function ProfileShipments() {
 		},
 	];
 
-	const getStatusStyles = (status: string) => {
-		switch (status) {
-			case "جاهز":
-				return "bg-blue-100 text-blue-700";
-			case "مكتمل":
-				return "bg-green-100 text-green-700";
-			case "قيد المراجعة":
-				return "bg-yellow-100 text-yellow-700";
-			case "ملغى":
-				return "bg-red-100 text-red-700";
-			default:
-				return "bg-(--background) text-(--secondary-text)";
-		}
-	};
-
 	const formatCurrency = (amount: number) => {
 		if (amount === 0) return "ر.ص 0.0++";
 		return `ر.ص ${amount.toLocaleString("ar-SA")}`;
 	};
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-5">
 			{/* Header */}
-			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-				<h2 className="text-3xl font-semibold text-(--main-text)">
+			<div className="flex items-center justify-between">
+				<h2 className="text-lg font-semibold text-(--primary-text)">
 					الشحنات
 				</h2>
 				<Link to="/newShipment">
-					<button className="inline-flex items-center justify-center gap-2 rounded-full bg-(--primary-color) px-6 py-3 font-semibold text-(--secondary-color) transition duration-300 hover:opacity-90">
-						<Plus className="w-5 h-5" />
-						إضافة شحنة +
+					<button className="inline-flex items-center gap-2 rounded-lg bg-(--primary-color) px-4 py-2 text-sm font-medium text-white transition hover:opacity-90">
+						<Plus className="w-4 h-4" />
+						إضافة شحنة
 					</button>
 				</Link>
 			</div>
 
 			{/* Shipments List */}
-			<div className="space-y-4">
-				{shipments.map((shipment, index) => (
-					<Link
-						key={shipment.id}
-						to={`/shipments/${shipment.shipmentId}`}
-						className="block"
-					>
-						<div className="rounded-[24px] border border-(--border-color) bg-(--secondary-color) p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-(--primary-color)/30 cursor-pointer">
-							<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-								{/* Left: ID and Price */}
-								<div className="flex flex-col justify-between gap-3">
-									<div>
-										<p className="text-xs text-(--secondary-text) mb-1">
-											رقم الشحنة
-										</p>
-										<p className="text-2xl font-bold text-(--primary-color)">
-											{
-												shipment.shipmentId
-											}
-										</p>
-									</div>
-									<p className="text-lg font-semibold text-(--main-text)">
-										{formatCurrency(
-											shipment.price,
-										)}
-									</p>
-								</div>
+			{shipments.length > 0 ? (
+				<div className="space-y-3">
+					{shipments.map((shipment) => {
+						const status = statusConfig[shipment.status] || {
+							label: shipment.status,
+							color: "bg-gray-100 text-gray-700",
+						};
+						return (
+							<Link
+								key={shipment.id}
+								to={`/shipments/${shipment.shipmentId}`}
+								className="block"
+							>
+								<div className="rounded-xl border border-(--tertiary-color)/30 bg-(--secondary-color) p-4 shadow-xs transition hover:shadow-md hover:border-(--primary-color)/30">
+									<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+										{/* Left: ID + Price */}
+										<div className="flex items-center gap-4">
+											<div className="flex h-10 w-10 items-center justify-center rounded-lg bg-(--primary-color)/10 text-(--primary-color)">
+												<PiPackage className="w-5 h-5" />
+											</div>
+											<div>
+												<p className="text-xs text-(--secondary-text)">
+													رقم الشحنة
+												</p>
+												<p className="text-lg font-bold text-(--primary-color)">
+													{shipment.shipmentId}
+												</p>
+											</div>
+										</div>
 
-								{/* Middle: Status and Date */}
-								<div className="flex flex-col justify-between gap-3 lg:justify-start">
-									<div className="flex items-center gap-3">
-										<span
-											className={`inline-flex rounded-full px-4 py-2 text-sm font-semibold ${getStatusStyles(
-												shipment.status,
-											)}`}
-										>
-											{
-												shipment.status
-											}
-										</span>
-									</div>
-									<p className="text-xs text-(--secondary-text)">
-										{shipment.date}
-									</p>
-								</div>
+										{/* Middle: Route */}
+										<div className="flex items-center gap-2 text-sm">
+											<span className="font-medium text-(--primary-text)">
+												{shipment.fromLocation}
+											</span>
+											<div className="flex items-center gap-1 text-(--secondary-text)">
+												<span className="h-px w-6 bg-(--secondary-text)" />
+												<PiArrowLeft className="w-3.5 h-3.5" />
+												<span className="h-px w-6 bg-(--secondary-text)" />
+											</div>
+											<span className="font-medium text-(--primary-text)">
+												{shipment.toLocation}
+											</span>
+										</div>
 
-								{/* Right: Location Info */}
-								<div className="flex flex-col justify-between gap-3 md:col-span-2 lg:col-span-1 lg:text-right">
-									<div className="flex items-center gap-2 lg:justify-end">
-										<span className="text-(--main-text) font-medium">
-											{
-												shipment.toLocation
-											}
-										</span>
-										<span className="text-(--secondary-text)">
-											←
-										</span>
-										<span className="text-(--main-text) font-medium">
-											{
-												shipment.fromLocation
-											}
-										</span>
-									</div>
-									<div className="flex items-center gap-2 text-(--secondary-text) lg:justify-end">
-										<MapPin className="w-4 h-4 flex-shrink-0" />
-										<span className="text-xs">
-											{
-												shipment.fromLocation
-											}{" "}
-											←{" "}
-											{
-												shipment.toLocation
-											}
-										</span>
+										{/* Right: Status + Price + Date */}
+										<div className="flex items-center gap-3 sm:text-left">
+											<span
+												className={`inline-flex rounded-md px-2.5 py-1 text-xs font-medium ${status.color}`}
+											>
+												{status.label}
+											</span>
+											<div className="text-right">
+												<p className="text-sm font-semibold text-(--primary-text)">
+													{formatCurrency(
+														shipment.price,
+													)}
+												</p>
+												<p className="text-xs text-(--secondary-text)">
+													{shipment.date}
+												</p>
+											</div>
+										</div>
 									</div>
 								</div>
-							</div>
-						</div>
-					</Link>
-				))}
-			</div>
-
-			{shipments.length === 0 && (
-				<div className="rounded-[24px] border-2 border-dashed border-(--border-color) bg-(--background) p-12 text-center">
+							</Link>
+						);
+					})}
+				</div>
+			) : (
+				<div className="rounded-xl border-2 border-dashed border-(--tertiary-color)/50 bg-(--bg-color) p-10 text-center">
+					<PiPackage className="w-10 h-10 mx-auto text-(--secondary-text) mb-3" />
 					<p className="text-(--secondary-text) mb-4">
 						لا توجد شحنات حالياً
 					</p>
 					<Link to="/newShipment">
-						<button className="inline-flex items-center gap-2 rounded-full bg-(--primary-color) px-6 py-3 font-semibold text-(--secondary-color) transition hover:opacity-90">
-							<Plus className="w-5 h-5" />
+						<button className="inline-flex items-center gap-2 rounded-lg bg-(--primary-color) px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90">
+							<Plus className="w-4 h-4" />
 							إنشاء شحنة جديدة
 						</button>
 					</Link>

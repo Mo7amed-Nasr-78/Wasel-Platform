@@ -18,6 +18,7 @@ import { ShipmentsService } from './shipments.service';
 import { CreateShipmentDto } from './dto/create-shipment.dto';
 import { AuthGuard } from '@/common/guards/jwtAuthGuard';
 import { UpdateShipmentDto } from './dto/update-shipment.dto';
+import { ShipmentQueryParams } from '@/shared/filters';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { RolesGuard } from '@/common/guards/rolesGuard';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
@@ -41,37 +42,7 @@ export class ShipmentsController {
   }
 
   @Get()
-  getShipments(
-    @Query()
-    query: {
-      search: string;
-      type: string;
-      status: string | string[];
-      goodsType: string;
-      packaging: string;
-      budgetType: string;
-      paymentType: string;
-      minWeight: number | undefined;
-      maxWeight: number | undefined;
-      minLength: number | undefined;
-      maxLength: number | undefined;
-      minWidth: number | undefined;
-      maxWidth: number | undefined;
-      minHeight: number | undefined;
-      maxHeight: number | undefined;
-      pickupAt: string;
-      deliveryAt: string;
-      urgent: boolean;
-      stacking: boolean;
-      additionalInsurance: boolean;
-      twoDrivers: boolean;
-      noFriday: boolean;
-      page: number | undefined;
-        limit: number | undefined;
-      sortBy: string;
-      sortOrder: string;
-    },
-  ) {
+  getShipments(@Query() query: ShipmentQueryParams) {
     return this.shipmentsService.getShipments(query);
   }
 

@@ -132,7 +132,11 @@ function TruckCard({ truck, onDelete }: TruckCardProps) {
 			formData.append("truck_front", editFiles.truck_front);
 		}
 
-		updateTruck({ truckId: truck.id, data: formData });
+		updateTruck({ truckId: truck.id, data: formData }, {
+			onSuccess: () => {
+				setIsEditDialogOpen(false);
+			}
+		});
 	};
 
 	const handleVerifyTruck = () => {
@@ -155,7 +159,7 @@ function TruckCard({ truck, onDelete }: TruckCardProps) {
 	};
 
 	return (
-		<div className="col-span-6 md:col-span-4 rounded-20 p-4 shadow-lg shadow-black/10 bg-(--secondary-color) border border-gray-200">
+		<div className="col-span-6 md:col-span-4 rounded-20 p-4 shadow-lg shadow-black/10 bg-(--secondary-color) border border-primary/25">
 			{/* Header with truck image and actions */}
 			<TooltipProvider>
 				<div className="flex items-center justify-between gap-3 mb-3">

@@ -1,27 +1,20 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '@/database/prisma/prisma.service';
+import { StripeService } from '@/modules/stripe';
 import {
   Wallet,
   Transaction,
-  Withdrawal,
-  ShipmentPayment,
   TransactionType,
   TransactionStatus,
+  Withdrawal,
   WithdrawalStatus,
-  ShipmentPaymentStatus,
 } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/client';
-import { StripeService } from '@/modules/stripe';
-import { RechargeWalletDTO } from './dto/recharge-wallet.dto';
-import { WithdrawWalletDTO } from './dto/withdraw-wallet.dto';
-import { PayForShipmentDTO } from './dto/pay-for-shipment.dto';
 import {
   InsufficientFundsException,
   WalletNotFoundException,
   TransactionFailedException,
   InvalidAmountException,
-  ShipmentNotFoundException,
-  WithdrawalNotAllowedException,
 } from './exceptions/wallet.exceptions';
 
 @Injectable()
@@ -30,802 +23,372 @@ export class WalletService {
 
   constructor(
     private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => StripeService))
     private readonly stripeService: StripeService,
   ) {}
 
-  /**
-   * Initialize a wallet for a user
-   * Called when a new user is created
-   */
-  async initializeWallet(
-    userId: string,
-    currency: string = 'USD',
-  ): Promise<Wallet> {
-    try {
-      const wallet = await this.prisma.wallet.create({
-        data: {
-          userId,
-          currency,
-          balance: new Decimal(0),
-        },
-      });
-      this.logger.log(`Wallet initialized for user ${userId}`);
-      return wallet;
-    } catch (error) {
-      this.logger.error(
-        `Failed to initialize wallet for user ${userId}`,
-        error,
-      );
-      throw new TransactionFailedException('Wallet initialization failed');
-    }
+  async initializeWallet(userId: string, currency: string = 'USD'): Promise<Wallet> {
+    return this.prisma.wallet.create({
+      data: { userId, currency, balance: new Decimal(0) },
+    });
   }
 
-  /**
-   * Create a Stripe PaymentIntent for wallet recharge
-   */
-  async createRechargeIntent(
-    walletId: string,
-    amount: number,
-    currency: string = 'usd',
-  ) {
-    const wallet = await this.prisma.wallet.findUnique({
-      where: { id: walletId },
-    });
+  async getBalance(userId: string): Promise<Decimal> {
+    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    if (!wallet) throw new WalletNotFoundException(userId);
+    return wallet.balance;
+  }
 
-    if (!wallet) {
-      throw new WalletNotFoundException(walletId);
-    }
+  async getWallet(userId: string): Promise<Wallet> {
+    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    if (!wallet) throw new WalletNotFoundException(userId);
+    return wallet;
+  }
+
+  async getWalletById(walletId: string): Promise<Wallet> {
+    const wallet = await this.prisma.wallet.findUnique({ where: { id: walletId } });
+    if (!wallet) throw new WalletNotFoundException(walletId);
+    return wallet;
+  }
+
+  // ──────────────────────────────────────────────
+  //  TOP-UP / CHARGE
+  // ──────────────────────────────────────────────
+
+  async topUp(userId: string, amount: number, currency: string = 'usd') {
+    const wallet = await this.getWallet(userId);
 
     const paymentIntent = await this.stripeService.createPaymentIntent(
       amount,
       currency,
+      { userId, walletId: wallet.id },
     );
 
-    return {
-      clientSecret: paymentIntent.client_secret,
-      paymentIntentId: paymentIntent.id,
-    };
+    this.logger.log(`Top-up PaymentIntent created: ${paymentIntent.id} for user ${userId}`);
+
+    return { clientSecret: paymentIntent.client_secret, paymentIntentId: paymentIntent.id };
   }
 
-  /**
-   * Create a PayPal order for wallet recharge
-   * Note: Requires PayPal SDK integration
-   */
-  async createPayPalRechargeOrder(
-    walletId: string,
-    amount: number,
-    currency: string = 'USD',
-  ) {
-    const wallet = await this.prisma.wallet.findUnique({
-      where: { id: walletId },
-    });
-
-    if (!wallet) {
-      throw new WalletNotFoundException(walletId);
+  async handlePaymentIntentSucceeded(pi: any): Promise<void> {
+    const { userId, walletId } = pi.metadata || {};
+    if (!userId || !walletId) {
+      this.logger.warn(`Missing metadata on PaymentIntent ${pi.id}`);
+      return;
     }
 
-    // TODO: Integrate PayPal SDK
-    // const order = await paypal.orders.create({ ... });
-    // return { orderId: order.id, approvalUrl: order.links... };
-
-    throw new TransactionFailedException(
-      'PayPal integration is not yet configured',
-    );
-  }
-
-  /**
-   * Confirm and complete a wallet recharge after external payment
-   */
-  async confirmRecharge(
-    walletId: string,
-    amount: number | string,
-    paymentMethod: string,
-    externalTransactionId: string,
-    description?: string,
-  ) {
-    if (paymentMethod === 'stripe') {
-      const paymentIntent = await this.stripeService.retrievePaymentIntent(
-        externalTransactionId,
-      );
-
-      if (paymentIntent.status !== 'succeeded') {
-        throw new TransactionFailedException(
-          `Payment not completed. Status: ${paymentIntent.status}`,
-        );
-      }
-    }
-
-    // TODO: Add PayPal order verification
-    // if (paymentMethod === 'paypal') {
-    //   const order = await paypal.orders.get(externalTransactionId);
-    //   if (order.status !== 'COMPLETED') { ... }
-    // }
-
-    return this.recharge(
-      walletId,
-      amount,
-      paymentMethod,
-      externalTransactionId,
-      description || `Wallet recharge via ${paymentMethod}`,
-    );
-  }
-
-  /**
-   * Get wallet balance
-   * Uses pessimistic locking to prevent race conditions
-   */
-  async getBalance(req): Promise<Decimal> {
-    const userId = req.user.sub;
+    const amount = new Decimal(pi.amount_received / 100);
 
     try {
-      const wallet = await this.prisma.wallet.findUnique({
-        where: { userId },
-        select: { balance: true },
-      });
-
-      if (!wallet) {
-        throw new WalletNotFoundException("No wallet found");
-      }
-
-      return wallet.balance;
-    } catch (error) {
-      if (error instanceof WalletNotFoundException) {
-        throw error;
-      }
-      this.logger.error(`Failed to get balance for wallet of user ${userId}`, error);
-      throw new TransactionFailedException('Failed to retrieve balance');
-    }
-  }
-
-  /**
-   * Recharge wallet
-   * Creates a RECHARGE transaction and updates balance
-   */
-  async recharge(
-    walletId: string,
-    amount: number | string,
-    paymentMethod: string,
-    externalTransactionId: string,
-    description?: string,
-  ): Promise<{
-    wallet: Wallet;
-    transaction: Transaction;
-  }> {
-    const decimalAmount = new Decimal(amount);
-
-    if (decimalAmount.isNegative() || decimalAmount.isZero()) {
-      throw new InvalidAmountException('Recharge amount must be positive');
-    }
-
-    try {
-      // Use database transaction with pessimistic locking
-      const result = await this.prisma.$transaction(async (tx) => {
-        // Lock the wallet row
-        const wallet: [{ id: string, balance: number }] | [] = await tx.$queryRaw`
-          SELECT id, balance FROM wallets WHERE id = ${walletId} FOR UPDATE
-        `;
-
-        if (!wallet || wallet.length === 0) {
-          throw new WalletNotFoundException(walletId);
+      await this.prisma.$transaction(async (tx) => {
+        const existing = await tx.transaction.findUnique({
+          where: { externalTransactionId: pi.id },
+        });
+        if (existing) {
+          this.logger.log(`PaymentIntent ${pi.id} already processed`);
+          return;
         }
 
-        // Create transaction record (immutable, append-only)
-        const transaction = await tx.transaction.create({
+        await tx.wallet.update({
+          where: { id: walletId },
+          data: { balance: { increment: amount } },
+        });
+
+        await tx.transaction.create({
           data: {
             type: TransactionType.RECHARGE,
-            amount: decimalAmount,
+            amount,
             status: TransactionStatus.COMPLETED,
-            paymentMethod,
-            externalTransactionId,
-            description: description || `Wallet recharge via ${paymentMethod}`,
             walletId,
-            referenceType: 'external_payment',
+            externalTransactionId: pi.id,
+            paymentMethod: 'stripe',
+            description: `Wallet top-up via Stripe (${pi.id})`,
           },
         });
-
-        // Update wallet balance
-        const updatedWallet = await tx.wallet.update({
-          where: { id: walletId },
-          data: {
-            balance: {
-              increment: decimalAmount,
-            },
-          },
-        });
-
-        return { wallet: updatedWallet, transaction };
       });
 
-      this.logger.log(
-        `Wallet ${walletId} recharged with ${amount} ${externalTransactionId}`,
-      );
-      return result;
+      this.logger.log(`Wallet ${walletId} credited ${amount} from PaymentIntent ${pi.id}`);
     } catch (error) {
-      if (
-        error instanceof WalletNotFoundException ||
-        error instanceof InvalidAmountException
-      ) {
-        throw error;
-      }
-      this.logger.error(`Failed to recharge wallet ${walletId}`, error);
-      throw new TransactionFailedException(`Recharge failed: ${error.message}`);
+      this.logger.error(`Failed to process PaymentIntent ${pi.id}`, error);
     }
   }
 
-  /**
-   * Withdraw funds from wallet
-   * Creates a WITHDRAW transaction and updates balance
-   */
-  async withdraw(
-    walletId: string,
-    amount: number | string,
-    bankAccount: {
-      accountNumber: string;
-      bankCode: string;
-      accountHolder: string;
-      bankName?: string;
-    },
-  ): Promise<{
-    withdrawal: Withdrawal;
-    transaction: Transaction;
-  }> {
-    const decimalAmount = new Decimal(amount);
+  // ──────────────────────────────────────────────
+  //  TRANSFER (peer-to-peer)
+  // ──────────────────────────────────────────────
 
+  async transfer(
+    senderUserId: string,
+    receiverUserId: string,
+    amount: number,
+  ): Promise<{ senderTransaction: Transaction; receiverTransaction: Transaction }> {
+    const decimalAmount = new Decimal(amount);
+    if (decimalAmount.isNegative() || decimalAmount.isZero()) {
+      throw new InvalidAmountException('Transfer amount must be positive');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const senderWallet = await tx.wallet.findUnique({
+        where: { userId: senderUserId },
+      });
+      if (!senderWallet) throw new WalletNotFoundException(senderUserId);
+
+      const receiverWallet = await tx.wallet.findUnique({
+        where: { userId: receiverUserId },
+      });
+      if (!receiverWallet) throw new WalletNotFoundException(receiverUserId);
+
+      if (senderWallet.balance.lessThan(decimalAmount)) {
+        throw new InsufficientFundsException(
+          senderWallet.balance.toNumber(),
+          decimalAmount.toNumber(),
+        );
+      }
+
+      // Debit sender
+      await tx.wallet.update({
+        where: { id: senderWallet.id },
+        data: { balance: { decrement: decimalAmount } },
+      });
+
+      // Credit receiver
+      await tx.wallet.update({
+        where: { id: receiverWallet.id },
+        data: { balance: { increment: decimalAmount } },
+      });
+
+      const senderTransaction = await tx.transaction.create({
+        data: {
+          type: TransactionType.TRANSFER,
+          amount: decimalAmount.negated(),
+          status: TransactionStatus.COMPLETED,
+          walletId: senderWallet.id,
+          referenceType: 'user',
+          referenceId: receiverUserId,
+          description: `Transfer to user ${receiverUserId}`,
+        },
+      });
+
+      const receiverTransaction = await tx.transaction.create({
+        data: {
+          type: TransactionType.TRANSFER,
+          amount: decimalAmount,
+          status: TransactionStatus.COMPLETED,
+          walletId: receiverWallet.id,
+          referenceType: 'user',
+          referenceId: senderUserId,
+          description: `Transfer from user ${senderUserId}`,
+        },
+      });
+
+      // If receiver has a Stripe Connect account, create a Transfer
+      const receiverUser = await tx.user.findUnique({
+        where: { id: receiverUserId },
+        select: { stripeAccountId: true },
+      });
+
+      if (receiverUser?.stripeAccountId) {
+        await this.stripeService
+          .createTransfer(amount, receiverUser.stripeAccountId, 'usd', {
+            senderUserId,
+            receiverUserId,
+          })
+          .catch((err) => {
+            this.logger.error(`Stripe transfer failed: ${err.message}`);
+          });
+      }
+
+      return { senderTransaction, receiverTransaction };
+    });
+  }
+
+  // ──────────────────────────────────────────────
+  //  WITHDRAW
+  // ──────────────────────────────────────────────
+
+  async withdraw(userId: string, amount: number): Promise<{ withdrawal: Withdrawal; transaction: Transaction }> {
+    const decimalAmount = new Decimal(amount);
     if (decimalAmount.isNegative() || decimalAmount.isZero()) {
       throw new InvalidAmountException('Withdrawal amount must be positive');
     }
 
-    try {
-      const result = await this.prisma.$transaction(async (tx) => {
-        // Lock and retrieve wallet
-        const wallet: [{ id: string, balance: number }] | [] = await tx.$queryRaw`
-          SELECT id, balance FROM wallets WHERE id = ${walletId} FOR UPDATE
-        `;
-
-        if (!wallet || wallet.length === 0) {
-          throw new WalletNotFoundException(walletId);
-        }
-
-        const currentBalance = new Decimal(wallet[0].balance);
-
-        // Check sufficient funds
-        if (currentBalance.lessThan(decimalAmount)) {
-          throw new InsufficientFundsException(
-            currentBalance.toNumber(),
-            decimalAmount.toNumber(),
-          );
-        }
-
-        // Create withdrawal record
-        const withdrawal = await tx.withdrawal.create({
-          data: {
-            walletId,
-            amount: decimalAmount,
-            status: WithdrawalStatus.PENDING,
-            bankAccount,
-          },
-        });
-
-        // Create transaction record (negative amount for debit)
-        const transaction = await tx.transaction.create({
-          data: {
-            type: TransactionType.WITHDRAW,
-            amount: decimalAmount.negated(),
-            status: TransactionStatus.PENDING,
-            walletId,
-            referenceType: 'withdrawal',
-            referenceId: withdrawal.id,
-            description: `Withdrawal to bank account ending in ${bankAccount.accountNumber.slice(-4)}`,
-          },
-        });
-
-        // Update wallet balance (deduct)
-        const updatedWallet = await tx.wallet.update({
-          where: { id: walletId },
-          data: {
-            balance: {
-              decrement: decimalAmount,
-            },
-          },
-        });
-
-        return { withdrawal, transaction };
-      });
-
-      this.logger.log(
-        `Withdrawal initiated for wallet ${walletId}, amount: ${amount}`,
-      );
-      return result;
-    } catch (error) {
-      if (
-        error instanceof WalletNotFoundException ||
-        error instanceof InvalidAmountException ||
-        error instanceof InsufficientFundsException
-      ) {
-        throw error;
-      }
-      this.logger.error(`Failed to withdraw from wallet ${walletId}`, error);
-      throw new TransactionFailedException(
-        `Withdrawal failed: ${error.message}`,
-      );
-    }
-  }
-
-  /**
-   * Create a Stripe PaymentIntent for shipment payment
-   */
-  async createShipmentPaymentIntent(
-    walletId: string,
-    shipmentId: string,
-    amount: number,
-    currency: string = 'usd',
-  ) {
-    const wallet = await this.prisma.wallet.findUnique({
-      where: { id: walletId },
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { stripeAccountId: true, wallet: true },
     });
 
-    if (!wallet) {
-      throw new WalletNotFoundException(walletId);
-    }
-
-    const shipment = await this.prisma.shipment.findUnique({
-      where: { id: shipmentId },
-      select: { id: true },
-    });
-
-    if (!shipment) {
-      throw new ShipmentNotFoundException(shipmentId);
-    }
-
-    const paymentIntent = await this.stripeService.createPaymentIntent(
-      amount,
-      currency,
-    );
-
-    return {
-      clientSecret: paymentIntent.client_secret,
-      paymentIntentId: paymentIntent.id,
-    };
-  }
-
-  /**
-   * Create a PayPal order for shipment payment
-   */
-  async createShipmentPayPalOrder(
-    walletId: string,
-    shipmentId: string,
-    amount: number,
-    currency: string = 'USD',
-  ) {
-    const wallet = await this.prisma.wallet.findUnique({
-      where: { id: walletId },
-    });
-
-    if (!wallet) {
-      throw new WalletNotFoundException(walletId);
-    }
-
-    const shipment = await this.prisma.shipment.findUnique({
-      where: { id: shipmentId },
-      select: { id: true },
-    });
-
-    if (!shipment) {
-      throw new ShipmentNotFoundException(shipmentId);
-    }
-
-    // TODO: Integrate PayPal SDK
-    throw new TransactionFailedException(
-      'PayPal integration is not yet configured',
-    );
-  }
-
-  /**
-   * Confirm and complete a shipment payment after external payment
-   */
-  async confirmShipmentPayment(
-    walletId: string,
-    shipmentId: string,
-    amount: number | string,
-    paymentMethod: string,
-    externalTransactionId: string,
-  ) {
-    if (paymentMethod === 'stripe') {
-      const paymentIntent = await this.stripeService.retrievePaymentIntent(
-        externalTransactionId,
-      );
-
-      if (paymentIntent.status !== 'succeeded') {
-        throw new TransactionFailedException(
-          `Payment not completed. Status: ${paymentIntent.status}`,
-        );
-      }
-    }
-
-    // TODO: Add PayPal order verification
-
-    const { shipmentPayment, transaction } = await this.payForShipment(
-      walletId,
-      shipmentId,
-      amount,
-    );
-
-    return { shipmentPayment, transaction };
-  }
-
-  /**
-   * Pay for shipment using wallet
-   * Creates a SHIPMENT_PAYMENT transaction and updates balance
-   */
-  async payForShipment(
-    walletId: string,
-    shipmentId: string,
-    amount: number | string,
-  ): Promise<{
-    shipmentPayment: ShipmentPayment;
-    transaction: Transaction;
-  }> {
-    const decimalAmount = new Decimal(amount);
-
-    if (decimalAmount.isNegative() || decimalAmount.isZero()) {
-      throw new InvalidAmountException('Payment amount must be positive');
-    }
-
-    try {
-      const result = await this.prisma.$transaction(async (tx) => {
-        // Verify shipment exists
-        const shipment = await tx.shipment.findUnique({
-          where: { id: shipmentId },
-          select: { id: true, status: true },
-        });
-
-        if (!shipment) {
-          throw new ShipmentNotFoundException(shipmentId);
-        }
-
-        // Lock and retrieve wallet
-        const wallet: [{ id: string, balance: number }] | [] = await tx.$queryRaw`
-          SELECT id, balance FROM wallets WHERE id = ${walletId} FOR UPDATE
-        `;
-
-        if (!wallet || wallet.length === 0) {
-          throw new WalletNotFoundException(walletId);
-        }
-
-        const currentBalance = new Decimal(wallet[0].balance);
-
-        // Check sufficient funds
-        if (currentBalance.lessThan(decimalAmount)) {
-          throw new InsufficientFundsException(
-            currentBalance.toNumber(),
-            decimalAmount.toNumber(),
-          );
-        }
-
-        // Check if payment already exists
-        const existingPayment = await tx.shipmentPayment.findFirst({
-          where: {
-            shipmentId,
-            walletId,
-            status: ShipmentPaymentStatus.COMPLETED,
-          },
-        });
-
-        if (existingPayment) {
-          throw new TransactionFailedException(
-            'Payment for this shipment already exists',
-          );
-        }
-
-        // Create transaction record (negative amount for debit)
-        const transaction = await tx.transaction.create({
-          data: {
-            type: TransactionType.SHIPMENT_PAYMENT,
-            amount: decimalAmount.negated(),
-            status: TransactionStatus.COMPLETED,
-            walletId,
-            referenceType: 'shipment',
-            referenceId: shipmentId,
-            description: `Payment for shipment ${shipmentId}`,
-          },
-        });
-
-        // Create shipment payment record
-        const shipmentPayment = await tx.shipmentPayment.create({
-          data: {
-            walletId,
-            shipmentId,
-            amount: decimalAmount,
-            status: ShipmentPaymentStatus.COMPLETED,
-            transactionId: transaction.id,
-            paidAt: new Date(),
-          },
-        });
-
-        // Update wallet balance (deduct)
-        const updatedWallet = await tx.wallet.update({
-          where: { id: walletId },
-          data: {
-            balance: {
-              decrement: decimalAmount,
-            },
-          },
-        });
-
-        return { shipmentPayment, transaction };
-      });
-
-      this.logger.log(
-        `Shipment ${shipmentId} payment processed for wallet ${walletId}, amount: ${amount}`,
-      );
-      return result;
-    } catch (error) {
-      if (
-        error instanceof WalletNotFoundException ||
-        error instanceof InvalidAmountException ||
-        error instanceof InsufficientFundsException ||
-        error instanceof ShipmentNotFoundException ||
-        error instanceof TransactionFailedException
-      ) {
-        throw error;
-      }
-      this.logger.error(`Failed to pay for shipment ${shipmentId}`, error);
+    if (!user?.stripeAccountId) {
       throw new TransactionFailedException(
-        `Shipment payment failed: ${error.message}`,
+        'User does not have a Stripe Connect account. Please set up your account first.',
       );
     }
-  }
 
-  /**
-   * Get transaction history for a wallet
-   * Returns paginated transaction records
-   */
-  async getTransactionHistory(
-    walletId: string,
-    limit: number = 20,
-    offset: number = 0,
-  ): Promise<{
-    transactions: Transaction[];
-    total: number;
-  }> {
-    try {
-      // Verify wallet exists
-      const wallet = await this.prisma.wallet.findUnique({
-        where: { id: walletId },
-      });
+    if (!user.wallet) throw new WalletNotFoundException(userId);
 
-      if (!wallet) {
-        throw new WalletNotFoundException(walletId);
-      }
-
-      const [transactions, total] = await Promise.all([
-        this.prisma.transaction.findMany({
-          where: { walletId },
-          orderBy: { createdAt: 'desc' },
-          take: limit,
-          skip: offset,
-        }),
-        this.prisma.transaction.count({
-          where: { walletId },
-        }),
-      ]);
-
-      return { transactions, total };
-    } catch (error) {
-      if (error instanceof WalletNotFoundException) {
-        throw error;
-      }
-      this.logger.error(
-        `Failed to get transaction history for wallet ${walletId}`,
-        error,
-      );
-      throw new TransactionFailedException(
-        'Failed to retrieve transaction history',
+    if (user.wallet.balance.lessThan(decimalAmount)) {
+      throw new InsufficientFundsException(
+        user.wallet.balance.toNumber(),
+        decimalAmount.toNumber(),
       );
     }
-  }
 
-  /**
-   * Apply a fee to the wallet
-   * Creates a FEE transaction
-   */
-  async applyFee(
-    walletId: string,
-    amount: number | string,
-    description: string,
-    referenceType?: string,
-    referenceId?: string,
-  ): Promise<Transaction> {
-    const decimalAmount = new Decimal(amount);
-
-    if (decimalAmount.isNegative() || decimalAmount.isZero()) {
-      throw new InvalidAmountException('Fee amount must be positive');
-    }
-
-    try {
-      return await this.prisma.$transaction(async (tx) => {
-        // Lock wallet
-        const wallet: [{ id: string, balance: number }] | [] = await tx.$queryRaw`
-          SELECT id, balance FROM wallets WHERE id = ${walletId} FOR UPDATE
-        `;
-
-        if (!wallet || wallet.length === 0) {
-          throw new WalletNotFoundException(walletId);
-        }
-
-        const currentBalance = new Decimal(wallet[0].balance);
-
-        if (currentBalance.lessThan(decimalAmount)) {
-          throw new InsufficientFundsException(
-            currentBalance.toNumber(),
-            decimalAmount.toNumber(),
-          );
-        }
-
-        // Create fee transaction
-        const transaction = await tx.transaction.create({
-          data: {
-            type: TransactionType.FEE,
-            amount: decimalAmount.negated(),
-            status: TransactionStatus.COMPLETED,
-            walletId,
-            description,
-            referenceType,
-            referenceId,
-          },
-        });
-
-        // Update balance
-        await tx.wallet.update({
-          where: { id: walletId },
-          data: {
-            balance: {
-              decrement: decimalAmount,
-            },
-          },
-        });
-
-        return transaction;
-      });
-    } catch (error) {
-      if (
-        error instanceof WalletNotFoundException ||
-        error instanceof InvalidAmountException ||
-        error instanceof InsufficientFundsException
-      ) {
-        throw error;
-      }
-      this.logger.error(`Failed to apply fee to wallet ${walletId}`, error);
-      throw new TransactionFailedException(
-        `Fee application failed: ${error.message}`,
-      );
-    }
-  }
-
-  /**
-   * Process a refund to the wallet
-   * Creates a REFUND transaction
-   */
-  async processRefund(
-    walletId: string,
-    amount: number | string,
-    reason: string,
-    referenceType?: string,
-    referenceId?: string,
-  ): Promise<Transaction> {
-    const decimalAmount = new Decimal(amount);
-
-    if (decimalAmount.isNegative() || decimalAmount.isZero()) {
-      throw new InvalidAmountException('Refund amount must be positive');
-    }
-
-    try {
-      return await this.prisma.transaction.create({
-        data: {
-          type: TransactionType.REFUND,
-          amount: decimalAmount,
-          status: TransactionStatus.COMPLETED,
-          walletId,
-          description: `Refund: ${reason}`,
-          referenceType,
-          referenceId,
-        },
-      });
-    } catch (error) {
-      this.logger.error(
-        `Failed to process refund for wallet ${walletId}`,
-        error,
-      );
-      throw new TransactionFailedException(
-        `Refund processing failed: ${error.message}`,
-      );
-    }
-  }
-
-  /**
-   * Get wallet details
-   */
-  async getWallet(walletId: string): Promise<Wallet> {
-    try {
-      const wallet = await this.prisma.wallet.findUnique({
-        where: { id: walletId },
-      });
-
-      if (!wallet) {
-        throw new WalletNotFoundException(walletId);
-      }
-
-      return wallet;
-    } catch (error) {
-      if (error instanceof WalletNotFoundException) {
-        throw error;
-      }
-      this.logger.error(`Failed to get wallet ${walletId}`, error);
-      throw new TransactionFailedException('Failed to retrieve wallet');
-    }
-  }
-
-  /**
-   * Get wallet by userId
-   */
-  async getWalletByUserId(userId: string): Promise<Wallet> {
-    try {
-      const wallet = await this.prisma.wallet.findUnique({
+    return this.prisma.$transaction(async (tx) => {
+      await tx.wallet.update({
         where: { userId },
+        data: { balance: { decrement: decimalAmount } },
       });
 
-      if (!wallet) {
-        throw new TransactionFailedException(
-          `Wallet not found for user ${userId}`,
-        );
-      }
+      const withdrawal = await tx.withdrawal.create({
+        data: {
+          walletId: user.wallet!.id,
+          amount: decimalAmount,
+          status: WithdrawalStatus.PROCESSING,
+          bankAccount: {},
+        },
+      });
 
-      return wallet;
-    } catch (error) {
-      if (error instanceof TransactionFailedException) {
-        throw error;
-      }
-      this.logger.error(`Failed to get wallet for user ${userId}`, error);
-      throw new TransactionFailedException('Failed to retrieve wallet');
-    }
+      const transaction = await tx.transaction.create({
+        data: {
+          type: TransactionType.WITHDRAW,
+          amount: decimalAmount.negated(),
+          status: TransactionStatus.PENDING,
+          walletId: user.wallet!.id,
+          referenceType: 'withdrawal',
+          referenceId: withdrawal.id,
+          description: `Withdrawal to bank via Stripe`,
+        },
+      });
+
+      // Create Stripe Payout on the user's Connect account
+      this.stripeService
+        .createPayout(amount, user.stripeAccountId!, 'usd', {
+          userId,
+          withdrawalId: withdrawal.id,
+        })
+        .then((payout) => {
+          this.logger.log(`Payout created: ${payout.id} for user ${userId}`);
+        })
+        .catch(async (err) => {
+          this.logger.error(`Payout creation failed: ${err.message}`);
+          // Reverse the debit
+          await this.prisma.wallet.update({
+            where: { userId },
+            data: { balance: { increment: decimalAmount } },
+          });
+          await this.prisma.withdrawal.update({
+            where: { id: withdrawal.id },
+            data: { status: WithdrawalStatus.FAILED },
+          });
+          await this.prisma.transaction.update({
+            where: { id: transaction.id },
+            data: { status: TransactionStatus.FAILED },
+          });
+        });
+
+      return { withdrawal, transaction };
+    });
   }
 
-  /**
-   * Mark withdrawal as processed
-   * Called by admin after bank transfer
-   */
-  async markWithdrawalAsProcessed(withdrawalId: string): Promise<Withdrawal> {
-    try {
-      // Update withdrawal status
-      const withdrawal = await this.prisma.withdrawal.update({
-        where: { id: withdrawalId },
-        data: {
-          status: WithdrawalStatus.COMPLETED,
-          processedAt: new Date(),
-        },
-      });
+  async handlePayoutPaid(payout: any): Promise<void> {
+    const { withdrawalId } = payout.metadata || {};
+    if (!withdrawalId) return;
 
-      // Update related transaction status
-      await this.prisma.transaction.updateMany({
-        where: {
-          referenceType: 'withdrawal',
-          referenceId: withdrawalId,
-        },
-        data: {
-          status: TransactionStatus.COMPLETED,
-        },
-      });
+    await this.prisma.withdrawal.update({
+      where: { id: withdrawalId },
+      data: { status: WithdrawalStatus.COMPLETED, processedAt: new Date() },
+    });
 
-      this.logger.log(`Withdrawal ${withdrawalId} marked as processed`);
-      return withdrawal;
-    } catch (error) {
-      this.logger.error(
-        `Failed to mark withdrawal ${withdrawalId} as processed`,
-        error,
-      );
-      throw new TransactionFailedException(
-        'Failed to update withdrawal status',
-      );
+    await this.prisma.transaction.updateMany({
+      where: { referenceType: 'withdrawal', referenceId: withdrawalId },
+      data: { status: TransactionStatus.COMPLETED },
+    });
+
+    this.logger.log(`Withdrawal ${withdrawalId} completed via payout ${payout.id}`);
+  }
+
+  async handlePayoutFailed(payout: any): Promise<void> {
+    const { withdrawalId, userId } = payout.metadata || {};
+    if (!withdrawalId) return;
+
+    const withdrawal = await this.prisma.withdrawal.findUnique({
+      where: { id: withdrawalId },
+    });
+
+    if (!withdrawal) return;
+
+    // Reverse the debit
+    await this.prisma.wallet.update({
+      where: { id: withdrawal.walletId },
+      data: { balance: { increment: withdrawal.amount } },
+    });
+
+    await this.prisma.withdrawal.update({
+      where: { id: withdrawalId },
+      data: { status: WithdrawalStatus.FAILED },
+    });
+
+    await this.prisma.transaction.updateMany({
+      where: { referenceType: 'withdrawal', referenceId: withdrawalId },
+      data: { status: TransactionStatus.FAILED },
+    });
+
+    this.logger.warn(`Withdrawal ${withdrawalId} reversed due to payout failure`);
+  }
+
+  // ──────────────────────────────────────────────
+  //  STRIPE CONNECT
+  // ──────────────────────────────────────────────
+
+  async createConnectAccount(userId: string, email: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new TransactionFailedException('User not found');
+
+    if ((user as any).stripeAccountId) {
+      throw new TransactionFailedException('User already has a Stripe Connect account');
     }
+
+    const account = await this.stripeService.createConnectedAccount(email);
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { stripeAccountId: account.id } as any,
+    });
+
+    this.logger.log(`Stripe Connect account created: ${account.id} for user ${userId}`);
+
+    return { accountId: account.id };
+  }
+
+  async getConnectAccountLink(userId: string, refreshUrl: string, returnUrl: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new TransactionFailedException('User not found');
+
+    const accountId = (user as any).stripeAccountId;
+    if (!accountId) {
+      throw new TransactionFailedException('User does not have a Stripe Connect account');
+    }
+
+    const accountLink = await this.stripeService.createAccountLink(accountId, refreshUrl, returnUrl);
+
+    return { url: accountLink.url, expiresAt: accountLink.expires_at };
+  }
+
+  // ──────────────────────────────────────────────
+  //  TRANSACTIONS
+  // ──────────────────────────────────────────────
+
+  async getTransactions(userId: string, limit = 20, offset = 0) {
+    const wallet = await this.getWallet(userId);
+
+    const [transactions, total] = await Promise.all([
+      this.prisma.transaction.findMany({
+        where: { walletId: wallet.id },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip: offset,
+      }),
+      this.prisma.transaction.count({ where: { walletId: wallet.id } }),
+    ]);
+
+    return { transactions, total };
   }
 }

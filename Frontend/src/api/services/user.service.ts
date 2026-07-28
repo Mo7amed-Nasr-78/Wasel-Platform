@@ -2,8 +2,14 @@ import { privateHttpClient } from "../client/HttpClient";
 
 class UserService {
 
-	userShipments(params?: Record<string, unknown>) {
-		return privateHttpClient.get('/user/shipments', { params })
+	userShipments(query?: Record<string, unknown>) {
+		const params = query && new URLSearchParams(
+			Object.entries(query).map(([key, value]) => [
+				key,
+				String(value),	
+			]),
+		);
+		return privateHttpClient.get(`/user/shipments?${params}`,)
 	}
 
 	logout() {

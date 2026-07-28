@@ -42,6 +42,18 @@ class DriversService {
 	deleteDriver(driverId: string) {
 		return privateHttpClient.delete(`/drivers/${driverId}`);
 	}
+
+	addVacation(driverId: string, data: Record<string, unknown>) {
+		return privateHttpClient.post(`drivers/${driverId}/vacations/add`, data);
+	}
+
+	returnFromVacation(vacationId: string) {
+		return privateHttpClient.patch(`drivers/vacations/${vacationId}/return`, undefined);
+	}
+
+	extendVacation(vacationId: string, data: Record<string, unknown>) {
+		return privateHttpClient.patch(`drivers/vacations/${vacationId}/extend`, data);
+	}
 }
 
 export const drievrsService = new DriversService();

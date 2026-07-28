@@ -1,350 +1,333 @@
 import { useState } from "react";
-import { CreditCard, Mail } from "lucide-react";
+import { PiCreditCard, PiCheckCircle, PiXCircle } from "react-icons/pi";
 import {
 	Dialog,
 	DialogContent,
-	DialogDescription,
-	DialogHeader,
 	DialogTitle,
 } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { useTopUpWallet } from "@/api/hooks/wallet/useTopUpWallet";
+import StripePaymentForm from "./StripePaymentForm";
 
 interface PaymentDialogProps {
 	isOpen: boolean;
 	onClose: () => void;
 }
 
-type PaymentMethod = "paypal" | "stripe" | null;
-type InputMethod = "card" | "email";
+type Step = "form" | "stripe" | "success" | "error";
+
+const STRIPE_FEE_RATE = 0.029;
+const STRIPE_FEE_FIXED = 0.3;
+const CURRENCIES = ["USD", "EUR", "SAR", "EGP", "AED"];
 
 function PaymentDialog({ isOpen, onClose }: PaymentDialogProps) {
-	const [selectedPayment, setSelectedPayment] =
-		useState<PaymentMethod>(null);
-	const [inputMethod, setInputMethod] = useState<InputMethod>("card");
+	const { mutate: topUp, isPending: isTopUpPending } = useTopUpWallet();
+	const [step, setStep] = useState<Step>("form");
 	const [amount, setAmount] = useState("");
-	const [cardData, setCardData] = useState({
-		cardNumber: "",
-		expiryDate: "",
-		cvv: "",
-	});
-	const [email, setEmail] = useState("");
-	const [loading, setLoading] = useState(false);
+	const [currency, setCurrency] = useState("USD");
+	const [clientSecret, setClientSecret] = useState("");
+	const [errorMessage, setErrorMessage] = useState("");
 
-	const handlePaymentMethodSelect = (method: PaymentMethod) => {
-		setSelectedPayment(method);
+	const numericAmount = parseFloat(amount) || 0;
+	const stripeFee = numericAmount * STRIPE_FEE_RATE + STRIPE_FEE_FIXED;
+	const total = numericAmount + stripeFee;
+
+	const handleTopUp = () => {
+		if (!numericAmount) return;
+		topUp(
+			{ amount: numericAmount, currency },
+			{
+				onSuccess: (res) => {
+					const body = res?.data;
+					const secret =
+						body?.data?.clientSecret ||
+						body?.clientSecret;
+					if (secret) {
+						setClientSecret(secret);
+						setStep("stripe");
+					} else {
+						setErrorMessage(
+							"لم يتم استلام client_secret من الخادم",
+						);
+						setStep("error");
+					}
+				},
+				onError: () => {
+					setErrorMessage(
+						"فشل الاتصال بالخادم. حاول مرة أخرى.",
+					);
+					setStep("error");
+				},
+			},
+		);
 	};
 
-	const handleCardChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const { name, value } = e.target;
-		setCardData((prev) => ({
-			...prev,
-			[name]: value,
-		}));
+	const handlePaymentSuccess = () => {
+		setStep("success");
 	};
 
-	const handleProcessPayment = async () => {
-		if (!amount || !selectedPayment) {
-			alert("الرجاء ملء جميع الحقول المطلوبة");
-			return;
-		}
-
-		if (
-			inputMethod === "card" &&
-			(!cardData.cardNumber ||
-				!cardData.expiryDate ||
-				!cardData.cvv)
-		) {
-			alert("الرجاء ملء بيانات البطاقة");
-			return;
-		}
-
-		if (inputMethod === "email" && !email) {
-			alert("الرجاء إدخال البريد الإلكتروني");
-			return;
-		}
-
-		setLoading(true);
-		try {
-			// TODO: Integrate with actual payment API
-			const paymentData = {
-				method: selectedPayment,
-				amount: parseFloat(amount),
-				inputMethod,
-				...(inputMethod === "card"
-					? { card: cardData }
-					: { email }),
-			};
-
-			console.log("Processing payment:", paymentData);
-
-			// Call your backend API here
-			// const response = await paymentService.processPayment(paymentData);
-
-			// For now, simulate successful payment
-			alert("تم معالجة الدفع بنجاح!");
-			resetForm();
-			onClose();
-		} catch (error) {
-			console.error("Payment error:", error);
-			alert("حدث خطأ أثناء معالجة الدفع");
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	const resetForm = () => {
-		setSelectedPayment(null);
-		setInputMethod("card");
-		setAmount("");
-		setCardData({ cardNumber: "", expiryDate: "", cvv: "" });
-		setEmail("");
+	const handlePaymentError = (message: string) => {
+		setErrorMessage(message);
+		setStep("error");
 	};
 
 	const handleClose = () => {
-		resetForm();
+		setStep("form");
+		setAmount("");
+		setCurrency("USD");
+		setClientSecret("");
+		setErrorMessage("");
 		onClose();
+	};
+
+	const handleBack = () => {
+		setStep("form");
+		setClientSecret("");
+		setErrorMessage("");
 	};
 
 	return (
 		<Dialog open={isOpen} onOpenChange={handleClose}>
-			<DialogContent className="sm:max-w-md">
-				<DialogHeader dir="rtl">
-					<DialogTitle>شحن المحفظة</DialogTitle>
-					<DialogDescription>
-						اختر طريقة الدفع المناسبة لك وأدخل المبلغ
-						المراد شحنه
-					</DialogDescription>
-				</DialogHeader>
+			<DialogContent
+				className={`bg-(--bg-color) border-0 ${
+					step === "stripe"
+						? "sm:max-w-lg"
+						: "sm:max-w-md"
+				}`}
+				dir="rtl"
+			>
+				<DialogTitle className="text-(--primary-text) text-xl font-semibold">
+					{step === "form" && "شحن المحفظة"}
+					{step === "stripe" && "أكمل الدفع"}
+					{step === "success" && "تم الدفع بنجاح"}
+					{step === "error" && "فشل الدفع"}
+				</DialogTitle>
 
-				<div className="space-y-6">
-					{/* Amount Input */}
-					<div>
-						<label className="block text-sm font-medium text-(--main-text) mb-2">
-							المبلغ (ر.ص)
-						</label>
-						<Input
-							type="number"
-							placeholder="أدخل المبلغ"
-							value={amount}
-							onChange={(e) =>
-								setAmount(e.target.value)
-							}
-							className="text-right"
-							dir="rtl"
-						/>
-					</div>
-
-					{/* Payment Methods */}
-					<div>
-						<label className="block text-sm font-medium text-(--main-text) mb-3">
-							اختر طريقة الدفع
-						</label>
-						<div className="grid grid-cols-2 gap-3">
-							<button
-								onClick={() =>
-									handlePaymentMethodSelect(
-										"stripe",
-									)
-								}
-								className={`p-4 rounded-lg border-2 transition-all ${
-									selectedPayment ===
-									"stripe"
-										? "border-(--primary-color) bg-(--primary-color)/5"
-										: "border-gray-300 hover:border-gray-400"
-								}`}
-							>
-								<div className="flex flex-col items-center gap-2">
-									<CreditCard className="w-6 h-6 text-(--primary-color)" />
-									<span className="text-sm font-medium">
-										Stripe
-									</span>
-								</div>
-							</button>
-
-							<button
-								onClick={() =>
-									handlePaymentMethodSelect(
-										"paypal",
-									)
-								}
-								className={`p-4 rounded-lg border-2 transition-all ${
-									selectedPayment ===
-									"paypal"
-										? "border-(--primary-color) bg-(--primary-color)/5"
-										: "border-gray-300 hover:border-gray-400"
-								}`}
-							>
-								<div className="flex flex-col items-center gap-2">
-									<Mail className="w-6 h-6 text-(--primary-color)" />
-									<span className="text-sm font-medium">
-										PayPal
-									</span>
-								</div>
-							</button>
-						</div>
-					</div>
-
-					{/* Payment Input Method - Only show if payment method selected */}
-					{selectedPayment && (
-						<div>
-							<label className="block text-sm font-medium text-(--main-text) mb-3">
-								طريقة الإدخال
-							</label>
-							<div className="flex gap-3 mb-4">
-								<button
-									onClick={() =>
-										setInputMethod(
-											"card",
+				{/* Step 1: Amount + Currency + Top-up */}
+				{step === "form" && (
+					<div className="space-y-5 mt-2">
+						<div className="grid grid-cols-3 gap-3">
+							<div className="col-span-2">
+								<label className="block text-sm font-medium text-(--primary-text) mb-1.5">
+									المبلغ
+								</label>
+								<Input
+									type="number"
+									placeholder="0.00"
+									value={amount}
+									onChange={(e) =>
+										setAmount(
+											e.target
+												.value,
 										)
 									}
-									className={`flex-1 py-2 rounded-lg border transition-all ${
-										inputMethod ===
-										"card"
-											? "border-(--primary-color) bg-(--primary-color)/10"
-											: "border-gray-300"
-									}`}
-								>
-									<span className="text-sm font-medium">
-										بطاقة ائتمان
-									</span>
-								</button>
-								<button
-									onClick={() =>
-										setInputMethod(
-											"email",
-										)
-									}
-									className={`flex-1 py-2 rounded-lg border transition-all ${
-										inputMethod ===
-										"email"
-											? "border-(--primary-color) bg-(--primary-color)/10"
-											: "border-gray-300"
-									}`}
-								>
-									<span className="text-sm font-medium">
-										البريد الإلكتروني
-									</span>
-								</button>
+									dir="rtl"
+								/>
 							</div>
-
-							{/* Card Input Fields */}
-							{inputMethod === "card" && (
-								<div className="space-y-3">
-									<div>
-										<label className="block text-xs font-medium text-(--secondary-text) mb-1">
-											رقم البطاقة
-										</label>
-										<Input
-											type="text"
-											name="cardNumber"
-											placeholder="1234 5678 9012 3456"
-											value={
-												cardData.cardNumber
-											}
-											onChange={
-												handleCardChange
-											}
-											maxLength={19}
-											className="text-right"
-											dir="rtl"
-										/>
-									</div>
-									<div className="grid grid-cols-2 gap-3">
-										<div>
-											<label className="block text-xs font-medium text-(--secondary-text) mb-1">
-												تاريخ
-												انتهاء
-												الصلاحية
-											</label>
-											<Input
-												type="text"
-												name="expiryDate"
-												placeholder="MM/YY"
+							<div>
+								<label className="block text-sm font-medium text-(--primary-text) mb-1.5">
+									العملة
+								</label>
+								<select
+									value={currency}
+									onChange={(e) =>
+										setCurrency(
+											e.target
+												.value,
+										)
+									}
+									className="flex h-10 w-full rounded-lg border border-gray-300 bg-(--bg-color) px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-(--primary-color) appearance-none cursor-pointer"
+								>
+									{CURRENCIES.map(
+										(c) => (
+											<option
+												key={
+													c
+												}
 												value={
-													cardData.expiryDate
+													c
 												}
-												onChange={
-													handleCardChange
-												}
-												maxLength={
-													5
-												}
-												className="text-center"
-											/>
-										</div>
-										<div>
-											<label className="block text-xs font-medium text-(--secondary-text) mb-1">
-												CVV
-											</label>
-											<Input
-												type="text"
-												name="cvv"
-												placeholder="123"
-												value={
-													cardData.cvv
-												}
-												onChange={
-													handleCardChange
-												}
-												maxLength={
-													3
-												}
-												className="text-center"
-											/>
-										</div>
-									</div>
-								</div>
-							)}
-
-							{/* Email Input Field */}
-							{inputMethod === "email" && (
-								<div>
-									<label className="block text-xs font-medium text-(--secondary-text) mb-1">
-										البريد الإلكتروني
-									</label>
-									<Input
-										type="email"
-										placeholder="your@email.com"
-										value={email}
-										onChange={(e) =>
-											setEmail(
-												e.target
-													.value,
-											)
-										}
-										className="text-right"
-										dir="rtl"
-									/>
-								</div>
-							)}
+											>
+												{c}
+											</option>
+										),
+									)}
+								</select>
+							</div>
 						</div>
-					)}
 
-					{/* Action Buttons */}
-					<div className="flex gap-3 pt-4">
+						<div>
+							<label className="block text-sm font-medium text-(--primary-text) mb-1.5">
+								طريقة الدفع
+							</label>
+							<div className="flex items-center gap-3 rounded-lg border-2 border-(--primary-color) bg-(--primary-color)/5 p-4">
+								<div className="flex h-10 w-10 items-center justify-center rounded-lg bg-(--primary-color) text-white">
+									<PiCreditCard className="w-5 h-5" />
+								</div>
+								<div className="flex-1 text-right">
+									<p className="text-sm font-semibold text-(--primary-text)">
+										Stripe
+									</p>
+									<p className="text-xs text-(--secondary-text)">
+										الدفع عبر
+										بطاقة ائتمان
+									</p>
+								</div>
+								<PiCheckCircle className="w-5 h-5 text-(--primary-color)" />
+							</div>
+						</div>
+
+						{numericAmount > 0 && (
+							<div className="rounded-lg bg-(--bg-color) border border-(--tertiary-color)/30 p-4 space-y-2">
+								<div className="flex justify-between text-sm">
+									<span className="text-(--secondary-text)">
+										المبلغ
+									</span>
+									<span className="font-medium text-(--primary-text)">
+										{numericAmount.toLocaleString(
+											"en-US",
+											{
+												minimumFractionDigits: 2,
+											},
+										)}{" "}
+										{currency}
+									</span>
+								</div>
+								<div className="flex justify-between text-sm">
+									<span className="text-(--secondary-text)">
+										رسوم المعالجة
+										(2.9% + 0.30)
+									</span>
+									<span className="font-medium text-red-500">
+										-
+										{stripeFee.toLocaleString(
+											"en-US",
+											{
+												minimumFractionDigits: 2,
+											},
+										)}{" "}
+										{currency}
+									</span>
+								</div>
+								<div className="border-t border-(--tertiary-color)/30 pt-2 flex justify-between text-sm font-semibold">
+									<span className="text-(--primary-text)">
+										الإجمالي
+									</span>
+									<span className="text-(--primary-color)">
+										{total.toLocaleString(
+											"en-US",
+											{
+												minimumFractionDigits: 2,
+											},
+										)}{" "}
+										{currency}
+									</span>
+								</div>
+							</div>
+						)}
+
+						<div className="flex gap-3">
+							<Button
+								onClick={handleClose}
+								variant="outline"
+								className="flex-1"
+							>
+								إلغاء
+							</Button>
+							<Button
+								onClick={handleTopUp}
+								disabled={
+									!numericAmount ||
+									isTopUpPending
+								}
+								className="flex-1"
+							>
+								{isTopUpPending
+									? "جاري..."
+									: "شحن المحفظة"}
+							</Button>
+						</div>
+					</div>
+				)}
+
+				{/* Step 2: Stripe Payment */}
+				{step === "stripe" && clientSecret && (
+					<div className="mt-2">
+						<StripePaymentForm
+							clientSecret={clientSecret}
+							amount={numericAmount}
+							currency={currency}
+							onSuccess={handlePaymentSuccess}
+							onError={handlePaymentError}
+						/>
+						<button
+							onClick={handleBack}
+							className="mt-3 w-full text-sm text-(--secondary-text) hover:text-(--primary-text) transition"
+						>
+							العودة إلى الخطوة السابقة
+						</button>
+					</div>
+				)}
+
+				{/* Step 3: Success */}
+				{step === "success" && (
+					<div className="space-y-4 mt-2">
+						<div className="rounded-lg border border-green-200 bg-green-50 p-6 text-center">
+							<PiCheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+							<p className="text-lg font-semibold text-green-700">
+								تم شحن المحفظة بنجاح
+							</p>
+							<p className="text-sm text-green-600 mt-1">
+								تمت إضافة{" "}
+								{numericAmount.toLocaleString(
+									"en-US",
+									{
+										minimumFractionDigits: 2,
+									},
+								)}{" "}
+								{currency.toUpperCase()} إلى
+								محفظتك
+							</p>
+						</div>
 						<Button
 							onClick={handleClose}
-							variant="outline"
-							className="flex-1"
+							className="w-full"
 						>
-							إلغاء
-						</Button>
-						<Button
-							onClick={handleProcessPayment}
-							disabled={
-								!selectedPayment ||
-								!amount ||
-								loading
-							}
-							className="flex-1"
-						>
-							{loading
-								? "جاري المعالجة..."
-								: "تأكيد الدفع"}
+							تم
 						</Button>
 					</div>
-				</div>
+				)}
+
+				{/* Step 4: Error */}
+				{step === "error" && (
+					<div className="space-y-4 mt-2">
+						<div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
+							<PiXCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
+							<p className="text-lg font-semibold text-red-700">
+								فشلت عملية الدفع
+							</p>
+							<p className="text-sm text-red-600 mt-1">
+								{errorMessage}
+							</p>
+						</div>
+						<div className="flex gap-3">
+							<Button
+								onClick={handleClose}
+								variant="outline"
+								className="flex-1"
+							>
+								إلغاء
+							</Button>
+							<Button
+								onClick={handleBack}
+								className="flex-1"
+							>
+								حاول مرة أخرى
+							</Button>
+						</div>
+					</div>
+				)}
 			</DialogContent>
 		</Dialog>
 	);

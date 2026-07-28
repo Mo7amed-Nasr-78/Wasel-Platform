@@ -25,6 +25,7 @@ import { useSignout } from "@/api/hooks/auth/useSignout";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { isAxiosError } from "axios";
+import { Button } from "./ui/button";
 
 function UserProfile() {
 	const { data, mutate, error, isError, isSuccess } = useSignout();
@@ -49,12 +50,12 @@ function UserProfile() {
 		<>
 			{!user ? (
 				<Link to={"/signin"}>
-					<button className="flex items-center gap-2 px-6 h-13 rounded-20 border border-(--primary-color) bg-(--primary-color) text-(--secondary-color) cursor-pointer duration-300 hover:scale-95">
+					<Button size={"lg"} className="flex items-center gap-2 rounded-20 border border-(--primary-color) bg-(--primary-color) text-(--secondary-color) cursor-pointer duration-300 hover:scale-95">
 						<PiSignIn className="text-2xl" />
 						<span className="font-main text-base font-medium capitalize">
 							تسجيل الدخول{" "}
 						</span>
-					</button>
+					</Button>
 				</Link>
 			) : (
 				<div className="flex items-center gap-2">

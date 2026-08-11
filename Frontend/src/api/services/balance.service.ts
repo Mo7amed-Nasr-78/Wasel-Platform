@@ -12,7 +12,7 @@ class BalanceService {
 				String(value),
 			]),
 		);
-		return privateHttpClient.get(`/transactions?${params}`);
+		return privateHttpClient.get(`wallet/transactions`);
 	}
 }
 

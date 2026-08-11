@@ -34,7 +34,7 @@ export function FilterMultiSelect({
 				{label}
 			</span>
 			<Popover>
-				<PopoverTrigger className="group h-10 w-full flex items-center justify-between gap-2 px-3 rounded-lg border border-(--tertiary-color) bg-(--secondary-color) font-main text-sm text-(--primary-text) cursor-pointer data-open:ring-2 data-open:ring-(--primary-color)/30">
+				<PopoverTrigger className="group h-10 w-full flex items-center justify-between gap-2 px-3 rounded-lg border border-(--tertiary-color) bg-(--bg-color)/25 font-main text-sm text-(--primary-text) cursor-pointer data-open:ring-2 data-open:ring-(--primary-color)/30">
 					<span>
 						{selectedCount > 0
 							? `${selectedCount} مختارة`

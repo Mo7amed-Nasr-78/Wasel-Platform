@@ -7,7 +7,6 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Button } from "@/components/ui/button";
 import { PiCalendar } from "react-icons/pi";
 
 interface FilterDateProps {
@@ -32,22 +31,17 @@ export function FilterDate({ label, value, onChange }: FilterDateProps) {
 				{label}
 			</span>
 			<Popover open={open} onOpenChange={setOpen}>
-				<PopoverTrigger asChild>
-					<Button
-						variant="outline"
-						className="h-10 w-full justify-between gap-2 font-main text-sm bg-(--secondary-color) border-(--tertiary-color)"
+				<PopoverTrigger className="group cursor-pointer flex h-10 w-full items-center justify-between gap-2 rounded-lg border border-(--tertiary-color) bg-(--bg-color)/25 px-3 font-main text-sm text-(--primary-text) data-open:ring-2 data-open:ring-(--primary-color)/30">
+					<span
+						className={
+							value
+								? "text-(--primary-text)"
+								: "text-(--secondary-text)/50"
+						}
 					>
-						<span
-							className={
-								value
-									? "text-(--primary-text)"
-									: "text-(--secondary-text)/50"
-							}
-						>
-							{displayValue || "اختر تاريخ"}
-						</span>
-						<PiCalendar className="text-(--secondary-text) text-lg shrink-0" />
-					</Button>
+						{displayValue || "اختر تاريخ"}
+					</span>
+					<PiCalendar className="text-(--secondary-text) text-lg shrink-0" />
 				</PopoverTrigger>
 				<PopoverContent
 					align="start"

@@ -14,6 +14,7 @@ export interface Shipment {
 	length: number;
 	height: number;
 	width: number;
+	chunksCount: number,
 	stacking?: boolean;
 	pickupAt: Date | undefined;
 	deliveryAt: Date | undefined;
@@ -21,17 +22,17 @@ export interface Shipment {
 	ETA?: string;
 	distance?: string;
 	status?:
-	| "PENDING"
-	| "IN_PROGRESS"
-	| "IN_TRANSIT"
-	| "DELAYED"
-	| "DELIVERED"
-	| "CANCELLED";
+		| "PENDING"
+		| "IN_PROGRESS"
+		| "IN_TRANSIT"
+		| "DELAYED"
+		| "DELIVERED"
+		| "CANCELLED";
 
-	urgent?: boolean;
-	additionalInsurance?: boolean;
-	twoDrivers?: boolean;
-	noFriday?: boolean;
+	urgent: boolean;
+	additionalInsurance: boolean;
+	twoDrivers: boolean;
+	noFriday: boolean;
 
 	budgetType: string;
 	suggestedBudget?: number;
@@ -96,12 +97,12 @@ export interface OfferResponse {
 		goodsType: string;
 		description: string;
 		status:
-		| "PENDING"
-		| "IN_PROGRESS"
-		| "IN_TRANSIT"
-		| "DELAYED"
-		| "DELIVERED"
-		| "CANCELLED";
+			| "PENDING"
+			| "IN_PROGRESS"
+			| "IN_TRANSIT"
+			| "DELAYED"
+			| "DELIVERED"
+			| "CANCELLED";
 		pickupAt: string;
 		deliveryAt: string;
 		urgent: boolean;
@@ -237,4 +238,36 @@ export interface Truck {
 	createdAt: string;
 	updatedAt: string;
 	profileId: string;
+}
+
+export interface UserProfile {
+	id: string;
+	username: string;
+	first_name: string | null;
+	last_name: string | null;
+	picture: string;
+	bio: string | null;
+	gender: string | null;
+	phone: string | null;
+	dateOfBirth: string | null;
+	age: number | null;
+	commercialRegister: string | null;
+	carCount: number | null;
+	role: string;
+	isActive: boolean;
+	verify: boolean;
+	createdAt: string;
+	updatedAt: string;
+	company_name: string | null;
+	userId: string;
+}
+
+export interface User {
+	id: string;
+	email: string;
+	password: string;
+	stripeAccountId: string | null;
+	createdAt: string;
+	updatedAt: string;
+	profile: UserProfile;
 }

@@ -274,10 +274,10 @@ function Home() {
 								</div>
 							</div>
 						</div>
-						<button className="hidden lg:flex absolute -left-5 top-1/2 -translate-y-1/2 w-12 h-12 lg:w-14 lg:h-14 rounded-full items-center justify-center text-(--primary-color) border-2 border-(--primary-color) cursor-pointer duration-300 hover:text-(--secondary-color) hover:bg-(--primary-color) hover:scale-95">
+						<button className="hidden lg:flex absolute left-5 top-1/2 -translate-y-1/2 w-12 h-12 lg:w-14 lg:h-14 rounded-full items-center justify-center text-(--primary-color) border-2 border-(--primary-color) cursor-pointer duration-300 hover:text-(--secondary-color) hover:bg-(--primary-color) hover:scale-95">
 							<PiArrowLeft className="text-2xl lg:text-3xl"/>
 						</button>
-						<button className="hidden lg:flex absolute -right-5 top-1/2 -translate-y-1/2 w-12 h-12 lg:w-14 lg:h-14 rounded-full items-center justify-center text-(--primary-color) border-2 border-(--primary-color) cursor-pointer duration-300 hover:text-(--secondary-color) hover:bg-(--primary-color) hover:scale-95">
+						<button className="hidden lg:flex absolute right-5 top-1/2 -translate-y-1/2 w-12 h-12 lg:w-14 lg:h-14 rounded-full items-center justify-center text-(--primary-color) border-2 border-(--primary-color) cursor-pointer duration-300 hover:text-(--secondary-color) hover:bg-(--primary-color) hover:scale-95">
 							<PiArrowRight className="text-2xl lg:text-3xl"/>
 						</button>
 					</div>

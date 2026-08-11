@@ -153,19 +153,27 @@ export class ShipmentsService {
   }
 
   async createShipment(
-    userId,
+    user,
     data: CreateShipmentDto,
     shipmentAttachments: ShipmentAttachments,
   ) {
+    const { sub, role, verify } = user;
+
     const userProfile = await this.prisma.profile.findUnique({
       where: {
-        userId,
+        userId: sub,
       },
     });
 
-    if (userProfile.role !== Role.MANUFACTURER) {
+    if (!verify)
       throw new HttpException(
-        'Failed to post the shipment',
+        'You need to verify your account first',
+        HttpStatus.BAD_REQUEST,
+      );
+
+    if (!Role.MANUFACTURER.includes(role)) {
+      throw new HttpException(
+        "You can't post a new shipment",
         HttpStatus.NOT_ACCEPTABLE,
       );
     }
@@ -235,7 +243,7 @@ export class ShipmentsService {
         additionalInsurance,
         noFriday,
         budgetType,
-        ...(paymentType? { paymentType } : { paymentType: "ON_DELIVER" }),
+        ...(paymentType ? { paymentType } : { paymentType: 'ON_DELIVER' }),
         suggestedBudget,
         offerCount: 0,
         ETA,
@@ -260,7 +268,7 @@ export class ShipmentsService {
       const size = (file.size / 1024 / 1024).toFixed(2); // MB
       const imageUrl = await this.R2Service.uploadFile(
         file,
-        `users/${userId}/shipments/images/${Date.now()}-${file.originalname}`,
+        `users/${sub}/shipments/images/${Date.now()}-${file.originalname}`,
       );
       await this.prisma.shipmentAttachment.create({
         data: {
@@ -290,7 +298,7 @@ export class ShipmentsService {
       const size = (file.size / 1024 / 1024).toFixed(2); // MB
       const docUrl = await this.R2Service.uploadFile(
         file,
-        `users/${userId}/shipments/docs/${Date.now()}-${file.originalname}`,
+        `users/${sub}/shipments/docs/${Date.now()}-${file.originalname}`,
       );
       await this.prisma.shipmentAttachment.create({
         data: {
@@ -317,36 +325,91 @@ export class ShipmentsService {
   async deleteShipment(
     shipmentId: string,
     userId: string,
+    role: Role,
   ): Promise<{
     status: HttpStatus;
     message: string;
     deletedShipment: Shipment;
   }> {
-    const userProfile = await this.prisma.profile.findUnique({
-      where: {
-        userId,
-      },
-      select: {
-        id: true,
-        shipments: {
+    let deletedShipment: Shipment | null = null;
+
+    const deleteShipmentTransaction = async () => {
+      return this.prisma.$transaction(async (tx) => {
+        const attachments = await tx.shipmentAttachment.findMany({
+          where: {
+            shipmentId,
+          },
+          select: {
+            url: true,
+          },
+        });
+
+        await Promise.all(
+          attachments.map(async (attachment) => {
+            const key = attachment.url.includes('r2.dev/')
+              ? attachment.url.split('r2.dev/')[1]
+              : null;
+
+            if (key) {
+              await this.R2Service.deleteFile(key);
+            }
+          }),
+        );
+
+        await tx.offer.deleteMany({
+          where: {
+            shipmentId,
+          },
+        });
+
+        await tx.shipmentAttachment.deleteMany({
+          where: {
+            shipmentId,
+          },
+        });
+
+        await tx.invoice.deleteMany({
+          where: {
+            shipmentId,
+          },
+        });
+
+        await tx.shipmentPayment.deleteMany({
+          where: {
+            shipmentId,
+          },
+        });
+
+        return tx.shipment.delete({
           where: {
             id: shipmentId,
           },
-        },
-      },
-    });
+        });
+      });
+    };
 
-    if (userProfile.shipments.length < 1) {
-      throw new HttpException('Shipment not found', HttpStatus.BAD_REQUEST);
+    if (Role.MANUFACTURER.includes(role)) {
+      const shipment = await this.prisma.shipment.findUnique({
+        where: {
+          id: shipmentId,
+          profile: {
+            userId,
+          },
+        },
+      });
+
+      if (!shipment) {
+        throw new HttpException('Shipment not found', HttpStatus.BAD_REQUEST);
+      }
+
+      deletedShipment = await deleteShipmentTransaction();
     }
 
-    const deleteShipment = await this.prisma.shipment.delete({
-      where: {
-        id: shipmentId,
-      },
-    });
+    if (Role.ADMIN.includes(role)) {
+      deletedShipment = await deleteShipmentTransaction();
+    }
 
-    if (!deleteShipment) {
+    if (!deletedShipment) {
       throw new HttpException(
         'Failed to delete the shipment',
         HttpStatus.BAD_REQUEST,
@@ -356,7 +419,7 @@ export class ShipmentsService {
     return {
       status: 200,
       message: 'Shipment deleted successfully',
-      deletedShipment: deleteShipment,
+      deletedShipment,
     };
   }
 
@@ -531,10 +594,7 @@ export class ShipmentsService {
     }
 
     if (driver.verificationStatus !== VerificationStatus.VERIFIED) {
-      throw new HttpException(
-        'Driver is not verified',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new HttpException('Driver is not verified', HttpStatus.BAD_REQUEST);
     }
 
     if (driver.status !== DriverStatus.AVAILABLE) {

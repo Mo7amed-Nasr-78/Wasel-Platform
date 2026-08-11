@@ -6,10 +6,6 @@ class AuthService {
 		return publicHttpClient.post(`/auth/refresh`);
 	}
 
-	me() {
-		return privateHttpClient.get("/user/me");
-	}
-
 	signup(data: { role: string | null, username: string, email: string, password: string }) {
 		return publicHttpClient.post(`/auth/signup`, data)
 	}

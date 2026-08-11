@@ -36,5 +36,7 @@
     "الحمولات المتأخرة": "delayed shipments",
     "الحمولات النشطة": "active shipments",
 	"الحمولات المتكملة": "completed shipments",
-    "تم توثيق الشاحنة بنجاح": "Truck verified successfully"
+    "تم توثيق الشاحنة بنجاح": "Truck verified successfully",
+    "تحتاج لتوثيق حسابك أولاً": "You need to verify your account first",
+    "تاريخ غير صالح": "Invalid shipment's date"
 }   

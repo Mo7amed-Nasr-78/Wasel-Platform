@@ -15,13 +15,13 @@ function Account() {
 							لتصفح كل جديد
 						</h3>
 						<div className="w-full flex flex-col gap-4 mb-5">
-							<Link to={'/signup?role=independent_carrier'}>
+							{/* <Link to={'/signup?role=independent_carrier'}>
 								<button className="flex items-center justify-center gap-2 w-full h-13 font-main font-medium border border-(--primary-color) text-(--primary-color) rounded-20 duration-300 hover:scale-95 cursor-pointer">
 									<span className="font-main text-lg font-medium capitalize">
 										كفرد ناقل
 									</span>
 								</button>
-							</Link>
+							</Link> */}
 							<Link to={'/signup?role=carrier_company'}>
 								<button className="flex items-center justify-center gap-2 w-full h-13 font-main font-medium border border-(--primary-color) text-(--primary-color) rounded-20 duration-300 hover:scale-95 cursor-pointer">
 									<span className="font-main text-lg font-medium capitalize">

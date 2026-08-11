@@ -1,27 +1,26 @@
 import { privateHttpClient } from "@/api/client/HttpClient"
 import { authService } from "@/api/services/auth.service"
 import { useMutation } from "@tanstack/react-query"
-import { useProps } from "@/components/PropsProvider"
-import { useNavigate } from "react-router-dom"
 import toast from "react-hot-toast"
 import { isAxiosError } from "axios"
 import { useTranslation } from "react-i18next"
+import { useCurrentUser } from "../user/useCurrentUser"
+import { useProps } from "@/components/PropsProvider"
 
 export function useSignin() {
-    const { user, setUser } = useProps();
-    const navigate = useNavigate();
     const { t } = useTranslation();
+    // const navigate = useNavigate();
+    const { mutate: currentUser } = useCurrentUser();
+    const { setIsLoading } = useProps();
 
     return useMutation({
         mutationKey: ["signin"],
         mutationFn: (data: { email: string; password: string }) => authService.signin(data),
 
         onSuccess: async (res) => {
-            privateHttpClient.setAccessToken(res.data.accessToken)
-            const { data } = await authService.me();
-            setUser(data);
-            if (!user)
-                navigate('/shipments');
+            privateHttpClient.setAccessToken(res.data.accessToken);
+            setIsLoading(true);
+            currentUser()
         },
 
         onError: (err) => {

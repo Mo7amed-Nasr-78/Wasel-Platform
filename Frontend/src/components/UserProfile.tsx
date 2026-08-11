@@ -22,29 +22,11 @@ import {
 	CreditCardIcon
 } from 'lucide-react';
 import { useSignout } from "@/api/hooks/auth/useSignout";
-import { useEffect } from "react";
-import toast from "react-hot-toast";
-import { isAxiosError } from "axios";
 import { Button } from "./ui/button";
 
 function UserProfile() {
-	const { data, mutate, error, isError, isSuccess } = useSignout();
+	const { mutate } = useSignout();
 	const { user } = useProps();
-
-	const logout = () => {
-		mutate();
-	}
-
-	useEffect(() => {
-		if (isSuccess) {
-			toast.success(data.data.message);
-		}
-
-		if (isError) {
-			const axiosMeg = isAxiosError(error) ? error.response?.data?.message : "حدث شء ما خطأ";
-			toast.error(axiosMeg);
-		}
-	}, [isSuccess, isError])
 
 	return (
 		<>
@@ -96,7 +78,7 @@ function UserProfile() {
 								</DropdownMenuItem>
 							</DropdownMenuGroup>
 							<DropdownMenuSeparator />
-							<DropdownMenuItem onClick={logout} className="font-main text-base font-light px-3 py-2 hover:bg-(--primary-color)/10 cursor-pointer">
+							<DropdownMenuItem onClick={() => mutate()} className="font-main text-base font-light px-3 py-2 hover:bg-(--primary-color)/10 cursor-pointer">
 								<LogOutIcon className="text-(--secondary-text)"/>
 								تسجيل الخروج
 							</DropdownMenuItem>

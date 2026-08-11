@@ -19,12 +19,16 @@ class ShipmentsService {
 		return privateHttpClient.get(`/shipments/${shipmentId}/offers`);
 	}
 
-	createShipment(data: Record<string, unknown>) {
+	createShipment(data: Record<string, unknown> | FormData) {
 		return privateHttpClient.post("/shipments/create", data);
 	}
 
 	updateShipment(id: string | undefined, data: Record<string, unknown>) {
 		return privateHttpClient.put(`/shipments/${id}`, data);
+	}
+
+	deleteShipment(id: string | undefined) {
+		return privateHttpClient.delete(`/shipments/${id}`);
 	}
 
 	assignShipment(id: string | undefined, data: Record<string, unknown>) {

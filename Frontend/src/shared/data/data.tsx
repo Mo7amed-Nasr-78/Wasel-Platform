@@ -17,7 +17,8 @@ import {
     PiWallet,
     PiCheckCircle,
     PiClock,
-    PiSteeringWheel
+    PiSteeringWheel,
+    PiUsers
 } from "react-icons/pi";
 
 export const ar_months = {
@@ -130,7 +131,7 @@ export const packagingItems = [
     "أكياس نيلون ملفوفة",
     "عبوات زجاجية",
     "صناديق بلاستيك",
-    "صناديق معدنية"<
+    "صناديق معدنية",
     "أكياس كبيرة",
     "صفائح",
     "بدون تغليف",
@@ -143,6 +144,12 @@ export const sidebarItems = [
         icon: PiHouse,
         path: "/dashboard",
         hasAccess: ["admin", "manufacturer", "carrier_company", "independent_carrier"],
+    },
+    {
+        name: "المستخدمين",
+        icon: PiUsers,
+        path: "users",
+        hasAccess: ["admin"]
     },
     {
         name: "الحمولات",

@@ -29,7 +29,7 @@ function DeleteConfirmationDialog({
 	return (
 		<Dialog open={isOpen} onOpenChange={onClose}>
 			<DialogContent
-				className="max-w-sm [&>button]:left-4 [&>button]:right-auto"
+				className="max-w-lg [&>button]:left-4 [&>button]:right-auto"
 				dir="rtl"
 			>
 				<DialogHeader>
@@ -49,7 +49,6 @@ function DeleteConfirmationDialog({
 
 				<DialogFooter className="gap-1">
 					<Button
-						size="lg"
 						type="button"
 						variant="outline"
 						onClick={onClose}
@@ -58,7 +57,6 @@ function DeleteConfirmationDialog({
 						إلغاء
 					</Button>
 					<Button
-						size="lg"
 						type="button"
 						variant="destructive"
 						onClick={onConfirm}

@@ -11,7 +11,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "./ui/tooltip"
 
 function ShipmentCard({ shipment }: { shipment: Shipment }) {
     return (
-        <div className="col-span-6 xxl:col-span-4 flex flex-col justify-between rounded-20 shadow-lg shadow-black/10 bg-[#F7F8FA] border border-(--primary-color)/25 overflow-hidden">
+        <div className="col-span-6 2xl:col-span-4 flex flex-col justify-between rounded-20 shadow-lg shadow-black/10 bg-[#F7F8FA] border border-(--primary-color)/25 overflow-hidden">
             <div className="relative h-48">
                 {
                     shipment.attachments && (
@@ -45,16 +45,6 @@ function ShipmentCard({ shipment }: { shipment: Shipment }) {
             </div>
 
             <div className="p-3">
-                {/* <div className="flex items-center justify-center gap-2 mt-3">
-                    <div className="flex items-center gap-1">
-                        <PiUser className="text-xl text-(--primary-text)"/>
-                        <Link to={{ pathname: '/' }}>
-                            <h4 className="font-main font-mediumm text-base text-(--secondry-text) duration-300 hover:underline hover:text-(--primary-color)">{ shipment.profile?.first_name } { shipment.profile?.last_name }</h4>
-                        </Link>
-                    </div>
-                    
-                </div> */}
-
                 <div className="flex items-center justify-evenly gap-3 mt-2 mb-3">
                     <div className="flex flex-col items-center justify-center">
                         <h4 className="font-main font-medium text-xl text-(--primary-text)">{ shipment.origin.split("-")[0].split(" ")[0] }</h4>

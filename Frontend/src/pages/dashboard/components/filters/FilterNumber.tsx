@@ -18,7 +18,7 @@ export function FilterNumber({ value, onChange, label, placeholder }: FilterNumb
 					onChange(e.target.value ? Number(e.target.value) : undefined)
 				}
 				placeholder={placeholder}
-				className="h-10 w-full font-main text-sm text-(--primary-text) bg-(--secondary-color) border-(--tertiary-color) [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+				className="h-10 w-full font-main text-sm text-(--primary-text) bg-(--bg-color)/25 border-(--tertiary-color) [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
 			/>
 		</div>
 	);

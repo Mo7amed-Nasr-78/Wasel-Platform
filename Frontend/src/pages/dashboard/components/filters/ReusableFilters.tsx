@@ -6,6 +6,9 @@ import { FilterSwitch } from "./FilterSwitch";
 import { FilterRange } from "./FilterRange";
 import { FilterMultiSelect } from "./FilterMultiSelect";
 import { FilterDate } from "./FilterDate";
+import { PiCaretDown, PiSlidersHorizontal, PiTrash, PiX } from "react-icons/pi";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
 
 interface ReusableFiltersProps {
 	configs: FilterConfig[];
@@ -14,7 +17,12 @@ interface ReusableFiltersProps {
 	onClear?: () => void;
 }
 
-export function ReusableFilters({ configs, values, onChange, onClear }: ReusableFiltersProps) {
+export function ReusableFilters({
+	configs,
+	values,
+	onChange,
+	onClear,
+}: ReusableFiltersProps) {
 	const hasActiveFilters = configs.some((cfg) => {
 		if (cfg.type === "range")
 			return (
@@ -30,8 +38,6 @@ export function ReusableFilters({ configs, values, onChange, onClear }: Reusable
 
 	const nonSwitchConfigs = configs.filter((c) => c.type !== "switch");
 	const switchConfigs = configs.filter((c) => c.type === "switch");
-
-	const cardClass = "rounded-lg px-3 py-2 transition-shadow";
 
 	const renderFilter = (filter: FilterConfig) => {
 		const val = values[filter.key];
@@ -201,68 +207,123 @@ export function ReusableFilters({ configs, values, onChange, onClear }: Reusable
 				.filter(Boolean)
 		: [];
 
+	const activeSwitchCount = switchConfigs.filter(
+		(cfg) => Boolean(values[cfg.key]),
+	).length;
+
 	return (
-		<>
-			{activeFilterChips.length > 0 && (
-				<div className="flex items-start gap-2 flex-wrap mb-3">
-					{onClear && (
-						<button
-							type="button"
-							onClick={onClear}
-							className="flex items-center gap-1 px-2.5 py-1 rounded-full border border-(--tertiary-color) font-main text-sm text-(--secondary-text) hover:text-(--primary-color) hover:border-(--primary-color) transition-colors cursor-pointer shrink-0"
-						>
-							مسح الكل
-						</button>
+		<div className="space-y-4">
+			{/* Header */}
+			<div className="flex items-center justify-between">
+				<div className="flex items-center gap-2">
+					<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-(--primary-color)/10 text-(--primary-color)">
+						<PiSlidersHorizontal className="w-4 h-4" />
+					</div>
+					<h3 className="font-main text-sm font-semibold text-(--primary-text)">
+						تصفية النتائج
+					</h3>
+					{activeFilterChips.length > 0 && (
+						<span className="inline-flex items-center justify-center rounded-full bg-(--primary-color) px-2 py-0.5 text-xs font-semibold text-white">
+							{activeFilterChips.length}
+						</span>
 					)}
+				</div>
+				{hasActiveFilters && onClear && (
+					<button
+						type="button"
+						onClick={onClear}
+						className="inline-flex items-center gap-1.5 rounded-lg px-3 h-8 text-sm font-medium text-(--secondary-text) hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
+					>
+						<PiTrash className="w-4 h-4" />
+						مسح الكل
+					</button>
+				)}
+			</div>
+
+			{/* Filter Controls */}
+			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+				{nonSwitchConfigs.map((filter) => (
+					<div key={filter.key}>{renderFilter(filter)}</div>
+				))}
+				{switchConfigs.length > 0 && (
+					<div className="flex flex-col gap-1.5">
+						<span className="font-main text-sm text-(--secondary-text)">
+							شروط
+						</span>
+						<Popover>
+							<PopoverTrigger className="group h-10 w-full flex items-center justify-between gap-2 px-3 rounded-lg border border-(--tertiary-color) bg-(--bg-color)/25 font-main text-sm text-(--primary-text) cursor-pointer hover:border-(--primary-color)/40 transition-colors shrink-0">
+								<span className="flex items-center gap-2.5">
+									{activeSwitchCount > 0 && (
+										<span className="inline-flex items-center justify-center min-w-5 h-5 rounded-full bg-(--primary-color) px-1.5 text-xs font-semibold text-white">
+											{activeSwitchCount}
+										</span>
+									)}
+									<span className={activeSwitchCount > 0 ? "text-(--primary-color)" : "text-(--secondary-text)"}>
+										{activeSwitchCount > 0
+											? `${activeSwitchCount} شروط مفعلة`
+											: "اختر الشروط"}
+									</span>
+								</span>
+								<PiCaretDown className="text-(--secondary-text) text-lg group-data-open:rotate-180 transition-transform" />
+							</PopoverTrigger>
+							<PopoverContent
+								align="start"
+								side="bottom"
+								sideOffset={4}
+								className="w-72 p-2"
+							>
+								<div className="divide-y divide-(--tertiary-color)/20">
+									{switchConfigs.map((filter) => (
+										<label
+											key={filter.key}
+											className="flex items-center justify-between gap-3 px-2 py-2.5 cursor-pointer"
+										>
+											<span className="font-main text-sm text-(--primary-text)">
+												{filter.name}
+											</span>
+											<Switch
+												dir="ltr"
+												checked={Boolean(values[filter.key])}
+												onCheckedChange={(v) =>
+													onChange(filter.key, v)
+												}
+											/>
+										</label>
+									))}
+								</div>
+							</PopoverContent>
+						</Popover>
+					</div>
+				)}
+			</div>
+
+			{/* Active Filter Chips */}
+			{activeFilterChips.length > 0 && (
+				<div className="flex items-center gap-2 flex-wrap">
+					<span className="text-xs text-(--secondary-text) shrink-0">
+						فلاتر مفعلة:
+					</span>
 					{activeFilterChips.map(
 						(chip) =>
 							chip && (
 								<span
 									key={chip.key}
-									className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-(--primary-color)/10 text-(--primary-color) font-main text-sm"
+									className="inline-flex items-center gap-1.5 rounded-md border border-(--primary-color)/20 bg-(--primary-color)/10 px-2.5 py-1 text-xs font-medium text-(--primary-color)"
 								>
 									{chip.label}
 									<button
 										type="button"
 										onClick={chip.reset}
-										className="hover:text-(--primary-color)/60 leading-none"
+										aria-label="إزالة الفلتر"
+										className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-(--primary-color)/20 transition-colors leading-none"
 									>
-										×
+										<PiX className="w-3 h-3" />
 									</button>
 								</span>
 							),
 					)}
 				</div>
 			)}
-			<div className="grid grid-cols-4 gap-1 items-end">
-				{nonSwitchConfigs.map((filter) => (
-					<div key={filter.key} className={cardClass}>
-						{renderFilter(filter)}
-					</div>
-				))}
-
-				{switchConfigs.length > 0 && (
-					<div className="col-span-4 flex items-end gap-3">
-						{switchConfigs.map((filter) => (
-							<div key={filter.key} className={cardClass}>
-								{renderFilter(filter)}
-							</div>
-						))}
-					</div>
-				)}
-
-				{switchConfigs.length === 0 && hasActiveFilters && onClear && (
-					<div className="flex items-end">
-						<button
-							type="button"
-							onClick={onClear}
-							className="h-10 px-4 rounded-lg border border-(--tertiary-color) font-main text-sm text-(--secondary-text) hover:text-(--primary-color) hover:border-(--primary-color) transition-colors cursor-pointer"
-						>
-							مسح الكل
-						</button>
-					</div>
-				)}
-			</div>
-		</>
+		</div>
 	);
 }

@@ -32,7 +32,45 @@ export class OffersService {
       const recentTenOffers = await this.prisma.offer.findMany({
         where: {
           status: "PENDING"
-        },    
+        },
+        select: {
+          id: true,
+          price: true,
+          proposal: true,
+          status: true,
+          createdAt: true,
+          updatedAt: true,
+          profile: {
+            select: {
+              id: true,
+              first_name: true,
+              last_name: true,
+              picture: true,
+              username: true,
+              company_name: true,
+            }
+          },
+          shipment: {
+            select: {
+              origin: true,
+              destination: true,
+              distance: true,
+              ETA: true,
+              id: true,
+              shipmentId: true,
+              profile: {
+                select: {
+                  id: true,
+                  first_name: true,
+                  last_name: true,
+                  picture: true,
+                  username: true,
+                  company_name: true,
+                }
+              },
+            }
+          }
+        },
         orderBy: {
           createdAt:  "desc"
         },

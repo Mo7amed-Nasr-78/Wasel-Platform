@@ -90,10 +90,10 @@ function PaymentDialog({ isOpen, onClose }: PaymentDialogProps) {
 	return (
 		<Dialog open={isOpen} onOpenChange={handleClose}>
 			<DialogContent
-				className={`bg-(--bg-color) border-0 ${
+				className={`bg-(--bg-color) border-0 max-h-[90dvh] overflow-y-auto ${
 					step === "stripe"
-						? "sm:max-w-lg"
-						: "sm:max-w-md"
+						? "sm:max-w-2xl"
+						: "sm:max-w-lg"
 				}`}
 				dir="rtl"
 			>

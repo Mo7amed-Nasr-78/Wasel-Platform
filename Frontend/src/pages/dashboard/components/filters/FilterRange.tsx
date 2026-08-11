@@ -34,7 +34,7 @@ export function FilterRange({
 						)
 					}
 					placeholder={placeholderFrom}
-					className="h-10 flex-1 min-w-0 font-main text-sm text-(--primary-text) bg-(--secondary-color) border-(--tertiary-color) [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+					className="h-10 flex-1 min-w-0 font-main text-sm text-(--primary-text) bg-(--bg-color)/25 border-(--tertiary-color) [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
 				/>
 				<span className="text-(--secondary-text) shrink-0">-</span>
 				<Input
@@ -48,7 +48,7 @@ export function FilterRange({
 						)
 					}
 					placeholder={placeholderTo}
-					className="h-10 flex-1 min-w-0 font-main text-sm text-(--primary-text) bg-(--secondary-color) border-(--tertiary-color) [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+					className="h-10 flex-1 min-w-0 font-main text-sm text-(--primary-text) bg-(--bg-color)/25 border-(--tertiary-color) [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
 				/>
 			</div>
 		</div>

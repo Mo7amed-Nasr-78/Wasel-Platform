@@ -25,7 +25,7 @@ function NavList() {
                 navLinks.map(({ title, path }, idx) => {
                     return (
                         <Link key={idx} to={path}>
-                            <li className="font-main font-medium text-2xl text-capitalize text-(--primary-text) cursor-pointer duration-300 hover:text-(--primary-color)">{ title }</li>
+                            <li className="font-main font-normal text-2xl text-capitalize text-(--primary-text) cursor-pointer duration-300 hover:text-(--primary-color)">{ title }</li>
                         </Link>
                     );
                 })

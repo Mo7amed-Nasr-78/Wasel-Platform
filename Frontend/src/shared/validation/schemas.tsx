@@ -20,6 +20,57 @@ export const signupSchema = yup.object({
 		.required("Confirm password field is required"),
 });
 
+export const newShipmentSchema = yup.object({
+	origin: yup.string().required("Source location is required"),
+	destination: yup.string().required("Destination is required"),
+	shipmentType: yup
+		.string()
+		.required("Shipment type is required")
+		.oneOf([
+			"شحنة عامة",
+			"مبردة / مجمدة",
+			"مواد خطر (ADR)",
+			"بضاعة سائبة",
+			"معدات ثقيلة",
+			"سيارات",
+		]),
+	packaging: yup
+		.string()
+		.required("Packaging type is required")
+		.oneOf([
+			"كرتون",
+			"بالتات",
+			"صناديق خشب",
+			"أكياس",
+			"براميل",
+			"رولات",
+			"كراتين ملفوفة بشرنك",
+			"أكياس نيلون ملفوفة",
+			"عبوات زجاجية",
+			"صناديق بلاستيك",
+			"صناديق معدنية",
+			"أكياس كبيرة",
+			"صفائح",
+			"بدون تغليف",
+		]),
+	goodsType: yup.string().required("Goods type is required"),
+	weight: yup.number().required("Shipment weight is required"),
+	length: yup.number().required("Shipment's length is required"),
+	width: yup.number().required("Shipment's width is required"),
+	height: yup.number().required("Shipment's height is required"),
+	pickupAt: yup.date().required("Shipment's pickup date is required"),
+	deliveryAt: yup.date().required("Shipment's delivery date is required"),
+	description: yup.string().required("Shipment description is required"),
+	budgetType: yup
+		.string()
+		.required("Budget type is required")
+		.oneOf(["OPEN_BUDGET", "LIMITED_BUDGET"]),
+	paymentType: yup
+		.string()
+		.required("Payment type is required")
+		.oneOf(["ON_DELIVER", "BANK_TRNASFER"]),
+});
+
 // Driver Schema
 export const createDriverSchema = yup.object({
 	first_name: yup

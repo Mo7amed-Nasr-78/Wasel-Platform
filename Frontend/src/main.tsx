@@ -12,6 +12,7 @@ import {
 } from "@tanstack/react-query";
 import { DirectionProvider } from "@/components/ui/direction"
 import { Toaster } from 'react-hot-toast';
+import { BrowserRouter } from 'react-router-dom'
 
 const queryClient = new QueryClient();
 
@@ -22,8 +23,10 @@ createRoot(document.getElementById('root')!).render(
         <PropsProvider>
           <NotificationProvider>
             <TooltipProvider>
-              <QueryClientProvider  client={queryClient}>
-                <App />
+              <QueryClientProvider client={queryClient}>
+                <BrowserRouter>
+                  <App />
+                </BrowserRouter>
                 <Toaster />
               </QueryClientProvider>
             </TooltipProvider>

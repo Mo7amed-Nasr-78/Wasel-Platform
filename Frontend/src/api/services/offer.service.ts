@@ -15,7 +15,7 @@ class OfferService {
 
 	sendOffer(
 		shipmentId: string | undefined,
-		data: { price: number; proposal: string },
+		data: { price: string | number; proposal: string },
 	) {
 		return privateHttpClient.post(`/offers/${shipmentId}`, data);
 	}

@@ -11,7 +11,6 @@ import {
   Request,
   UseInterceptors,
   UploadedFiles,
-  UploadedFile,
   Query,
 } from '@nestjs/common';
 import { ShipmentsService } from './shipments.service';
@@ -66,16 +65,17 @@ export class ShipmentsController {
     @UploadedFiles()
     shipmentAssets: ShipmentAttachments,
   ) {
-    const userId = req.user.sub as string;
+    const { sub, role, verify } = req.user;
     const data: CreateShipmentDto = JSON.parse(body.data);
-    return this.shipmentsService.createShipment(userId, data, shipmentAssets);
+    return this.shipmentsService.createShipment({ sub, role, verify }, data, shipmentAssets);
   }
 
-  @Delete(':id/delete')
+  @Delete(':id')
   @Roles(['MANUFACTURER', 'ADMIN'])
+  @UseGuards(AuthGuard)
   deleteShipment(@Param('id') shpimentId: string, @Request() req) {
-    const userId = req.user.sub as string;
-    return this.shipmentsService.deleteShipment(shpimentId, userId);
+    const { sub, role } = req.user;
+    return this.shipmentsService.deleteShipment(shpimentId, sub, role);
   }
 
   @Patch(':id/update')

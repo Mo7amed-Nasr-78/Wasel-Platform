@@ -41,5 +41,7 @@
     "PENDING": "قيد الإنتظار",
     "REJECTED": "مرفوض",
 	"Driver is not available": "السواق غير متوفر",
-	"Truck verified successfully": "تم توثيق الشاحنة بنجاح"
+	"Truck verified successfully": "تم توثيق الشاحنة بنجاح",
+	"You need to verify your account first": "تحتاج لتوثيق حسابك أولاً",
+	"Invalid shipment's date": "تاريخ غير صالح"
 }

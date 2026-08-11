@@ -56,7 +56,7 @@ export class OffersController {
   }
 
   @Post(':offerId/accept')
-  @Roles(['MANUFACTURER', 'ADMIN'])
+  @Roles(['MANUFACTURER'])
   acceptOffer(
     @Param('offerId') offerId: string,
   ) {
@@ -64,7 +64,7 @@ export class OffersController {
   }
 
   @Post(':offerId/reject')
-  @Roles(['MANUFACTURER', 'ADMIN'])
+  @Roles(['MANUFACTURER'])
   rejectOffer(
     @Param('offerId') offerId: string,
   ) {

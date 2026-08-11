@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { useProps } from "@/components/PropsProvider";
 import type { ChangeEvent, FormEvent } from "react";
 import {
 	PiDotsThree,
@@ -11,8 +10,6 @@ import {
 	PiFilePdf,
 	PiFileDoc,
 } from "react-icons/pi";
-import { useNavigate } from "react-router-dom";
-import { useNotification } from "@/components/NotificationContext";
 import type { Shipment } from "@/shared/interfaces/Interfaces";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -28,7 +25,6 @@ import {
 } from "@/components/ui/select";
 import { useCreateShipment } from "@/api/hooks/shipments/useCreateShipment";
 import { useTranslation } from "react-i18next";
-import axios from "axios";
 import {
 	newShipmentSections,
 	packagingItems,
@@ -44,11 +40,14 @@ import dayjs from "dayjs";
 import "dayjs/locale/ar";
 import { ar } from "date-fns/locale";
 import LocationTracker from "@/components/LocationPicker";
+import { newShipmentSchema } from "@/shared/validation/schemas";
+import toast from "react-hot-toast";
+import { ValidationError } from "yup";
 
 dayjs.locale("ar");
 
 function NewShipment() {
-	const newShipmentObject: Shipment = {
+	const initialNewShipment: Shipment = {
 		origin: "",
 		destination: "",
 		shipmentType: "",
@@ -58,35 +57,49 @@ function NewShipment() {
 		length: 0,
 		width: 0,
 		height: 0,
+		chunksCount: 0,
 		pickupAt: undefined,
 		deliveryAt: undefined,
 		description: "",
+
+		urgent: false,
+		twoDrivers: false,
+		additionalInsurance: false,
+		noFriday: false,
+		stacking: false,
 
 		budgetType: "",
 		paymentType: "",
 	};
 
-	const { user } = useProps();
-	const navigate = useNavigate();
-	const { addNotification } = useNotification();
 	const { t } = useTranslation();
 	const spansRef = useRef<HTMLSpanElement[]>([]);
-	const { data, mutate, isPending, isError, error, isSuccess } =
-		useCreateShipment();
+	const shipmentImgsInputRef = useRef<HTMLInputElement | null>(null);
+	const shipmentDocsInputRef = useRef<HTMLInputElement | null>(null);
+	const { mutate, isPending } = useCreateShipment();
 
 	// Components' states
 	const [newShipment, setNewShipment] =
-		useState<Shipment>(newShipmentObject);
+		useState<Shipment>(initialNewShipment);
 	const [shipmentImgs, setShipmentImgs] = useState<File[]>([]);
 	const [shipmentDocs, setShipmentDocs] = useState<File[]>([]);
 	const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 	const [isCustomShipmentType, setIsCustomShipmentType] = useState(false);
 
-	useEffect(() => {
-		if (!user) {
-			navigate("/");
+	const resetForm = () => {
+		previewUrls.forEach((url) => URL.revokeObjectURL(url));
+		setNewShipment(initialNewShipment);
+		setShipmentImgs([]);
+		setShipmentDocs([]);
+		setPreviewUrls([]);
+		setIsCustomShipmentType(false);
+		if (shipmentImgsInputRef.current) {
+			shipmentImgsInputRef.current.value = "";
 		}
-	}, [user]);
+		if (shipmentDocsInputRef.current) {
+			shipmentDocsInputRef.current.value = "";
+		}
+	};
 
 	useEffect(() => {
 		if (!shipmentImgs) return;
@@ -104,24 +117,6 @@ function NewShipment() {
 		};
 	}, [shipmentImgs]);
 
-	useEffect(() => {
-		if (isSuccess) {
-			addNotification(t(data.data?.message), "success", 5000);
-			setNewShipment(newShipmentObject);
-			setShipmentImgs([]);
-			setShipmentDocs([]);
-			setPreviewUrls([]);
-			setIsCustomShipmentType(false);
-		}
-
-		if (isError) {
-			const axiosMeg = axios.isAxiosError(error)
-				? error.response?.data.message
-				: "حدث خطأ ما";
-			addNotification(t(axiosMeg), "error", 5000);
-		}
-	}, [isError, isSuccess]);
-
 	const handleChange = (
 		e: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
 	) => {
@@ -138,9 +133,11 @@ function NewShipment() {
 
 	const handleFileUploading = (e: ChangeEvent<HTMLInputElement>) => {
 		e.preventDefault();
-		if (!e.target.files?.length || !spansRef.current) return;
+		const MAX_FILES = 3;
+		const files = Array.from(e.target.files ?? []);
+		if (!files?.length || !spansRef.current) return;
 
-		if (e.target.files.length > e.target.maxLength) {
+		if (files.length > MAX_FILES) {
 			spansRef.current.forEach((span) => {
 				if (span.dataset.span === e.target.name) {
 					span.classList.remove("hidden");
@@ -153,7 +150,7 @@ function NewShipment() {
 				}
 			});
 		} else if (
-			e.target.files.length < e.target.maxLength &&
+			files.length < MAX_FILES &&
 			e.target.name !== "shipmentDocs"
 		) {
 			spansRef.current.forEach((span) => {
@@ -169,9 +166,9 @@ function NewShipment() {
 			});
 		} else {
 			if (e.target.name === "shipmentImgs") {
-				setShipmentImgs(Array.from(e.target.files));
+				setShipmentImgs(files);
 			} else {
-				setShipmentDocs(Array.from(e.target.files));
+				setShipmentDocs(Array.from(files));
 			}
 		}
 	};
@@ -186,7 +183,7 @@ function NewShipment() {
 	};
 
 	// Calculate distance and ETA using OSRM API
-	const calculateDistanceAndETA = async (	
+	const calculateDistanceAndETA = async (
 		originLat: number,
 		originLng: number,
 		destinationLat: number,
@@ -213,7 +210,6 @@ function NewShipment() {
 						? `${hours}h ${minutes}m`
 						: `${minutes}m`;
 
-
 				// setNewShipment({ ...newShipment, ETA: eta, distance: distance })
 				return {
 					distance: `${distanceKm} km`,
@@ -233,12 +229,12 @@ function NewShipment() {
 		e.preventDefault();
 
 		if (shipmentImgs.length < 3) {
-			addNotification("لا يمكنك رفع أقل من 3 صور", "warning", 5000);
+			toast.error(t("لا يمكنك رفع أقل من 3 صور"));
 			return;
 		}
 
 		if (shipmentDocs.length < 1) {
-			addNotification("لا يمكنك رفع أقل مرفق", "warning", 5000);
+			toast.error(t("لا يمكنك رفع أقل مرفق"));
 			return;
 		}
 
@@ -251,30 +247,39 @@ function NewShipment() {
 			formData.append("shipmentDocs", shipmentDoc);
 		}
 
-		const validDate = dayjs(newShipment.deliveryAt).diff(newShipment.pickupAt, "days")  > 1? true : false;
-		if(!validDate) {
-			addNotification(
-				`تاريخ غير صالح`,
-				"warning",
-				5000,
-			);
+		try {
+			await newShipmentSchema.validate(newShipment, {
+				abortEarly: false,
+			});
+		} catch (error) {
+			if (error instanceof ValidationError) {
+				const messages = error.errors.join("\n");
+				toast.error(messages || "يرجى التحقق من بيانات الشحنة");
+				return;
+			}
+
+			toast.error("يرجى التحقق من بيانات الشحنة");
 			return;
 		}
 
-		// for (const value of Object.values(newShipmentObject)) {
-		// 	if (typeof value !== "boolean" && !value) {
-		// 		addNotification(
-		// 			`من فضلك أدخل تفاصيل الحمولة كاملة أولاً`,
-		// 			"warning",
-		// 			5000,
-		// 		);
-		// 		return;
-		// 	}
-		// }
+		const validDate =
+			dayjs(newShipment.deliveryAt).diff(
+				newShipment.pickupAt,
+				"days",
+			) > 1
+				? true
+				: false;
+		if (!validDate) {
+			toast.error(t("Invalid shipment's date"));
+			return;
+		}
 
 		formData.set("data", JSON.stringify(newShipment));
-
-		mutate(formData);
+		mutate(formData, {
+			onSuccess: () => {
+				resetForm();
+			},
+		});
 	};
 
 	return (
@@ -289,8 +294,17 @@ function NewShipment() {
 										<li
 											key={idx}
 											onClick={() => {
-												const el = document.getElementById(sec.sectionId);
-												if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+												const el =
+													document.getElementById(
+														sec.sectionId,
+													);
+												if (el)
+													el.scrollIntoView(
+														{
+															behavior: "smooth",
+															block: "start",
+														},
+													);
 											}}
 											className="w-full py-2 flex items-center gap-3 text-xl text-(--scondary-color) p-3 bg-(--primary-color)/6 rounded-20 border border-transparent hover:border-(--primary-color) cursor-pointer"
 										>
@@ -317,7 +331,10 @@ function NewShipment() {
 							onSubmit={handleSubmit}
 							className="flex flex-col"
 						>
-							<div id="shipment-type" className="w-full rounded-20 bg-(--secondary-color) p-5 mb-5">
+							<div
+								id="shipment-type"
+								className="w-full rounded-20 bg-(--secondary-color) p-5 mb-5"
+							>
 								<div className="flex items-center gap-3 mb-4">
 									<div className="w-8 h-8 flex items-center justify-center rounded-full bg-(--primary-color) text-(--secondary-color)">
 										<span className="font-main font-medium text-xl">
@@ -334,10 +351,13 @@ function NewShipment() {
 											const Icon =
 												i.icon;
 											return (
-												<div className="col-span-3">
+												<div
+													key={`shipment-type-${idx}`}
+													className="col-span-3"
+												>
 													<label
 														htmlFor={`shipment-type-${idx}`}
-														className="h-36 flex flex-col items-center justify-center gap-2 border border-(--secondary-text) rounded-20 transition-colors duration-200 has-[input:checked]:border-transparent has-[input:checked]:bg-(--tertiary-color)/25 hover:bg-(--tertiary-color)/25 cursor-pointer"
+														className="h-36 flex flex-col items-center justify-center gap-2 border border-(--secondary-text) rounded-20 transition-colors duration-200 has-[input:checked]:border-transparent has-[input:checked]:bg-(--primary-color)/10 hover:bg-(--tertiary-color)/25 cursor-pointer"
 													>
 														<div className="w-14 h-14 flex items-center justify-center rounded-full bg-(--primary-color)/10">
 															<Icon className="text-3xl text-(--primary-color)" />
@@ -349,9 +369,15 @@ function NewShipment() {
 														</h5>
 														<input
 															type="radio"
-															onChange={(e) => {
-																setIsCustomShipmentType(false);
-																handleChange(e);
+															onChange={(
+																e,
+															) => {
+																setIsCustomShipmentType(
+																	false,
+																);
+																handleChange(
+																	e,
+																);
 															}}
 															value={
 																i.type
@@ -374,7 +400,11 @@ function NewShipment() {
 										</h5>
 										<input
 											type="radio"
-											onChange={() => setIsCustomShipmentType(true)}
+											onChange={() =>
+												setIsCustomShipmentType(
+													true,
+												)
+											}
 											value="OTHER"
 											name="shipmentType"
 											className="hidden"
@@ -385,7 +415,9 @@ function NewShipment() {
 									<div className="mt-4">
 										<input
 											type="text"
-											onChange={handleChange}
+											onChange={
+												handleChange
+											}
 											name="shipmentType"
 											placeholder="الرجاء كتابة نوع الشحنة"
 											className="w-full h-12 border border-(--primary-color) rounded-10 font-main font-medium text-base text-(--primary-text) focus:outline-none px-3"
@@ -394,7 +426,10 @@ function NewShipment() {
 								)}
 							</div>
 
-							<div id="shipment-details" className="w-full rounded-20 bg-(--secondary-color) p-5 mb-5">
+							<div
+								id="shipment-details"
+								className="w-full rounded-20 bg-(--secondary-color) p-5 mb-5"
+							>
 								<div className="flex items-center gap-3 mb-4">
 									<div className="w-8 h-8 flex items-center justify-center rounded-full bg-(--tertiary-color)/10 text-(--primary-text)">
 										<span className="font-main font-medium text-xl">
@@ -427,6 +462,9 @@ function NewShipment() {
 												)
 											}
 											name="packaging"
+											value={
+												newShipment.packaging
+											}
 										>
 											<SelectTrigger
 												className="w-full font-main font-medium text-base text-(--primary-text) border border-(--tertiary-color) rounded-10"
@@ -477,6 +515,9 @@ function NewShipment() {
 											onChange={
 												handleChange
 											}
+											value={
+												newShipment.goodsType
+											}
 											name="goodsType"
 											placeholder="مثال: مواد بناء، ملابس، إلكترونتات..."
 											className="w-full h-12 border border-(--tertiary-color) rounded-10 font-main font-medium placeholder:text-base text-base text-(--primary-text) focus:outline-none px-3 "
@@ -485,7 +526,10 @@ function NewShipment() {
 								</div>
 							</div>
 
-							<div id="basic-data" className="w-full rounded-20 bg-(--secondary-color) p-5 mb-5">
+							<div
+								id="basic-data"
+								className="w-full rounded-20 bg-(--secondary-color) p-5 mb-5"
+							>
 								<div className="flex items-center gap-3 mb-4">
 									<div className="w-8 h-8 flex items-center justify-center rounded-full bg-(--tertiary-color)/10 text-(--primary-text)">
 										<span className="font-main font-medium text-xl">
@@ -512,6 +556,9 @@ function NewShipment() {
 													handleChange
 												}
 												name="weight"
+												value={
+													newShipment.weight
+												}
 												placeholder="0"
 												className="w-full h-full font-main font-medium placeholder:text-base text-lg text-(--primary-text) focus:outline-none"
 											/>
@@ -531,6 +578,10 @@ function NewShipment() {
 										<input
 											type="number"
 											name="chunksCount"
+											onChange={handleChange}
+											value={
+												newShipment.chunksCount
+											}
 											placeholder="0"
 											className="w-full h-12 border border-(--tertiary-color) rounded-10 font-main font-medium placeholder:text-base text-base text-(--primary-text) focus:outline-none px-3"
 										/>
@@ -546,6 +597,9 @@ function NewShipment() {
 													handleChange
 												}
 												name="stacking"
+												value={
+													newShipment.stacking
+												}
 												id="stacking"
 												className="relative appearance-none w-5 h-5 rounded-sm border border-(--secondary-text) before:absolute before:top-2/4 before:left-2/4 before:-translate-2/4 before:text-(--secondary-color) checked:before:content-['\2713'] checked:border-(--primary-color) checked:bg-(--primary-color)"
 											/>
@@ -576,6 +630,9 @@ function NewShipment() {
 														handleChange
 													}
 													name="length"
+													value={
+														newShipment.length
+													}
 													placeholder="0"
 													className="w-full h-12 px-3 font-main font-medium placeholder:text-base text-base text-(--primary-text) rounded-10 border border-(--tertiary-color) focus:outline-none"
 												/>
@@ -593,6 +650,9 @@ function NewShipment() {
 														handleChange
 													}
 													name="width"
+													value={
+														newShipment.width
+													}
 													placeholder="0"
 													className="w-full h-12 px-3 font-main font-medium placeholder:text-base text-base text-(--primary-text) rounded-10 border border-(--tertiary-color) focus:outline-none"
 												/>
@@ -610,6 +670,9 @@ function NewShipment() {
 														handleChange
 													}
 													name="height"
+													value={
+														newShipment.height
+													}
 													placeholder="0"
 													className="w-full h-12 px-3 font-main font-medium placeholder:text-base text-base text-(--primary-text) rounded-10 border border-(--tertiary-color) focus:outline-none"
 												/>
@@ -643,8 +706,11 @@ function NewShipment() {
 												)
 											}
 											name="description"
+											value={
+												newShipment.description
+											}
 											maxLength={
-												300
+												800
 											}
 											id="shipmentDesc"
 											placeholder="اكتب تفاصيل إضافية..."
@@ -687,17 +753,8 @@ function NewShipment() {
                                             <input type="date" onChange={(e) => setNewShipment({ ...newShipment, pickupAt: e.target.value })} id="pickup-date" placeholder="يوم/شهر/سنة" className="w-full h-full font-main font-medium placeholder:text-base text-lg text-(--primary-text) focus:outline-none" />
                                         </div> */}
 										<Popover>
-											<PopoverTrigger
-												asChild
-											>
-												<Button
-													type="button"
-													variant="outline"
-													data-empty={
-														!newShipment.pickupAt
-													}
-													className="w-full h-12 font-main flex items-center justify-between px-3 rounded-10 border border-(--tertiary-color) bg-transparent hover:bg-transparent data-[empty=true]:text-muted-foreground"
-												>
+											<PopoverTrigger>
+												<span className="w-full h-12 font-main flex items-center justify-between px-3 rounded-10 border border-(--tertiary-color) bg-transparent hover:bg-transparent data-[empty=true]:text-muted-foreground">
 													{newShipment.pickupAt ? (
 														dayjs(
 															newShipment.pickupAt,
@@ -712,7 +769,7 @@ function NewShipment() {
 														</span>
 													)}
 													{/* <ChevronDownIcon /> */}
-												</Button>
+												</span>
 											</PopoverTrigger>
 											<PopoverContent
 												className="w-auto p-0 z-50"
@@ -753,17 +810,8 @@ function NewShipment() {
 											تاريخ الوصول
 										</span>
 										<Popover>
-											<PopoverTrigger
-												asChild
-											>
-												<Button
-													type="button"
-													variant="outline"
-													data-empty={
-														!newShipment.deliveryAt
-													}
-													className="w-full h-12 font-main flex items-center justify-between px-3 rounded-10 border border-(--tertiary-color) bg-transparent hover:bg-transparent data-[empty=true]:text-muted-foreground"
-												>
+											<PopoverTrigger>
+												<span className="w-full h-12 font-main flex items-center justify-between px-3 rounded-10 border border-(--tertiary-color) bg-transparent hover:bg-transparent data-[empty=true]:text-muted-foreground">
 													{newShipment.deliveryAt ? (
 														dayjs(
 															newShipment.deliveryAt,
@@ -777,7 +825,7 @@ function NewShipment() {
 															)}
 														</span>
 													)}
-												</Button>
+												</span>
 											</PopoverTrigger>
 											<PopoverContent
 												className="w-auto p-0 z-50"
@@ -1029,7 +1077,10 @@ function NewShipment() {
 							</div>
 
 							<div className="flex items-stretch gap-5">
-								<div id="shipment-images" className="w-full h-full rounded-20 bg-(--secondary-color) p-5 mb-5">
+								<div
+									id="shipment-images"
+									className="w-full h-full rounded-20 bg-(--secondary-color) p-5 mb-5"
+								>
 									<div className="flex items-center gap-3 mb-4">
 										<div className="w-8 h-8 flex items-center justify-center rounded-full bg-(--tertiary-color)/10 text-(--primary-text)">
 											<span className="font-main font-medium text-xl">
@@ -1070,12 +1121,14 @@ function NewShipment() {
 										}
 										name="shipmentImgs"
 										id="shipmentImgs"
+										ref={
+											shipmentImgsInputRef
+										}
 										className="hidden"
 										multiple
 										maxLength={3}
 										accept="image/png, image/webp, image/jpeg"
 									/>
-
 									<ul className="flex items-center gap-2">
 										<li className="group relative w-full h-24 flex items-center justify-center rounded-10 overflow-hidden bg-(--secondary-text)/15">
 											{previewUrls[0] ? (
@@ -1175,9 +1228,7 @@ function NewShipment() {
 										}}
 										data-span="shipmentImgs"
 										className={`hidden font-main font-medium text-sm text-(--red-color)`}
-									>
-										hgh
-									</span>
+									></span>
 								</div>
 
 								<div className="w-full rounded-20 bg-(--secondary-color) p-5 mb-5">
@@ -1273,7 +1324,10 @@ function NewShipment() {
 								</div>
 							</div>
 
-							<div id="additional-options" className="w-full rounded-20 bg-(--secondary-color) p-5 mb-5">
+							<div
+								id="additional-options"
+								className="w-full rounded-20 bg-(--secondary-color) p-5 mb-5"
+							>
 								<div className="flex items-center gap-3 mb-4">
 									<div className="w-8 h-8 flex items-center justify-center rounded-full bg-(--tertiary-color)/10 text-(--primary-text)">
 										<span className="font-main font-medium text-xl">
@@ -1293,6 +1347,9 @@ function NewShipment() {
 												handleChange
 											}
 											name="urgent"
+											value={
+												newShipment.urgent
+											}
 											id="urgent"
 											className="relative appearance-none w-5 h-5 rounded-sm border border-(--secondary-text) before:absolute before:top-2/4 before:left-2/4 before:-translate-2/4 before:text-(--secondary-color) checked:before:content-['\2713'] checked:border-(--primary-color) checked:bg-(--primary-color)"
 										/>
@@ -1310,6 +1367,9 @@ function NewShipment() {
 												handleChange
 											}
 											name="additionalInsurance"
+											value={
+												newShipment.additionalInsurance
+											}
 											id="additionalInsurance"
 											className="relative appearance-none w-5 h-5 rounded-sm border border-(--secondary-text) before:absolute before:top-2/4 before:left-2/4 before:-translate-2/4 before:text-(--secondary-color) checked:before:content-['\2713'] checked:border-(--primary-color) checked:bg-(--primary-color)"
 										/>
@@ -1325,6 +1385,9 @@ function NewShipment() {
 											type="checkbox"
 											onChange={
 												handleChange
+											}
+											value={
+												newShipment.twoDrivers
 											}
 											name="twoDrivers"
 											id="twoDrivers"
@@ -1344,6 +1407,9 @@ function NewShipment() {
 												handleChange
 											}
 											name="noFriday"
+											value={
+												newShipment.noFriday
+											}
 											id="noFriday"
 											className="relative appearance-none w-5 h-5 rounded-sm border border-(--secondary-text) before:absolute before:top-2/4 before:left-2/4 before:-translate-2/4 before:text-(--secondary-color) checked:before:content-['\2713'] checked:border-(--primary-color) checked:bg-(--primary-color)"
 										/>
@@ -1358,7 +1424,10 @@ function NewShipment() {
 								</div>
 							</div>
 
-							<div id="payment-budget" className="w-full rounded-20 bg-(--secondary-color) p-5 mb-5">
+							<div
+								id="payment-budget"
+								className="w-full rounded-20 bg-(--secondary-color) p-5 mb-5"
+							>
 								<div className="flex items-center gap-3 mb-4">
 									<div className="w-8 h-8 flex items-center justify-center rounded-full bg-(--tertiary-color)/10 text-(--primary-text)">
 										<span className="font-main font-medium text-xl">
@@ -1491,7 +1560,10 @@ function NewShipment() {
 															وسائل
 															الدفع
 														</SelectLabel>
-														<SelectItem value="ON_DELIVER">
+														<SelectItem
+															defaultChecked
+															value="ON_DELIVER"
+														>
 															الدفع
 															عند
 															الإستلام

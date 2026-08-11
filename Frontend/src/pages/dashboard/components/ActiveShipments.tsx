@@ -154,7 +154,7 @@ function ActiveShipments() {
 	};
 
 	return (
-		<div className="w-full h-full flex flex-col bg-(--secondary-color) rounded-20 p-6 border border-(--tertiary-color)/20">
+		<div className="w-full h-full flex flex-col bg-(--secondary-color) rounded-20 p-6 border border-(--tertiary-color)/20 justify-between">
 			<div className="flex items-center justify-between mb-6">
 				<h2 className="font-main text-xl font-bold text-(--primary-text)">
 					الشحنات النشطة
@@ -345,6 +345,17 @@ function ActiveShipments() {
 				</div>
 			)}
 
+			<div className="flex items-center justify-center pt-4">
+				<Link to={{ pathname: "/dashboard/shipments" }}>
+					<Button
+						variant="outline"
+						className="h-11 text-base"
+					>
+						عرض جميع الشحنات
+					</Button>
+				</Link>
+			</div>
+
 			<Dialog
 				open={isAssignDialogOpen}
 				onOpenChange={(open) =>
@@ -483,17 +494,6 @@ function ActiveShipments() {
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>
-
-			<div className="flex items-center justify-center pt-4">
-				<Link to={{ pathname: "/dashboard/shipments" }}>
-					<Button
-						variant="outline"
-						className="h-11 text-base"
-					>
-						عرض جميع الشحنات
-					</Button>
-				</Link>
-			</div>
 		</div>
 	);
 }

@@ -312,8 +312,8 @@ export function ShipmentsDataTable() {
 
 	return (
 		<div className="w-full h-full flex flex-col gap-4">
-			{/* Filters section box */}
-			<div className="rounded-xl border border-(--tertiary-color) bg-(--secondary-color) p-4">
+{/* Filters section box */}
+			<div className="rounded-xl border border-(--tertiary-color)/20 bg-(--secondary-color) shadow-sm p-4">
 				<ReusableFilters
 					configs={shipmentFilters}
 					values={filters as unknown as Record<string, unknown>}
@@ -325,7 +325,7 @@ export function ShipmentsDataTable() {
 			</div>
 
 			{/* Table section box */}
-			<div className="flex-1 rounded-xl border border-(--tertiary-color) bg-(--secondary-color)	 flex flex-col gap-4">
+			<div className="flex-1 rounded-xl border border-(--tertiary-color) bg-(--secondary-color) flex flex-col gap-4">
 				{isLoading ? (
 					<div className="flex items-center justify-center flex-1">
 						<div className="text-center">

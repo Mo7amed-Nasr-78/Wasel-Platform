@@ -1,11 +1,9 @@
 import Main from "@/components/Main";
 import { useShipment } from "@/api/hooks/shipments/useShipment";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import PageTitle from "@/components/PageTitle";
-import axios from "axios";
-import { useNotification } from "@/components/NotificationContext";
 import { useTranslation } from "react-i18next";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { MouseEvent } from "react";
 import { Button } from "@/components/ui/button";
 import Loader from "@/components/Loader";
@@ -35,6 +33,10 @@ import { Spinner } from "@/components/ui/spinner";
 import ShipmentMap from "@/components/ShipmentMap";
 import { useProps } from "@/components/PropsProvider";
 import { Dialog, DialogTrigger, DialogContent } from "@/components/ui/dialog";
+import toast from "react-hot-toast";
+import HasRole from "@/components/HasRole";
+import { useDeleteShipment } from "@/api/hooks/shipments/useDeleteShipment";
+import DeleteConfirmationDialog from "@/pages/dashboard/components/DeleteConfirmationDialog";
 dayjs.locale("ar");
 
 function Shipment() {
@@ -45,27 +47,21 @@ function Shipment() {
 
 	const { id: shipmentId } = useParams();
 	const { t } = useTranslation();
-	const { addNotification } = useNotification();
 	const { user } = useProps();
+	const navigate = useNavigate();
 
 	// Shipment states
 	const [offer, setOffer] = useState<Offer>(offerInitial);
+	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
 	// Shipment queries
-	const {
-		data,
-		isLoading: isShipmentLoading,
-		error: shipmentError,
-		isError: isShipmentError,
-	} = useShipment(shipmentId);
-	const {
-		data: newOffer,
-		mutate: createOffer,
-		error: OfferError,
-		isError: isOfferError,
-		isPending: isOfferPending,
-		isSuccess: isOfferSuccess,
-	} = useCreateOffer(shipmentId, offer);
+	const { data, isLoading: isShipmentLoading } = useShipment(shipmentId);
+	const { mutate: createOffer, isPending: isOfferPending } = useCreateOffer(
+		shipmentId,
+		offer,
+	);
+	const { mutate: deleteShipment, isPending: isDeleting } =
+		useDeleteShipment();
 
 	const shipment: Shipment = data?.data;
 	const profile = data?.data.profile;
@@ -79,38 +75,13 @@ function Shipment() {
 			return attachment.attachmentType === "File";
 		}) || [];
 
-	useEffect(() => {
-		if (isShipmentError || isOfferError) {
-			const error = isShipmentError ? shipmentError : OfferError;
-
-			// const status = axios.isAxiosError(error)? error.status : 501
-			const axiosMeg = axios.isAxiosError(error)
-				? error.response?.data.message
-				: 501;
-
-			addNotification(t(axiosMeg), "error", 5000);
-		}
-
-		if (isOfferSuccess) {
-			addNotification(t(newOffer.data.message), "success", 5000);
-			setOffer(offerInitial);
-		}
-	}, [
-		isOfferSuccess,
-		isShipmentError,
-		isOfferError,
-		shipmentError,
-		OfferError,
-		shipmentId,
-	]);
-
 	const handleClick = async (e: MouseEvent<HTMLButtonElement>) => {
 		e.preventDefault();
 
 		const { price } = offer;
 
 		if (!price) {
-			addNotification(t("أدخل سعرك أولاً"), "warning", 5000);
+			toast(t("أدخل سعرك أولاً"));
 			return;
 		}
 
@@ -121,17 +92,55 @@ function Shipment() {
 		return dayjs(date).format("DD MMMM YYYY");
 	};
 
+	const handleDeleteShipment = () => {
+		const shipmentIdToDelete = shipment?.id || shipmentId;
+		if (!shipmentIdToDelete) return;
+
+		deleteShipment(shipmentIdToDelete, {
+			onSuccess: () => {
+				setIsDeleteDialogOpen(false);
+				navigate("/shipments");
+			},
+			onSettled: () => {
+				setIsDeleteDialogOpen(false);
+			},
+		});
+	};
+
 	if (isShipmentLoading) return <Loader />;
 
 	return (
 		<Main>
 			<section className="container mx-auto px-4 sm:px-0 min-h-screen pt-28 mb-24">
-				<div className="flex items-center justify-start">
+				<div className="flex items-center justify-between">
 					<PageTitle
 						title={shipment.shipmentId}
 						subTitle="تصفح تفاصيل الحمولة كاملةً وقم بتقديم عرضك لنقلها بأمان وسرعة"
 					/>
+					<HasRole roles={["manufacturer", "admin"]}>
+						<Button
+							size={"default"}
+							variant={"destructive"}
+							className="px-4"
+							onClick={() =>
+								setIsDeleteDialogOpen(true)
+							}
+							disabled={isDeleting}
+						>
+							{isDeleting
+								? "جارٍ الحذف..."
+								: "حذف الشحنة"}
+						</Button>
+					</HasRole>
 				</div>
+				<DeleteConfirmationDialog
+					isOpen={isDeleteDialogOpen}
+					onClose={() => setIsDeleteDialogOpen(false)}
+					onConfirm={handleDeleteShipment}
+					title="حذف الشحنة"
+					description={`هل أنت متأكد من رغبتك في حذف الشحنة ${shipment.shipmentId || "هذه الشحنة"}؟ هذا الإجراء لا يمكن التراجع عنه.`}
+					isLoading={isDeleting}
+				/>
 				<div className="w-full h-full grid grid-cols-12 gap-5">
 					<div className="col-span-3">
 						<div className="flex flex-col gap-5">
@@ -514,9 +523,7 @@ function Shipment() {
 							</div>
 							<div className="w-full flex items-center gap-3 overflow-x-scroll scrollbar-hidden">
 								{shipmentImgs.map((img) => {
-									const key =
-										(img as any).id ||
-										img.url;
+									const key = img.url;
 
 									return (
 										<Dialog key={key}>

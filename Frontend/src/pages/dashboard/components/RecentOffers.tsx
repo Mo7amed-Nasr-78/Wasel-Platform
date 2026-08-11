@@ -4,6 +4,8 @@ import {
 	PiCheckCircle, 
 	PiXCircle, 
 	PiChatDots,
+	PiMapPin,
+	PiPackage
 } from "react-icons/pi";
 import { useRecentOffer } from "@/api/hooks/offers/useRecentOffer";
 import { Link } from "react-router-dom";
@@ -117,18 +119,26 @@ function RecentOffers() {
 									className={`p-3 rounded-xl transition-all border border-(--primary-color)/25 bg-(--primary-color)/4`}
 								>
 									<div className="flex flex-col items-start justify-between">
-										<div className="w-full flex items-center justify-between mb-3">
-											<Link to={`/dashboard/shipments/${offer.shipment?.id}`}>
-												<p className="font-bold text-(--primary-text) hover:text-(--primary-color) underline">
-													{
-														offer.shipment?.shipmentId
-													}
-												</p>
-											</Link>
+										<div className="w-full flex items-center justify-between pb-2 mb-3 border-b">
+											<div className="flex items-center gap-2">
+												<div className="w-11 h-11 flex items-center justify-center rounded-full border border-(--tertiary-color)/50 bg-(--tertiary-color)/10">
+													<PiPackage className="text-2xl text-(--secondary-text)"/>
+												</div>
+												<div className="flex flex-col gap-0">
+													<h3 className="text-xs font-semibold text-(--secondary-text)">رقم الشحنة</h3>
+													<Link to={`/dashboard/shipments/${offer.shipment?.id}`}>
+														<p className="text-sm text-(--primary-text) hover:text-(--primary-color) underline">
+															{
+																offer.shipment?.shipmentId
+															}
+														</p>
+													</Link>
+												</div>
+											</div>
 											<span className={`text-xs px-3 py-1 rounded-full ${statusColor.text} ${statusColor.bg}`}>{ statusColor.label }</span>
 										</div>
 										
-										<div className="w-full px-2 flex-1 mb-3">
+										<div className="w-full px-2 flex-1">
 											{/* <div className="flex items-center justify-between gap-2 mb-3">
 												<h3 className="font-bold text-(--primary-text) truncate">
 													{ isManufacturer && (offer.profile.first_name + " " + offer.profile.last_name) }
@@ -155,46 +165,32 @@ function RecentOffers() {
 												</span>
 											</div> */}
 
-											<div className="flex flex-col items-center gap-1">
-												{/* {isManufacturer && (
-													<div className="flex items-center justify-between">
+											<div className="flex flex-col items-center gap-2">
+												<div className="w-full flex items-center gap-6">
+													<div className="flex flex-col">
 														<p className="text-(--secondary-text) text-sm mb-1">
-															الشحنة
+															السعر
 														</p>
-														<Link to={`/dashboard/shipments/${offer.shipment.id}`}>
-															<p className="font-bold text-(--primary-text) hover:text-(--primary-color) underline">
-																{
-																	offer.shipment.shipmentId
-																}
-															</p>
-														</Link>
+														<p className="font-bold text-(--primary-color) text-base">
+															{
+																offer.price
+															}
+														</p>
 													</div>
-												) } */}
-												<div className="w-full flex items-center justify-between">
-													<p className="text-(--secondary-text) text-sm mb-1">
-														السعر
-													</p>
-													<p className="font-bold text-(--primary-color) text-base">
-														{
-															offer.price
-														}
-													</p>
+													<div className="flex flex-col">
+														<p className="text-(--secondary-text) text-sm mb-1">
+															الوقت المتوقع
+														</p>
+														<p className="font-bold text-(--primary-text)">
+															{
+																offer.shipment?.ETA
+															}
+														</p>
+													</div>
 												</div>
-												<div className="w-full flex items-center justify-between">
-													<p className="text-(--secondary-text) text-sm mb-1">
-														الوقت المتوقع
-													</p>
-													<p className="font-bold text-(--primary-text)">
-														{
-															offer.shipment?.ETA
-														}
-													</p>
-												</div>
-												<div className="w-full flex items-center justify-between">
-													<p className="text-(--secondary-text) text-sm mb-1">
-														الوجهة
-													</p>
-													<p className="font-semibold text-(--primary-text)">
+												<div className="w-full flex items-center gap-1">
+													<PiMapPin className="text-base text-(--primary-color)"/>
+													<p className="text-sm font-normal text-(--primary-text)">
 														{ offer.shipment?.origin } / { offer.shipment?.destination }
 													</p>
 												</div>

@@ -16,3 +16,8 @@ export interface DriverAttachments {
   national_id_card_front?: Express.Multer.File[];
   national_id_card_back?: Express.Multer.File[];
 }
+
+export interface UserAttachments {
+  picture?: Express.Multer.File[];
+  commercialRegister?: Express.Multer.File[];
+}

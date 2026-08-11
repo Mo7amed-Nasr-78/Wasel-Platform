@@ -30,24 +30,76 @@ import { isAxiosError } from "axios";
 // Custom hooks
 import { useTranslation } from "react-i18next";
 import { useRefresh } from "./api/hooks/auth/useRefresh";
-import { useMe } from "./api/hooks/auth/useMe";
 import { useSignout } from "./api/hooks/auth/useSignout";
 import DashDrivers from "./pages/dashboard/DashDrivers";
 import DashTrucks from "./pages/dashboard/DashTrucks";
 import DashBalance from "./pages/dashboard/DashBalance";
+import DashUsers from "./pages/dashboard/DashUsers";
+import ProfileEdit from "./pages/ProfileEdit";
+import { useCurrentUser } from "./api/hooks/user/useCurrentUser";
+import ProtectedRoute from "./components/ProtectedRoute";
+
+const dashboardRoles = [
+	"admin",
+	"manufacturer",
+	"carrier_company",
+	"independent_carrier",
+] as const;
+
+const noAuthPages = new Set([
+	"/account",
+	"/signin",
+	"/signup",
+	"/forgetpassword",
+	"/verification",
+	"/resetpassword",
+]);
+
+const publicRoutes = [
+	{ path: "/", element: <Home /> },
+	{ path: "/account", element: <Account /> },
+	{ path: "/signin", element: <Signin /> },
+	{ path: "/signup", element: <Signup /> },
+	{ path: "/forgetpassword", element: <ForgetPassword /> },
+	{ path: "/resetpassword", element: <ResetPassword /> },
+	{ path: "/verification", element: <OneTimePassword /> },
+	{ path: "/profile/:username", element: <Profile /> },
+	{ path: "/profile/:username/edit", element: <ProfileEdit /> },
+	{ path: "/shipments", element: <Shipments /> },
+	{ path: "/shipments/:id", element: <Shipment /> },
+];
+
+const protectedRoutes = [
+	{
+		path: "/newShipment",
+		element: (
+			<ProtectedRoute>
+				<NewShipment />
+			</ProtectedRoute>
+		),
+	},
+];
+
+const dashboardRoutes = [
+	{ path: "", element: <DashHome /> },
+	{ path: "shipments", element: <DashShipments /> },
+	{ path: "shipments/:shipmentId", element: <DashShipmentOffers /> },
+	{ path: "shipments/:shipmentId/edit", element: <DashShipmentEdit /> },
+	{ path: "offers", element: <DashOffers /> },
+	{ path: "drivers", element: <DashDrivers /> },
+	{ path: "trucks", element: <DashTrucks /> },
+	{ path: "balance", element: <DashBalance /> },
+	{ path: "users", element: <DashUsers /> },
+];
 
 function App() {
 	const { i18n, t } = useTranslation();
-	const { setUser } = useProps();
+	const { setUser, setIsLoading } = useProps();
 	const { addNotification } = useNotification();
 
 	// set signout into httpClient
-	const { 
-		data: signoutResponse, 
-		mutate: signout, 
-		isSuccess: isSignoutSuccess,
-		isError: isSignoutError,
-		error: signoutError
+	const {
+		mutate: signout,
 	} = useSignout();
 	privateHttpClient.setLogoutCallback(signout);
 
@@ -60,27 +112,16 @@ function App() {
 	} = useRefresh();
 
 	const {
-		data: user,
 		mutate: currentUser,
-		isError: isUserError,
-		error: userError,
-		isSuccess: isUserSuccess,
-	} = useMe();
+	} = useCurrentUser();
 
 	useEffect(() => {
 		i18n.changeLanguage("ar");
+		setIsLoading(true);
 
-		const noAuthPages = [
-			"/account",
-			"/signin",
-			"/signup",
-			"/forgetpassword",
-			"/verification",
-			"/resetpassword",
-		];
 		const currentPath = window.location.pathname;
-
-		if (!noAuthPages.includes(currentPath)) {
+		if (!noAuthPages.has(currentPath)) {
+			setIsLoading(true);
 			refresh();
 		}
 	}, []);
@@ -91,157 +132,42 @@ function App() {
 			currentUser();
 		}
 
-		// if (isRefreshError) {
-		// 	signout();
-		// }
+		if (isRefreshError) {
+			setIsLoading(false);
+		}
 	}, [isRefreshSuccess, isRefreshError, refreshError]);
 
-	useEffect(() => {
-		if (isUserSuccess) {
-			setUser(user.data);
-		}
-
-		if (isUserError) {
-			const axiosMsg = isAxiosError(userError)
-				? userError.response?.data?.message
-				: "حدث خطأ ما";
-
-			addNotification(t(axiosMsg), "error", 5000);
-		}
-	}, [isUserSuccess, isUserError, userError]);
-
-	useEffect(() => {
-		if (isSignoutSuccess) {
-			// Clearup local state
-			setUser(null);
-			privateHttpClient.accessToken = null;
-			privateHttpClient.accessTokenExp = 0;
-
-			// Show notification
-			addNotification(
-				t(signoutResponse.data.message),
-				"success",
-				5000
-			);
-
-			// Redirect
-			window.location.href = "/signin"
-		}
-
-		if (isSignoutError) {
-			const axiosMsg = isAxiosError(signoutError)
-				? signoutError.response?.data?.message
-				: "حدث خطأ في تسجيل الخروج";
-			
-			// Still clear state and redirect as fallback
-			setUser(null);
-			privateHttpClient.accessToken = null;
-			privateHttpClient.accessTokenExp = 0;
-			window.location.href = "/signin";
-			
-			addNotification(t(axiosMsg), "error", 5000);
-		}
-	}, [isSignoutSuccess, isSignoutError, signoutError])
-
 	return (
-		<BrowserRouter>
-			<Suspense>
-				<Routes>
-					<Route path="/" element={<Home />}></Route>
-					{/* auth */}
-					<Route
-						path="/account"
-						element={<Account />}
-					></Route>
-					<Route
-						path="/signin"
-						element={<Signin />}
-					></Route>
-					<Route
-						path="/signup"
-						element={<Signup />}
-					></Route>
-					<Route
-						path="/forgetpassword"
-						element={<ForgetPassword />}
-					></Route>
-					<Route
-						path="/resetpassword"
-						element={<ResetPassword />}
-					></Route>
-					<Route
-						path="/verification"
-						element={<OneTimePassword />}
-					></Route>
-					{/* Pages */}
-					<Route
-						path="/newShipment"
-						element={<NewShipment />}
-					/>
-					<Route
-						path="/profile/:username"
-						element={<Profile />}
-					></Route>
-					<Route
-						path="/shipments"
-						element={<Shipments />}
-					></Route>
-					<Route
-						path="/shipments/:id"
-						element={<Shipment />}
-					></Route>
+		<Suspense>
+			<Routes>
+				{publicRoutes.map(({ path, element }) => (
+					<Route key={path} path={path} element={element} />
+				))}
 
-					{/* Dashoard */}
-					<Route
-						path="/dashboard"
-						element={
-							<HasAccess
-								role={[
-									"admin",
-									"manufacturer",
-									"carrier_company",
-									"independent_carrier",
-								]}
-							>
-								<DashLayout />
-							</HasAccess>
-						}
-					>
-						<Route index element={<DashHome />} />
+				{protectedRoutes.map(({ path, element }) => (
+					<Route key={path} path={path} element={element} />
+				))}
+
+				<Route
+					path="/dashboard"
+					element={
+						<HasAccess role={dashboardRoles}>
+							<DashLayout />
+						</HasAccess>
+					}
+				>
+					{dashboardRoutes.map(({ path, element }) => (
 						<Route
-							path="shipments"
-							element={<DashShipments />}
+							key={path}
+							path={path}
+							element={element}
 						/>
-						<Route
-							path="shipments/:shipmentId"
-							element={<DashShipmentOffers />}
-						/>
-						<Route
-							path="shipments/:shipmentId/edit"
-							element={<DashShipmentEdit />}
-						/>
-						<Route
-							path="offers"
-							element={<DashOffers />}
-						/>
-						<Route
-							path="drivers"
-							element={<DashDrivers />}
-						/>
-						<Route
-							path="trucks"
-							element={<DashTrucks />}
-						/>
-						<Route
-							path="balance"
-							element={<DashBalance />}
-						/>
-					</Route>
-					{/* Default */}
-					<Route path="*" element={<NotFound />} />
-				</Routes>
-			</Suspense>
-		</BrowserRouter>
+					))}
+				</Route>
+
+				<Route path="*" element={<NotFound />} />
+			</Routes>
+		</Suspense>
 	);
 }
 

@@ -83,6 +83,7 @@ export class AuthService {
             id: true,
             role: true,
             username: true,
+            verify: true
           },
         },
       },
@@ -102,6 +103,7 @@ export class AuthService {
         email: user.email,
         username: user.profile.username,
         role: user.profile.role,
+        verify: user.profile.verify
       },
       {
         expiresIn: '1h',
@@ -140,6 +142,7 @@ export class AuthService {
             select: {
               username: true,
               role: true,
+              verify: true
             },
           },
         },
@@ -151,6 +154,7 @@ export class AuthService {
           email: user.email,
           username: user.profile.username,
           role: user.profile.role,
+          verify: user.profile.verify
         },
         {
           expiresIn: '1h',

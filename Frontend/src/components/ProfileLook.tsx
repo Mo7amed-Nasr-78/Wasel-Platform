@@ -31,10 +31,10 @@ function ProfileLook() {
 	const publishedShipments = isManufacturer ? 12 : 0;
 
 	const stats = [
-		{ label: "عدد الشحنات", value: 45, icon: PiPackage, color: "text-blue-500 bg-blue-50" },
-		{ label: "الحمولات النشطة", value: 12, icon: PiArrowsClockwise, color: "text-emerald-500 bg-emerald-50" },
-		{ label: "التقييم", value: "4.7/5", icon: PiStar, color: "text-amber-500 bg-amber-50" },
-		{ label: "الحمولات المكتملة", value: 33, icon: PiCheckCircle, color: "text-green-500 bg-green-50" },
+		{ label: "عدد الشحنات", value: user? user.stats?.total_shipments : 0, icon: PiPackage, color: "text-blue-500 bg-blue-50" },
+		{ label: "الحمولات النشطة", value: user? user.stats?.pending_shipments : 0, icon: PiArrowsClockwise, color: "text-emerald-500 bg-emerald-50" },
+		{ label: "التقييم", value: user? `${user.stats.rate}/5` : "0/5", icon: PiStar, color: "text-amber-500 bg-amber-50" },
+		{ label: "الحمولات المكتملة", value: user? user.stats?.completed_shipments : 0, icon: PiCheckCircle, color: "text-green-500 bg-green-50" },
 	];
 
 	return (

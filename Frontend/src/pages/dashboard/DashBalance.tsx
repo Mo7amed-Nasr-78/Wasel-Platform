@@ -5,19 +5,56 @@ import { Button } from "@/components/ui/button";
 import Loader from "@/components/Loader";
 import DashHeader from "./components/DashHeader";
 import PaymentDialog from "@/components/PaymentDialog";
-import { PiPlus, PiArrowDown, PiArrowUp, PiWallet, PiCheckCircle, PiClock } from "react-icons/pi";
+import {
+	PiPlus,
+	PiArrowDown,
+	PiArrowUp,
+	PiWallet,
+	PiCheckCircle,
+	PiClock,
+} from "react-icons/pi";
+
+interface Transaction {
+	id: string;
+	type: string;
+	amount: string | number;
+	status: string;
+	createdAt: string;
+	description: string;
+	paymentMethod?: string;
+}
+
+const CREDIT_TYPES = new Set(["RECHARGE", "TOP_UP", "REFUND", "PAYMENT_IN"]);
+
+const statusConfig: Record<string, { label: string; color: string }> = {
+	COMPLETED: { label: "مكتمل", color: "bg-green-100 text-green-700" },
+	PENDING: { label: "معلق", color: "bg-yellow-100 text-yellow-700" },
+	SUCCESS: { label: "مكتمل", color: "bg-green-100 text-green-700" },
+	FAILED: { label: "فشل", color: "bg-red-100 text-red-700" },
+	CANCELLED: { label: "ملغى", color: "bg-red-100 text-red-700" },
+};
+
+const formatDate = (iso: string) => {
+	if (!iso) return "-";
+	return new Date(iso).toLocaleDateString("ar-EG", {
+		year: "numeric",
+		month: "long",
+		day: "numeric",
+	});
+};
 
 function DashBalance() {
 	const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 	const { data: balanceData, isLoading, error } = useBalance();
 	const { data: transactionsData } = useTransactions();
 
-	const balance = balanceData?.data?.balance || {
+	const balance = balanceData?.data?.data?.balance || {
 		total: 0,
 		pending: 0,
 		available: 0,
 	};
-	const transactions = transactionsData?.data?.transactions || [];
+	const transactions: Transaction[] =
+		transactionsData?.data?.data?.transactions || [];
 
 	if (isLoading) {
 		return (
@@ -56,7 +93,7 @@ function DashBalance() {
 						</div>
 						<div>
 							<span className="font-main text-2xl font-extrabold text-(--primary-text)">
-								{balance.total?.toLocaleString() || 0}
+								{balance?.toLocaleString() || 0}
 							</span>
 							<span className="font-main text-sm text-(--secondary-text) mr-1">
 								ر.س
@@ -72,7 +109,8 @@ function DashBalance() {
 						</div>
 						<div>
 							<span className="font-main text-2xl font-extrabold text-green-600">
-								{balance.available?.toLocaleString() || 0}
+								{balance.available?.toLocaleString() ||
+									0}
 							</span>
 							<span className="font-main text-sm text-(--secondary-text) mr-1">
 								ر.س
@@ -88,7 +126,8 @@ function DashBalance() {
 						</div>
 						<div>
 							<span className="font-main text-2xl font-extrabold text-yellow-600">
-								{balance.pending?.toLocaleString() || 0}
+								{balance.pending?.toLocaleString() ||
+									0}
 							</span>
 							<span className="font-main text-sm text-(--secondary-text) mr-1">
 								ر.س
@@ -140,55 +179,67 @@ function DashBalance() {
 								</tr>
 							</thead>
 							<tbody>
-								{transactions.map(
-									(
-										t: any,
-										idx: number,
-									) => (
+								{transactions.map((t) => {
+									const isCredit =
+										CREDIT_TYPES.has(
+											t.type,
+										);
+									const status =
+										statusConfig[
+											t.status
+										] || {
+											label: t.status,
+											color: "bg-gray-100 text-gray-700",
+										};
+									return (
 										<tr
-											key={
-												t.id ||
-												idx
-											}
+											key={t.id}
 											className="border-t border-(--tertiary-color)/10 hover:bg-(--tertiary-color)/5 transition-colors"
 										>
 											<td className="px-5 py-4">
 												<div className="flex items-center gap-3">
 													<div
 														className={`w-8 h-8 rounded-full flex items-center justify-center ${
-															t.type ===
-															"credit"
+															isCredit
 																? "bg-green-100 text-green-600"
 																: "bg-red-100 text-red-600"
 														}`}
 													>
-														{t.type ===
-														"credit" ? (
+														{isCredit ? (
 															<PiArrowDown className="text-sm" />
 														) : (
 															<PiArrowUp className="text-sm" />
 														)}
 													</div>
-													<span className="font-main text-sm text-(--primary-text)">
-														{t.title ||
-															t.description}
-													</span>
+													<div>
+														<p className="font-main text-sm text-(--primary-text)">
+															{t.description ||
+																t.type}
+														</p>
+														{t.paymentMethod && (
+															<p className="font-main text-xs text-(--secondary-text)">
+																{
+																	t.paymentMethod
+																}
+															</p>
+														)}
+													</div>
 												</div>
 											</td>
 											<td className="px-5 py-4 font-main text-sm text-(--secondary-text)">
-												{t.date}
+												{formatDate(
+													t.createdAt,
+												)}
 											</td>
 											<td className="px-5 py-4">
 												<span
 													className={`font-main text-sm font-medium ${
-														t.type ===
-														"credit"
+														isCredit
 															? "text-green-600"
 															: "text-red-600"
 													}`}
 												>
-													{t.type ===
-													"credit"
+													{isCredit
 														? "+"
 														: "-"}
 													{Number(
@@ -199,32 +250,16 @@ function DashBalance() {
 											</td>
 											<td className="px-5 py-4">
 												<span
-													className={`text-xs px-2 py-1 rounded-full font-medium ${
-														t.status ===
-															"completed" ||
-														t.status ===
-															"success"
-															? "bg-green-100 text-green-700"
-															: t.status ===
-																  "pending"
-																? "bg-yellow-100 text-yellow-700"
-																: "bg-red-100 text-red-700"
-													}`}
+													className={`text-xs px-2 py-1 rounded-full font-medium ${status.color}`}
 												>
-													{t.status ===
-														"completed" ||
-													t.status ===
-														"success"
-														? "مكتمل"
-														: t.status ===
-															  "pending"
-															? "معلق"
-															: "فشل"}
+													{
+														status.label
+													}
 												</span>
 											</td>
 										</tr>
-									),
-								)}
+									);
+								})}
 							</tbody>
 						</table>
 					</div>

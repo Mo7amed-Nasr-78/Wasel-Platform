@@ -1,4 +1,3 @@
-import { useLogout } from "@/api/hooks/user/useLogout";
 import { useEffect } from "react";
 import {
     PiSidebar,
@@ -11,11 +10,12 @@ import { useProps } from "@/components/PropsProvider";
 import HasAccess from "@/components/HasAccess";
 import { sidebarItems } from "@/shared/data/data";
 import { Link } from "react-router-dom";
+import { useSignout } from "@/api/hooks/auth/useSignout";
 
 function DashSidebar({ closeSidebar, setCloseSidebar }: { closeSidebar: boolean, setCloseSidebar: (v: boolean) => void }) {    
 
     const { setUser } = useProps();
-    const { mutate, error, isError, isSuccess } = useLogout();
+    const { mutate, error, isError, isSuccess } = useSignout();
     const { addNotification } = useNotification();
     const { t } = useTranslation();
 

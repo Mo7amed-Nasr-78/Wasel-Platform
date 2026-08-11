@@ -2,7 +2,7 @@ import Stats from "./components/Stats";
 import ActiveShipments from "./components/ActiveShipments";
 import RecentOffers from "./components/RecentOffers";
 import TrackingPreview from "./components/TrackingPreview";
-import ActivityTimeline from "./components/ActivityTimeline";
+// import ActivityTimeline from "./components/ActivityTimeline";
 import DashHeader from "./components/DashHeader";
 
 function DashHome() {

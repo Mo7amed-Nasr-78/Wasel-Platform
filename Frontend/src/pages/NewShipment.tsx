@@ -69,7 +69,7 @@ function NewShipment() {
 		stacking: false,
 
 		budgetType: "",
-		paymentType: "",
+		paymentType: "ON_DELIVER",
 	};
 
 	const { t } = useTranslation();
@@ -596,10 +596,10 @@ function NewShipment() {
 												onChange={
 													handleChange
 												}
-												name="stacking"
-												value={
-													newShipment.stacking
+												checked={
+													newShipment.stacking === true
 												}
+												name="stacking"
 												id="stacking"
 												className="relative appearance-none w-5 h-5 rounded-sm border border-(--secondary-text) before:absolute before:top-2/4 before:left-2/4 before:-translate-2/4 before:text-(--secondary-color) checked:before:content-['\2713'] checked:border-(--primary-color) checked:bg-(--primary-color)"
 											/>
@@ -749,9 +749,6 @@ function NewShipment() {
 										<span className="font-main font-normal text-lg text-(--secondary-text)">
 											تاريخ الإنطلاق
 										</span>
-										{/* <div className="w-full h-12 flex items-center justify-between px-3 rounded-10 border border-(--tertiary-color)">
-                                            <input type="date" onChange={(e) => setNewShipment({ ...newShipment, pickupAt: e.target.value })} id="pickup-date" placeholder="يوم/شهر/سنة" className="w-full h-full font-main font-medium placeholder:text-base text-lg text-(--primary-text) focus:outline-none" />
-                                        </div> */}
 										<Popover>
 											<PopoverTrigger>
 												<span className="w-full h-12 font-main flex items-center justify-between px-3 rounded-10 border border-(--tertiary-color) bg-transparent hover:bg-transparent data-[empty=true]:text-muted-foreground">
@@ -768,7 +765,6 @@ function NewShipment() {
 															)}
 														</span>
 													)}
-													{/* <ChevronDownIcon /> */}
 												</span>
 											</PopoverTrigger>
 											<PopoverContent
@@ -1347,9 +1343,7 @@ function NewShipment() {
 												handleChange
 											}
 											name="urgent"
-											value={
-												newShipment.urgent
-											}
+											checked={newShipment.urgent === true}
 											id="urgent"
 											className="relative appearance-none w-5 h-5 rounded-sm border border-(--secondary-text) before:absolute before:top-2/4 before:left-2/4 before:-translate-2/4 before:text-(--secondary-color) checked:before:content-['\2713'] checked:border-(--primary-color) checked:bg-(--primary-color)"
 										/>
@@ -1367,9 +1361,7 @@ function NewShipment() {
 												handleChange
 											}
 											name="additionalInsurance"
-											value={
-												newShipment.additionalInsurance
-											}
+											checked={newShipment.additionalInsurance === true}
 											id="additionalInsurance"
 											className="relative appearance-none w-5 h-5 rounded-sm border border-(--secondary-text) before:absolute before:top-2/4 before:left-2/4 before:-translate-2/4 before:text-(--secondary-color) checked:before:content-['\2713'] checked:border-(--primary-color) checked:bg-(--primary-color)"
 										/>
@@ -1386,9 +1378,7 @@ function NewShipment() {
 											onChange={
 												handleChange
 											}
-											value={
-												newShipment.twoDrivers
-											}
+											checked={newShipment.twoDrivers === true}
 											name="twoDrivers"
 											id="twoDrivers"
 											className="relative appearance-none w-5 h-5 rounded-sm border border-(--secondary-text) before:absolute before:top-2/4 before:left-2/4 before:-translate-2/4 before:text-(--secondary-color) checked:before:content-['\2713'] checked:border-(--primary-color) checked:bg-(--primary-color)"
@@ -1407,9 +1397,7 @@ function NewShipment() {
 												handleChange
 											}
 											name="noFriday"
-											value={
-												newShipment.noFriday
-											}
+											checked={newShipment.noFriday === true}
 											id="noFriday"
 											className="relative appearance-none w-5 h-5 rounded-sm border border-(--secondary-text) before:absolute before:top-2/4 before:left-2/4 before:-translate-2/4 before:text-(--secondary-color) checked:before:content-['\2713'] checked:border-(--primary-color) checked:bg-(--primary-color)"
 										/>
@@ -1551,6 +1539,7 @@ function NewShipment() {
 												<SelectTrigger
 													className="w-full font-main text-base text-(--primary-text) border border-(--tertiary-color) rounded-10"
 													size="xl"
+													defaultValue={newShipment.paymentType}
 												>
 													<SelectValue placeholder="إختر نوع الدفع" />
 												</SelectTrigger>

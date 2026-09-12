@@ -22,6 +22,7 @@ import { useRejectOffer } from "@/api/hooks/offers/useRejectOffer";
 import { Spinner } from "@/components/ui/spinner";
 import { useAcceptOffer } from "@/api/hooks/offers/useAcceptOffer";
 import { useShipment } from "@/api/hooks/shipments/useShipment";
+import HasAccess from "@/components/HasAccess";
 
 
 
@@ -255,14 +256,44 @@ export default function DashShipmentOffers() {
 							</div>
 
 							{/* Offer Count */}
-							<div className="space-y-2">
-								<p className="text-sm text-(--secondary-text)">
-									الناقل
-								</p>
-								<p className="font-semibold text-(--primary-text) text-sm">
-									{ shipment.acceptedOffer && shipment.acceptedOffer.profile.first_name + " " + shipment.acceptedOffer.profile.last_name}
-								</p>
-							</div>
+							{shipment.assignedDriver && (
+								<div className="space-y-2">
+									<p className="text-sm text-(--secondary-text)">
+										السواق
+									</p>
+									<p className="font-semibold text-(--primary-text) text-sm">
+										{ shipment.assignedDriver.first_name + " " + shipment.assignedDriver.last_name}
+									</p>
+								</div>
+							)}
+							{shipment.assignedTruck && (
+								<>
+									<div className="space-y-2">
+										<p className="text-sm text-(--secondary-text)">
+											رقم الشاحنة
+										</p>
+										<p className="font-semibold text-(--primary-text) text-sm">
+											{ shipment.assignedTruck.truck_num}
+										</p>
+									</div>
+									<div className="space-y-2">
+										<p className="text-sm text-(--secondary-text)">
+											نوع الشاحنة
+										</p>
+										<p className="font-semibold text-(--primary-text) text-sm">
+											{ shipment.assignedTruck.truck_type}
+										</p>
+									</div>
+									<div className="space-y-2">
+										<p className="text-sm text-(--secondary-text)">
+											مودل الشاحنة
+										</p>
+										<p className="font-semibold text-(--primary-text) text-sm">
+											{ shipment.assignedTruck.truck_model	}
+										</p>
+									</div>
+								</>
+							)}
 						</div>
 
 						{/* Description and Goods Type */}
@@ -441,27 +472,29 @@ function OfferCard({ offer }: OfferCardProps) {
 				)}
 
 				{/* Actions */}
-				{offer.status === "PENDING" && (
-					<div className="pt-4 flex gap-3">
-						<Button
-							type="button"
-							className="flex-1 bg-(--primary-color) hover:bg-(--primary-color)/90 text-white"
-							onClick={() => handleAcceptOffer(offer.id)}
-							disabled={isAcceptPending}
-						>
-							{ isRejectPending? <Spinner /> : "قبول" }
-						</Button>
-						<Button
-							type="button"
-							variant="outline"
-							className="flex-1 font-main"
-                            onClick={() => handleRejectOffer(offer.id)}
-							disabled={isRejectPending}
-						>
-							{ isRejectPending? <Spinner /> : "رفض" }
-						</Button>
-					</div>
-				)}
+				<HasAccess role={["ADMIN", "MANUFACTURER"]}>
+					{offer.status === "PENDING" && (
+						<div className="pt-4 flex gap-3">
+							<Button
+								type="button"
+								className="flex-1 bg-(--primary-color) hover:bg-(--primary-color)/90 text-white"
+								onClick={() => handleAcceptOffer(offer.id)}
+								disabled={isAcceptPending}
+							>
+								{ isRejectPending? <Spinner /> : "قبول" }
+							</Button>
+							<Button
+								type="button"
+								variant="outline"
+								className="flex-1 font-main"
+								onClick={() => handleRejectOffer(offer.id)}
+								disabled={isRejectPending}
+							>
+								{ isRejectPending? <Spinner /> : "رفض" }
+							</Button>
+						</div>
+					)}
+				</HasAccess>
 			</div>
 		</div>
 	);

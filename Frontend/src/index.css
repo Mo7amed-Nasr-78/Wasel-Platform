@@ -53,8 +53,8 @@ body {
 
 .review-card {
 	@apply relative flex flex-col items-center bg-(--secondary-color) drop-shadow-xl shadow-black/10 px-6 pt-12 pb-14 rounded-30;
-	width: calc((100% - 28px) / 2);
-	min-width: calc((100% - 28px) / 2);
+	width: calc((100% - 28px) / 4);
+	min-width: calc((100% - 28px) / 4);
 }
 
 @media (max-width: 1023px) {

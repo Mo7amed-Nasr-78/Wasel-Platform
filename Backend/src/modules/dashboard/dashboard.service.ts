@@ -16,12 +16,6 @@ export class DashboardService {
 
         let res = {};
 
-        // const profile = await this.prismaService.profile.findUnique({
-        //     where: {
-        //         userId
-        //     }
-        // })
-
         const shipments  = await this.prismaService.shipment.count({
             where: {
                 profile: {

@@ -32,6 +32,7 @@ import { PiCheckCircle, PiEye, PiMapPin, PiTruck } from "react-icons/pi";
 import { Link } from "react-router-dom";
 import { useDrivers } from "@/api/hooks/drivers/useDrivers";
 import { useTrucks } from "@/api/hooks/trucks/useTrucks";
+import ConfirmationDialog from "@/pages/dashboard/components/ConfirmationDialog";
 
 const getStatusBadgeColor = (
 	status:
@@ -77,23 +78,38 @@ const getStatusBadgeColor = (
 	}
 };
 
-function DeliverButton({
-	shipmentId,
-}: {
-	shipmentId: string | undefined;
-}) {
+function DeliverButton({ shipmentId }: { shipmentId: string | undefined }) {
+	const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
 	const { mutate: deliverShipment, isPending } =
 		useDeliverShipment(shipmentId);
 
+	const confirmDelivery = () => {
+		deliverShipment(undefined, {
+			onSettled: () => setIsConfirmationOpen(false),
+		});
+	};
+
 	return (
-		<Button
-			size="sm"
-			className="h-9 px-3 rounded-8"
-			onClick={() => deliverShipment()}
-			disabled={isPending}
-		>
-			<PiCheckCircle className="text-lg" />
-		</Button>
+		<>
+			<Button
+				size="sm"
+				className="h-9 px-3 rounded-8"
+				onClick={() => setIsConfirmationOpen(true)}
+				disabled={isPending}
+			>
+				<PiCheckCircle className="text-lg" />
+			</Button>
+			<ConfirmationDialog
+				isOpen={isConfirmationOpen}
+				onClose={() => setIsConfirmationOpen(false)}
+				onConfirm={confirmDelivery}
+				title="تأكيد تسليم الحمولة"
+				description="هل أنت متأكد من رغبتك في تأكيد تسليم هذه الحمولة؟"
+				confirmLabel="تأكيد التسليم"
+				loadingLabel="جارٍ التسليم..."
+				isLoading={isPending}
+			/>
+		</>
 	);
 }
 
@@ -130,13 +146,17 @@ function ActiveShipments() {
 		if (!activeShipmentId || !selectedDriverId || !selectedTruckId)
 			return;
 
-		assignShipment({
-			driverId: selectedDriverId,
-			truckId: selectedTruckId,
-		});
-		setIsAssignDialogOpen(false);
-		setSelectedDriverId("");
-		setSelectedTruckId("");
+		assignShipment(
+			{
+				driverId: selectedDriverId,
+				truckId: selectedTruckId,
+			},
+			{
+				onSettled: () => {
+					closeAssignDialog();
+				},
+			},
+		);
 	};
 
 	const openAssignDialog = (shipmentId: string | undefined) => {
@@ -302,20 +322,22 @@ function ActiveShipments() {
 															}
 														/>
 													)}
-												{canAssignShipment && (
-													<Button
-														size="sm"
-														variant="outline"
-														className="h-9 px-3 rounded-8"
-														onClick={() =>
-															openAssignDialog(
-																shipment.id,
-															)
-														}
-													>
-														<PiTruck className="text-lg" />
-													</Button>
-												)}
+												{canAssignShipment &&
+													shipment.status ===
+														"IN_PROGRESS" && (
+														<Button
+															size="sm"
+															variant="outline"
+															className="h-9 px-3 rounded-8"
+															onClick={() =>
+																openAssignDialog(
+																	shipment.id,
+																)
+															}
+														>
+															<PiTruck className="text-lg" />
+														</Button>
+													)}
 												<Link
 													to={{
 														pathname: `/dashboard/shipments/${shipment.id}`,

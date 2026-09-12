@@ -1,17 +1,22 @@
 import { useState } from "react";
 import { useDrivers } from "@/api/hooks/drivers/useDrivers";
 import { useDeleteDriver } from "@/api/hooks/drivers/useDeleteDriver";
-import { useAddVacation } from "@/api/hooks/drivers/useAddVacation";
-import { useReturnFromVacation } from "@/api/hooks/drivers/useReturnFromVacation";
-import { useExtendVacation } from "@/api/hooks/drivers/useExtendVacation";
 import DriverCard from "@/pages/dashboard/components/DriverCard";
 import AddDriverDialog from "@/pages/dashboard/components/AddDriverDialog";
 import DeleteConfirmationDialog from "@/pages/dashboard/components/DeleteConfirmationDialog";
+import VacationActions from "@/pages/dashboard/components/VacationActions";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import Loader from "@/components/Loader";
-import { Plus, MoreHorizontal, Edit, Trash2 } from "lucide-react";
-import { PiUsers, PiClock, PiCheckCircle, PiSteeringWheel, PiPause, PiSquaresFour, PiTable, PiSuitcaseSimple } from "react-icons/pi";
+import { Plus, Trash2 } from "lucide-react";
+import {
+	PiUsers,
+	PiClock,
+	PiCheckCircle,
+	PiSteeringWheel,
+	PiPause,
+	PiSquaresFour,
+	PiTable,
+} from "react-icons/pi";
 import {
 	Table,
 	TableBody,
@@ -20,19 +25,6 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import {
-	Dialog,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-} from "@/components/ui/dialog";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import DashHeader from "./components/DashHeader";
 import dayjs from "dayjs";
 
@@ -42,22 +34,8 @@ function DashDrivers() {
 	const [viewMode, setViewMode] = useState<"card" | "grid">("card");
 
 	const { mutate: deleteDriver, isPending: isDeleting } = useDeleteDriver();
-	const { mutate: addVacation, isPending: isAddingVacation } =
-		useAddVacation();
-	const { mutate: returnFromVacation, isPending: isReturning } =
-		useReturnFromVacation();
-	const { mutate: extendVacation, isPending: isExtending } =
-		useExtendVacation();
-
 	const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
-	const [vacDialogOpen, setVacDialogOpen] = useState(false);
-	const [vacDriverId, setVacDriverId] = useState("");
-	const [vacMode, setVacMode] = useState<"add" | "return" | "extend">("add");
-	const [vacFromDate, setVacFromDate] = useState("");
-	const [vacToDate, setVacToDate] = useState("");
-	const [vacId, setVacId] = useState("");
 
 	const handleDeleteDriver = () => {
 		if (!deleteTargetId) return;
@@ -74,41 +52,6 @@ function DashDrivers() {
 		setIsDeleteDialogOpen(true);
 	};
 
-	const openVacDialogWithId = (
-		driverId: string,
-		vacationId: string,
-		mode: "add" | "return" | "extend",
-	) => {
-		setVacDriverId(driverId);
-		setVacMode(mode);
-		setVacFromDate("");
-		setVacToDate("");
-		setVacId(vacationId);
-		setVacDialogOpen(true);
-	};
-
-	const handleVacSubmit = () => {
-		if (vacMode === "add") {
-			addVacation(
-				{
-					driverId: vacDriverId,
-					from_date: vacFromDate,
-					to_date: vacToDate,
-				},
-				{ onSuccess: () => setVacDialogOpen(false) },
-			);
-		} else if (vacMode === "return") {
-			returnFromVacation(vacId, {
-				onSuccess: () => setVacDialogOpen(false),
-			});
-		} else if (vacMode === "extend") {
-			extendVacation(
-				{ vacationId: vacId, data: { to_date: vacToDate } },
-				{ onSuccess: () => setVacDialogOpen(false) },
-			);
-		}
-	};
-
 	const statusLabel: Record<string, string> = {
 		IN_WORK: "في العمل",
 		IN_REST: "في الراحة",
@@ -120,6 +63,16 @@ function DashDrivers() {
 		IN_WORK: "bg-green-100 text-green-700",
 		IN_REST: "bg-red-100 text-red-700",
 		AVAILABLE: "bg-blue-100 text-blue-700",
+		PENDING: "bg-yellow-100 text-yellow-700",
+	};
+
+	const verificationStatusLabel: Record<string, string> = {
+		VERIFIED: "موافق عليه",
+		PENDING: "قيد الانتظار",
+	};
+
+	const verificationStatusColor: Record<string, string> = {
+		VERIFIED: "bg-green-100 text-green-700",
 		PENDING: "bg-yellow-100 text-yellow-700",
 	};
 
@@ -243,16 +196,14 @@ function DashDrivers() {
 								? "عرض جدولي"
 								: "عرض بطاقات"}
 						</Button>
-						{drivers.length >= 1 && (
-							<Button
-								size="sm"
-								onClick={() => setIsDialogOpen(true)}
-								className="flex items-center gap-1.5 whitespace-nowrap"
-							>
-								<Plus className="w-4 h-4" />
-								إضافة سائق جديد
-							</Button>
-						)}
+						<Button
+							size="sm"
+							onClick={() => setIsDialogOpen(true)}
+							className="flex items-center gap-1.5 whitespace-nowrap"
+						>
+							<Plus className="w-4 h-4" />
+							إضافة سائق جديد
+						</Button>
 					</div>
 				</div>
 
@@ -261,6 +212,14 @@ function DashDrivers() {
 						<p className="text-gray-500 text-lg mb-4">
 							لا توجد سائقين حالياً
 						</p>
+						<Button
+							size="sm"
+							onClick={() => setIsDialogOpen(true)}
+							className="flex items-center gap-1.5 whitespace-nowrap"
+						>
+							<Plus className="w-4 h-4" />
+							إضافة سائق جديد
+						</Button>
 					</div>
 				) : viewMode === "card" ? (
 					<div className="flex-1 overflow-y-auto py-4">
@@ -300,6 +259,9 @@ function DashDrivers() {
 										الحالة
 									</TableHead>
 									<TableHead className="text-right">
+										حالة التوثيق
+									</TableHead>
+									<TableHead className="text-right">
 										الإجراءات
 									</TableHead>
 								</TableRow>
@@ -316,23 +278,45 @@ function DashDrivers() {
 										}
 									>
 										<TableCell className="font-medium">
-											{driver.first_name}{" "}
-											{driver.last_name}
+											{
+												driver.first_name
+											}{" "}
+											{
+												driver.last_name
+											}
 										</TableCell>
 										<TableCell>
 											{driver.phone}
 										</TableCell>
 										<TableCell>
-											{driver.national_id}
+											{
+												driver.national_id
+											}
 										</TableCell>
 										<TableCell>
 											{driver.age}
 										</TableCell>
 										<TableCell>
-											{dayjs(driver?.vacations[0]?.from_date).format("DD MMMM YYYY")}
+											{driver?.currentDriverVacation
+												? dayjs(
+														driver
+															?.currentDriverVacation
+															?.from_date,
+													).format(
+														"DD MMMM YYYY",
+													)
+												: "-"}
 										</TableCell>
 										<TableCell>
-											{dayjs(driver?.vacations[0]?.to_date).format("DD MMMM YYYY")}
+											{driver?.currentDriverVacation
+												? dayjs(
+														driver
+															?.currentDriverVacation
+															?.to_date,
+													).format(
+														"DD MMMM YYYY",
+													)
+												: "-"}
 										</TableCell>
 										<TableCell>
 											<span
@@ -352,75 +336,41 @@ function DashDrivers() {
 											</span>
 										</TableCell>
 										<TableCell>
-											<DropdownMenu>
-												<DropdownMenuTrigger
-													asChild
-												>
-													<Button
-														size="sm"
-														variant="ghost"
-														className="h-8 w-8 p-0"
-													>
-														<MoreHorizontal className="w-4 h-4" />
-													</Button>
-												</DropdownMenuTrigger>
-												<DropdownMenuContent
-													align="end"
-												>
-													<DropdownMenuItem
-														onClick={() =>
-															openVacDialogWithId(
-																driver.id,
-																"",
-																"add",
-															)
-														}
-													>
-														<PiSuitcaseSimple className="w-4 h-4 ml-2" />
-														إضافة إجازة
-													</DropdownMenuItem>
-													<DropdownMenuItem
-														onClick={() =>
-															openVacDialogWithId(
-																driver.id,
-																driver.vacations?.[0]
-																	?.id ||
-																	"",
-																"return",
-															)
-														}
-													>
-														<PiSuitcaseSimple className="w-4 h-4 ml-2" />
-														عودة من الإجازة
-													</DropdownMenuItem>
-													<DropdownMenuItem
-														onClick={() =>
-															openVacDialogWithId(
-																driver.id,
-																driver.vacations?.[0]
-																	?.id ||
-																	"",
-																"extend",
-															)
-														}
-													>
-														<PiSuitcaseSimple className="w-4 h-4 ml-2" />
-														تمديد الإجازة
-													</DropdownMenuItem>
-													<DropdownMenuSeparator />
-													<DropdownMenuItem
-														onClick={() =>
-															openDeleteDialog(
-																driver.id,
-															)
-														}
-														className="text-red-500"
-													>
-														<Trash2 className="w-4 h-4 ml-2" />
-														حذف
-													</DropdownMenuItem>
-												</DropdownMenuContent>
-											</DropdownMenu>
+											<span
+												className={`px-2 py-1 rounded text-xs font-medium ${
+													verificationStatusColor[
+														driver
+															.verificationStatus
+													] ||
+													"bg-gray-100 text-gray-700"
+												}`}
+											>
+												{verificationStatusLabel[
+													driver
+														.verificationStatus
+												] ||
+													driver.verificationStatus}
+											</span>
+										</TableCell>
+										<TableCell>
+											<VacationActions
+												driver={
+													driver
+												}
+												variant="menu"
+											/>
+											<Button
+												size="sm"
+												variant="ghost"
+												onClick={() =>
+													openDeleteDialog(
+														driver.id,
+													)
+												}
+												className="text-red-500"
+											>
+												<Trash2 className="w-4 h-4" />
+											</Button>
 										</TableCell>
 									</TableRow>
 								))}
@@ -445,128 +395,6 @@ function DashDrivers() {
 				description="هل أنت متأكد من رغبتك في حذف هذا السائق؟ هذا الإجراء لا يمكن التراجع عنه."
 				isLoading={isDeleting}
 			/>
-
-			{/* Vacation Dialog */}
-			<Dialog open={vacDialogOpen} onOpenChange={setVacDialogOpen}>
-				<DialogContent
-					className="max-w-md bg-(--bg-color) border-0"
-					dir="rtl"
-				>
-					<DialogHeader>
-						<DialogTitle className="text-(--primary-text) text-right">
-							{vacMode === "add"
-								? "إضافة إجازة"
-								: vacMode === "return"
-									? "عودة من الإجازة"
-									: "تمديد الإجازة"}
-						</DialogTitle>
-					</DialogHeader>
-
-					{vacMode === "add" && (
-						<div className="space-y-4 py-2">
-							<div className="flex flex-col gap-1.5">
-								<label className="text-sm font-medium text-(--primary-text)">
-									من تاريخ
-								</label>
-								<Input
-									type="date"
-									value={vacFromDate}
-									onChange={(e) =>
-										setVacFromDate(
-											e.target
-												.value,
-										)
-									}
-									dir="rtl"
-								/>
-							</div>
-							<div className="flex flex-col gap-1.5">
-								<label className="text-sm font-medium text-(--primary-text)">
-									إلى تاريخ
-								</label>
-								<Input
-									type="date"
-									value={vacToDate}
-									onChange={(e) =>
-										setVacToDate(
-											e.target
-												.value,
-										)
-									}
-									dir="rtl"
-								/>
-							</div>
-							<Button
-								className="w-full"
-								onClick={handleVacSubmit}
-								disabled={
-									isAddingVacation ||
-									!vacFromDate ||
-									!vacToDate
-								}
-							>
-								{isAddingVacation
-									? "جارِ الإضافة..."
-									: "إضافة إجازة"}
-							</Button>
-						</div>
-					)}
-
-					{vacMode === "return" && (
-						<div className="space-y-4 py-2">
-							<p className="text-sm text-gray-500 text-right">
-								هل أنت متأكد من رغبتك في إرجاع
-								السائق من الإجازة؟
-							</p>
-							<Button
-								className="w-full"
-								onClick={handleVacSubmit}
-								disabled={
-									isReturning || !vacId
-								}
-							>
-								{isReturning
-									? "جارِ العودة..."
-									: "عودة من الإجازة"}
-							</Button>
-						</div>
-					)}
-
-					{vacMode === "extend" && (
-						<div className="space-y-4 py-2">
-							<div className="flex flex-col gap-1.5">
-								<label className="text-sm font-medium text-(--primary-text)">
-									إلى تاريخ
-								</label>
-								<Input
-									type="date"
-									value={vacToDate}
-									onChange={(e) =>
-										setVacToDate(
-											e.target
-												.value,
-										)
-									}
-									dir="rtl"
-								/>
-							</div>
-							<Button
-								className="w-full"
-								onClick={handleVacSubmit}
-								disabled={
-									isExtending ||
-									!vacId ||
-									!vacToDate
-								}
-							>
-								{isExtending
-									? "جارِ التمديد..."
-									: "تمديد الإجازة"}
-							</Button>
-						</div>
-					)}
-				</DialogContent>
-			</Dialog>
 		</div>
 	);
 }

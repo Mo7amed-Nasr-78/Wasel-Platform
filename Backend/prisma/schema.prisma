@@ -93,7 +93,7 @@ enum ShipmentPaymentStatus {
 
 // Truck enum
 enum TruckStatus {
-  ACTIVE
+  AVAILABLE
   IN_WORK
   IN_MAINTENANCE
   OUT
@@ -305,7 +305,7 @@ model Truck {
   truck_front         String
   truck_type          String
   truck_model         String
-  status              TruckStatus        @default(ACTIVE)
+  status              TruckStatus        @default(AVAILABLE)
   verificationStatus  VerificationStatus @default(PENDING)
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
@@ -366,9 +366,9 @@ model Invoice {
   carrierId String
   carrier   Profile @relation("CarrierInvoices", fields: [carrierId], references: [id])
 
-  amount        Float
-  platformFee   Float
-  carrierAmount Float
+  amount        Decimal
+  platformFee   Decimal
+  carrierAmount Decimal
 
   status        InvoiceStatus @default(PENDING)
   paymentMethod String?

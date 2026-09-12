@@ -198,7 +198,7 @@ function RecentOffers() {
 										</div>
 
 										{isManufacturer && (
-											<div className="flex items-center gap-2">
+											<div className="flex items-center gap-2 mt-3 px-2">
 												<Button
 													size="sm"
 													className="h-9 px-6 rounded-8 bg-(--primary-color) hover:bg-(--primary-color)/80 whitespace-nowrap text-sm"

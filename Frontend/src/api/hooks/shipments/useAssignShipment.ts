@@ -12,7 +12,7 @@ export function useAssignShipment(shipmentId: string | undefined) {
 			shipmentsService.assignShipment(shipmentId, data),
 		onSuccess: () => {
 			queryClient.invalidateQueries({
-				queryKey: ["shipments"],
+				queryKey: ["userShipments"],
 			});
 			queryClient.invalidateQueries({
 				queryKey: ["shipment", shipmentId],
@@ -22,7 +22,7 @@ export function useAssignShipment(shipmentId: string | undefined) {
 		onError: (error) => {
 			const message = isAxiosError(error)
 				? error.response?.data?.message
-				: "تعذر تعيين الشاحنة والسائق";
+				: "تعذر تعيين الشاحنةax والسائق";
 			toast.error(message || "تعذر تعيين الشاحنة والسائق");
 		},
 	});

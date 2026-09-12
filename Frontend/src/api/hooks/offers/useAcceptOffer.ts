@@ -15,7 +15,8 @@ export function useAcceptOffer() {
 
             onSuccess: (res) => {
                 toast.success(t(res.data.message || "تم قبول العرض"))
-                queryClient.invalidateQueries({ queryKey: ["shipmentOffers"] })
+                queryClient.invalidateQueries({ queryKey: ["shipmentOffers"] });
+                queryClient.invalidateQueries({ queryKey: ["recentOffer"] });
             },
 
             onError: (err) => {

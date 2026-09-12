@@ -5,7 +5,13 @@ import { useUpdateTruck } from "@/api/hooks/trucks/useUpdateTruck";
 import { useVerifyTruck } from "@/api/hooks/trucks/useVerifyTruck";
 import { useCommentTruck } from "../../../api/hooks/trucks/useCommentTruck";
 import { useProps } from "@/components/PropsProvider";
-import { Trash2, Edit } from "lucide-react";
+import {
+	BadgeCheck,
+	Edit,
+	LoaderCircle,
+	MessageCircle,
+	Trash2,
+} from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import {
 	Dialog,
@@ -22,10 +28,13 @@ import {
 import { Input } from "../../../components/ui/input";
 import FileUploadField from "../../../components/FileUploadField";
 import DeleteConfirmationDialog from "./DeleteConfirmationDialog";
+import CommentTruckDialog from "./CommentTruckDialog";
+import DocumentPreviewDialog from "./DocumentPreviewDialog";
 
 interface TruckCardProps {
 	truck: Truck;
 	onDelete?: (truckId: string) => void;
+	actionsOnly?: boolean;
 }
 
 interface ImageModal {
@@ -33,7 +42,7 @@ interface ImageModal {
 	alt: string;
 }
 
-function TruckCard({ truck, onDelete }: TruckCardProps) {
+function TruckCard({ truck, onDelete, actionsOnly = false }: TruckCardProps) {
 	const [selectedImage, setSelectedImage] = useState<ImageModal | null>(
 		null,
 	);
@@ -132,11 +141,14 @@ function TruckCard({ truck, onDelete }: TruckCardProps) {
 			formData.append("truck_front", editFiles.truck_front);
 		}
 
-		updateTruck({ truckId: truck.id, data: formData }, {
-			onSuccess: () => {
-				setIsEditDialogOpen(false);
-			}
-		});
+		updateTruck(
+			{ truckId: truck.id, data: formData },
+			{
+				onSuccess: () => {
+					setIsEditDialogOpen(false);
+				},
+			},
+		);
 	};
 
 	const handleVerifyTruck = () => {
@@ -159,60 +171,129 @@ function TruckCard({ truck, onDelete }: TruckCardProps) {
 	};
 
 	return (
-		<div className="col-span-6 md:col-span-4 rounded-20 p-4 shadow-lg shadow-black/10 bg-(--secondary-color) border border-primary/25">
-			{/* Header with truck image and actions */}
+		<div
+			className={
+				actionsOnly
+					? "contents"
+					: "col-span-6 md:col-span-4 rounded-20 p-4 shadow-lg shadow-black/10 bg-(--secondary-color) border border-primary/25"
+			}
+		>
+			{/* Truck image */}
 			<TooltipProvider>
-				<div className="flex items-center justify-between gap-3 mb-3">
-					<div className="flex-1">
-						{truck.truck_front && (
-							<img
-								src={truck.truck_front}
-								alt={truck.truck_num}
-								className="w-full h-32 rounded-lg object-cover"
-							/>
-						)}
-					</div>
-					<div className="flex items-center flex-col gap-2">
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<Button
-									size="sm"
-									variant="ghost"
-									onClick={handleEditClick}
-									disabled={isUpdating}
-									className="text-blue-500 hover:text-blue-600 hover:bg-blue-50"
-								>
-									<Edit className="w-5 h-5" />
-								</Button>
-							</TooltipTrigger>
-							<TooltipContent>
-								<p>تعديل الشاحنة</p>
-							</TooltipContent>
-						</Tooltip>
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<Button
-									size="sm"
-									variant="ghost"
-									onClick={
-										handleDeleteClick
-									}
-									disabled={isDeleting}
-									className="text-red-500 hover:text-red-600 hover:bg-red-50"
-								>
-									<Trash2 className="w-5 h-5" />
-								</Button>
-							</TooltipTrigger>
-							<TooltipContent>
-								<p>حذف الشاحنة</p>
-							</TooltipContent>
-						</Tooltip>
-					</div>
+				<div className={actionsOnly ? "hidden" : "mb-3"}>
+					{truck.truck_front && (
+						<img
+							src={truck.truck_front}
+							alt={truck.truck_num}
+							className="w-full h-32 rounded-lg object-cover"
+						/>
+					)}
+				</div>
+
+				<div className={actionsOnly? "flex gap-1" : "flex w-full items-center justify-center gap-2 border-b pb-3"}>
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<Button
+								size="icon"
+								variant="ghost"
+								onClick={handleEditClick}
+								disabled={isUpdating}
+								className="text-blue-500 hover:text-blue-600 hover:bg-blue-50"
+							>
+								<Edit className="w-5 h-5" />
+							</Button>
+						</TooltipTrigger>
+						<TooltipContent>
+							<p>تعديل الشاحنة</p>
+						</TooltipContent>
+					</Tooltip>
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<Button
+								size="icon"
+								variant="ghost"
+								onClick={handleDeleteClick}
+								disabled={isDeleting}
+								className="text-red-500 hover:text-red-600 hover:bg-red-50"
+							>
+								<Trash2 className="w-5 h-5" />
+							</Button>
+						</TooltipTrigger>
+						<TooltipContent>
+							<p>حذف الشاحنة</p>
+						</TooltipContent>
+					</Tooltip>
+					{isAdmin && (
+						<>
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<Button
+										size="icon"
+										variant="ghost"
+										onClick={
+											handleVerifyTruck
+										}
+										disabled={
+											isVerifying ||
+											truck.verificationStatus ===
+												"VERIFIED"
+										}
+										aria-label="توثيق الشاحنة"
+										className="text-green-500 hover:text-green-600 hover:bg-green-50"
+									>
+										{isVerifying ? (
+											<LoaderCircle className="h-5 w-5 animate-spin" />
+										) : (
+											<BadgeCheck className="h-5 w-5" />
+										)}
+									</Button>
+								</TooltipTrigger>
+								<TooltipContent>
+									<p>
+										{isVerifying
+											? "جاري التوثيق..."
+											: "توثيق الشاحنة"}
+									</p>
+								</TooltipContent>
+							</Tooltip>
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<Button
+										size="icon"
+										variant="ghost"
+										onClick={() =>
+											setIsCommentDialogOpen(
+												true,
+											)
+										}
+										disabled={
+											isCommenting
+										}
+										aria-label="إرسال تعليق"
+										className="text-amber-500 hover:text-amber-600 hover:bg-amber-50"
+									>
+										{isCommenting ? (
+											<LoaderCircle className="h-5 w-5 animate-spin" />
+										) : (
+											<MessageCircle className="h-5 w-5" />
+										)}
+									</Button>
+								</TooltipTrigger>
+								<TooltipContent>
+									<p>
+										{isCommenting
+											? "جاري الإرسال..."
+											: "إرسال تعليق"}
+									</p>
+								</TooltipContent>
+							</Tooltip>
+						</>
+					)}
 				</div>
 			</TooltipProvider>
 
 			{/* Truck Details */}
-			<div className="space-y-2 text-sm">
+			<div className={actionsOnly ? "hidden" : "space-y-2 text-sm"}>
 				<div className="flex justify-between">
 					<span className="text-gray-600">
 						رقم الشاحنة:
@@ -237,18 +318,18 @@ function TruckCard({ truck, onDelete }: TruckCardProps) {
 					<span className="text-gray-600">الحالة:</span>
 					<span
 						className={`font-medium px-2 py-1 rounded text-xs ${
-							truck.status === "ACTIVE"
+							truck.status === "AVAILABLE"
 								? "bg-green-100 text-green-700"
 								: truck.status === "MAINTENANCE"
 									? "bg-yellow-100 text-yellow-700"
 									: "bg-gray-100 text-gray-700"
 						}`}
 					>
-						{truck.status === "ACTIVE"
-							? "نشطة"
+						{truck.status === "AVAILABLE"
+							? "متاح"
 							: truck.status === "MAINTENANCE"
 								? "صيانة"
-								: "غير نشطة"}
+								: "غير متاح"}
 					</span>
 				</div>
 				<div className="flex justify-between">
@@ -272,7 +353,11 @@ function TruckCard({ truck, onDelete }: TruckCardProps) {
 			</div>
 
 			{/* License Images */}
-			<div className="border-t pt-3 mt-3">
+			<div
+				className={
+					actionsOnly ? "hidden" : "border-t pt-3 mt-3"
+				}
+			>
 				<p className="text-sm font-semibold mb-3">المستندات:</p>
 				<div className="grid grid-cols-2 gap-2">
 					<TooltipProvider>
@@ -332,121 +417,19 @@ function TruckCard({ truck, onDelete }: TruckCardProps) {
 				</div>
 			</div>
 
-			{isAdmin && (
-				<div className="mt-4 flex w-full gap-2 border-t pt-3">
-					<Button
-						size="lg"
-						type="button"
-						onClick={handleVerifyTruck}
-						disabled={
-							isVerifying ||
-							truck.verificationStatus ===
-								"VERIFIED"
-						}
-						className="flex-1 bg-green-600 text-white hover:bg-green-700"
-					>
-						{isVerifying
-							? "جاري التوثيق..."
-							: "توثيق الشاحنة"}
-					</Button>
-					<Button
-						size="lg"
-						type="button"
-						onClick={() => setIsCommentDialogOpen(true)}
-						disabled={isCommenting}
-						className="flex-1 bg-amber-500 text-white hover:bg-amber-600"
-					>
-						{isCommenting
-							? "جاري الإرسال..."
-							: "إرسال تعليق"}
-					</Button>
-				</div>
-			)}
+			<DocumentPreviewDialog
+				document={selectedImage}
+				onClose={() => setSelectedImage(null)}
+			/>
 
-			{/* Image Preview Modal */}
-			<Dialog
-				open={!!selectedImage}
-				onOpenChange={() => setSelectedImage(null)}
-			>
-				<DialogContent className="max-w-2xl bg-(--bg-color) border-0">
-					{selectedImage && (
-						<div className="flex flex-col items-center justify-center py-4">
-							<img
-								src={selectedImage.src}
-								alt={selectedImage.alt}
-								className="max-w-full max-h-[70vh] object-contain rounded"
-							/>
-							<p className="text-(--primary-text) text-center mt-4">
-								{selectedImage.alt}
-							</p>
-						</div>
-					)}
-				</DialogContent>
-			</Dialog>
-
-			{/* Comment Truck Dialog */}
-			<Dialog
+			<CommentTruckDialog
 				open={isCommentDialogOpen}
+				comment={commentText}
+				isSubmitting={isCommenting}
+				onCommentChange={setCommentText}
+				onSubmit={handleCommentSubmit}
 				onOpenChange={setIsCommentDialogOpen}
-			>
-				<DialogContent
-					className="max-w-lg bg-(--bg-color) border-0"
-					dir="rtl"
-				>
-					<DialogHeader>
-						<DialogTitle className="text-(--primary-text) text-right">
-							إرسال تعليق للشاحنة
-						</DialogTitle>
-					</DialogHeader>
-					<form
-						onSubmit={handleCommentSubmit}
-						className="space-y-4"
-					>
-						<label className="text-sm font-medium text-(--primary-text) block text-right">
-							نص التعليق
-						</label>
-						<textarea
-							value={commentText}
-							onChange={(e) =>
-								setCommentText(e.target.value)
-							}
-							placeholder="اكتب تعليقًا للشاحنة..."
-							required
-							disabled={isCommenting}
-							className="w-full min-h-28 rounded-md border border-gray-300 px-3 py-2 text-right focus:outline-none focus:ring-2 focus:ring-(--primary-color)"
-						/>
-						<div className="flex gap-3 pt-2">
-							<Button
-								size="lg"
-								type="submit"
-								disabled={
-									isCommenting ||
-									!commentText.trim()
-								}
-								className="flex-1 bg-(--primary-color) text-white hover:bg-(--primary-color)/80"
-							>
-								{isCommenting
-									? "جاري الإرسال..."
-									: "إرسال التعليق"}
-							</Button>
-							<Button
-								size="lg"
-								type="button"
-								variant="outline"
-								onClick={() =>
-									setIsCommentDialogOpen(
-										false,
-									)
-								}
-								disabled={isCommenting}
-								className="flex-1"
-							>
-								إلغاء
-							</Button>
-						</div>
-					</form>
-				</DialogContent>
-			</Dialog>
+			/>
 
 			{/* Delete Confirmation Dialog */}
 			<DeleteConfirmationDialog

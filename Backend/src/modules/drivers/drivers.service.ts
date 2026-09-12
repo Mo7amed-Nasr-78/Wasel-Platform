@@ -1,12 +1,22 @@
 import { PrismaService } from '@/database/prisma/prisma.service';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Driver, DriverStatus, Role, Vacations, VerificationStatus } from '@prisma/client';
+import {
+  Driver,
+  DriverStatus,
+  Role,
+  Vacations,
+  VerificationStatus,
+} from '@prisma/client';
 import { CreateDriverDto } from './dto/createDriverDto';
 import { UpdateDriverDto } from './dto/updateDriverDto';
 import { DriverAttachments } from '@/shared/interfaces/interfaces';
 import { R2Service } from '@/shared/services/r2/r2.service';
 import * as path from 'path';
 import { OtpGenerator } from '@/shared/services/OtpGenerator';
+
+type DriverWithCurrentVacation = Driver & {
+  currentDriverVacation: Vacations | null;
+};
 
 @Injectable()
 export class DriversService {
@@ -41,7 +51,7 @@ export class DriversService {
   async getDrivers(req): Promise<{
     status: HttpStatus;
     message: string;
-    drivers: Driver[] | [];
+    drivers: DriverWithCurrentVacation[];
     meta:
       | {
           total: number;
@@ -52,14 +62,14 @@ export class DriversService {
         }
       | {};
   }> {
-    const { status, verificationStatus }: { status: Role, verificationStatus: VerificationStatus } = req.query;
+    const { status, verificationStatus } = req.query;
     const { sub: userId, role } = req.user;
 
-    if (status && status.toUpperCase() as DriverStatus)
-      throw new HttpException("Invalid driver status", HttpStatus.BAD_REQUEST);
-    
-    if (verificationStatus && verificationStatus.toUpperCase() as VerificationStatus)
-      throw new HttpException("Invalid verification status", HttpStatus.BAD_REQUEST);
+    // if (status && DriverStatus[status.toUpperCase()])
+    //   throw new HttpException("Invalid driver status", HttpStatus.BAD_REQUEST);
+
+    // if (verificationStatus && VerificationStatus[verificationStatus.toUpperCase()])
+    //   throw new HttpException("Invalid verification status", HttpStatus.BAD_REQUEST);
 
     let res = [];
     let meta = {};
@@ -68,7 +78,12 @@ export class DriversService {
       const drivers = await this.prisma.driver.findMany({
         where: {
           ...(status ? { status: status.toUpperCase() as DriverStatus } : {}),
-          ...(verificationStatus ? { verificationStatus: verificationStatus.toUpperCase() as VerificationStatus } : {}),
+          ...(verificationStatus
+            ? {
+                verificationStatus:
+                  verificationStatus.toUpperCase() as VerificationStatus,
+              }
+            : {}),
           profile: {
             userId,
           },
@@ -79,11 +94,11 @@ export class DriversService {
               returning: false,
             },
             orderBy: {
-              updatedAt: "desc",
-            }, 
-            take: 1
-          }
-        }
+              updatedAt: 'desc',
+            },
+            take: 1,
+          },
+        },
       });
 
       const pending = await this.prisma.driver.count({
@@ -94,6 +109,13 @@ export class DriversService {
           },
         },
       });
+
+      const driversWithCurrentVacation = drivers.map(
+        ({ vacations, ...driver }) => ({
+          ...driver,
+          currentDriverVacation: vacations[0] ?? null,
+        }),
+      );
 
       const available = await this.prisma.driver.count({
         where: {
@@ -126,7 +148,7 @@ export class DriversService {
         throw new HttpException('No drivers found', HttpStatus.NO_CONTENT);
       }
 
-      res = drivers;
+      res = driversWithCurrentVacation;
       meta['total'] = drivers.length;
       meta['pending'] = pending;
       meta['available'] = available;
@@ -135,7 +157,35 @@ export class DriversService {
     }
 
     if (Role.ADMIN.includes(role)) {
-      const drivers = await this.prisma.driver.findMany();
+      const drivers = await this.prisma.driver.findMany({
+        where: {
+          ...(status ? { status: DriverStatus[status.toUpperCase()] } : {}),
+          ...(verificationStatus
+            ? {
+                verificationStatus:
+                  VerificationStatus[verificationStatus.toUpperCase()],
+              }
+            : {}),
+        },
+        include: {
+          vacations: {
+            where: {
+              returning: false,
+            },
+            orderBy: {
+              updatedAt: 'desc',
+            },
+            take: 1,
+          },
+        },
+      });
+
+      const driversWithCurrentVacation = drivers.map(
+        ({ vacations, ...driver }) => ({
+          ...driver,
+          currentDriverVacation: vacations[0] ?? null,
+        }),
+      );
 
       const pending = await this.prisma.driver.count({
         where: {
@@ -165,7 +215,7 @@ export class DriversService {
         throw new HttpException('No drivers found', HttpStatus.NO_CONTENT);
       }
 
-      res = drivers;
+      res = driversWithCurrentVacation;
       meta['total'] = drivers.length;
       meta['pending'] = pending;
       meta['available'] = available;
@@ -523,9 +573,7 @@ export class DriversService {
     return updatedVacation;
   }
 
-  async verifyDriver(
-    driverId: string,
-  ): Promise<{
+  async verifyDriver(driverId: string): Promise<{
     status: HttpStatus;
     message: string;
     driver: Driver;

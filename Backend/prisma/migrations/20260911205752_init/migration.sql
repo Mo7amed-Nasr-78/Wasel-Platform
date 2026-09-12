@@ -30,10 +30,12 @@ CREATE TABLE `User` (
     `id` VARCHAR(191) NOT NULL,
     `email` VARCHAR(191) NOT NULL,
     `password` VARCHAR(191) NOT NULL,
+    `stripeAccountId` VARCHAR(191) NULL,
     `createAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
     UNIQUE INDEX `User_email_key`(`email`),
+    UNIQUE INDEX `User_stripeAccountId_key`(`stripeAccountId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -74,6 +76,8 @@ CREATE TABLE `Shipment` (
     `createAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
     `profileId` VARCHAR(191) NOT NULL,
+    `assignedDriverId` VARCHAR(191) NULL,
+    `assignedTruckId` VARCHAR(191) NULL,
 
     UNIQUE INDEX `Shipment_shipmentId_key`(`shipmentId`),
     UNIQUE INDEX `Shipment_acceptedOfferId_key`(`acceptedOfferId`),
@@ -172,10 +176,12 @@ CREATE TABLE `Truck` (
 -- CreateTable
 CREATE TABLE `Driver` (
     `id` VARCHAR(191) NOT NULL,
+    `driverId` VARCHAR(191) NOT NULL,
     `first_name` VARCHAR(191) NOT NULL,
     `last_name` VARCHAR(191) NOT NULL,
-    `age` INTEGER NOT NULL,
+    `age` VARCHAR(191) NOT NULL,
     `national_id` VARCHAR(191) NOT NULL,
+    `phone` VARCHAR(191) NOT NULL,
     `picture` VARCHAR(191) NOT NULL,
     `license_front` VARCHAR(191) NOT NULL,
     `license_back` VARCHAR(191) NOT NULL,
@@ -185,6 +191,7 @@ CREATE TABLE `Driver` (
     `verificationStatus` ENUM('PENDING', 'VERIFIED') NOT NULL DEFAULT 'PENDING',
     `profileId` VARCHAR(191) NOT NULL,
 
+    UNIQUE INDEX `Driver_driverId_key`(`driverId`),
     INDEX `Driver_id_idx`(`id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -207,9 +214,9 @@ CREATE TABLE `Invoice` (
     `shipmentId` VARCHAR(191) NOT NULL,
     `companyId` VARCHAR(191) NOT NULL,
     `carrierId` VARCHAR(191) NOT NULL,
-    `amount` DOUBLE NOT NULL,
-    `platformFee` DOUBLE NOT NULL,
-    `carrierAmount` DOUBLE NOT NULL,
+    `amount` DECIMAL(65, 30) NOT NULL,
+    `platformFee` DECIMAL(65, 30) NOT NULL,
+    `carrierAmount` DECIMAL(65, 30) NOT NULL,
     `status` ENUM('PENDING', 'PAID', 'RELEASED', 'CANCELLED') NOT NULL DEFAULT 'PENDING',
     `paymentMethod` VARCHAR(191) NULL,
     `issuedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -238,7 +245,7 @@ CREATE TABLE `Wallet` (
 -- CreateTable
 CREATE TABLE `Transaction` (
     `id` VARCHAR(191) NOT NULL,
-    `type` ENUM('RECHARGE', 'WITHDRAW', 'SHIPMENT_PAYMENT', 'REFUND', 'FEE') NOT NULL,
+    `type` ENUM('RECHARGE', 'WITHDRAW', 'SHIPMENT_PAYMENT', 'TRANSFER', 'REFUND', 'FEE') NOT NULL,
     `amount` DECIMAL(19, 4) NOT NULL,
     `status` ENUM('PENDING', 'COMPLETED', 'FAILED', 'CANCELLED') NOT NULL DEFAULT 'PENDING',
     `referenceType` VARCHAR(191) NULL,
@@ -289,6 +296,20 @@ CREATE TABLE `ShipmentPayment` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- CreateTable
+CREATE TABLE `Vacations` (
+    `id` VARCHAR(191) NOT NULL,
+    `status` ENUM('REST') NOT NULL DEFAULT 'REST',
+    `returning` BOOLEAN NOT NULL DEFAULT false,
+    `from_date` DATETIME(3) NOT NULL,
+    `to_date` DATETIME(3) NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+    `driverId` VARCHAR(191) NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- AddForeignKey
 ALTER TABLE `Profile` ADD CONSTRAINT `Profile_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
@@ -297,6 +318,12 @@ ALTER TABLE `Shipment` ADD CONSTRAINT `Shipment_acceptedOfferId_fkey` FOREIGN KE
 
 -- AddForeignKey
 ALTER TABLE `Shipment` ADD CONSTRAINT `Shipment_profileId_fkey` FOREIGN KEY (`profileId`) REFERENCES `Profile`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Shipment` ADD CONSTRAINT `Shipment_assignedDriverId_fkey` FOREIGN KEY (`assignedDriverId`) REFERENCES `Driver`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Shipment` ADD CONSTRAINT `Shipment_assignedTruckId_fkey` FOREIGN KEY (`assignedTruckId`) REFERENCES `Truck`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `ShipmentAttachment` ADD CONSTRAINT `ShipmentAttachment_shipmentId_fkey` FOREIGN KEY (`shipmentId`) REFERENCES `Shipment`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -354,3 +381,6 @@ ALTER TABLE `ShipmentPayment` ADD CONSTRAINT `ShipmentPayment_walletId_fkey` FOR
 
 -- AddForeignKey
 ALTER TABLE `ShipmentPayment` ADD CONSTRAINT `ShipmentPayment_transactionId_fkey` FOREIGN KEY (`transactionId`) REFERENCES `Transaction`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Vacations` ADD CONSTRAINT `Vacations_driverId_fkey` FOREIGN KEY (`driverId`) REFERENCES `Driver`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

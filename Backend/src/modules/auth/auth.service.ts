@@ -7,6 +7,10 @@ import { OtpGenerator } from '@/shared/services/OtpGenerator';
 import { SignupDto } from './dto/signup.dto';
 import { usernameVerify } from './dto/username-verify';
 import { WalletService } from '../wallet';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
+import { EmailTemplate } from '@/shared/emails/emailTemplates';
+import { EmailService } from '@/jobs/email/email.service';
 
 @Injectable()
 export class AuthService {
@@ -14,36 +18,38 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly walletService: WalletService,
+    private readonly emailService: EmailService,
   ) {}
 
   async signup({ username, role, email, password }: SignupDto) {
-    const existingUserEmail = await this.prisma.user.findUnique({
+    const existingUser = await this.prisma.user.findFirst({
       where: {
-        email,
+        OR: [{ email }, { profile: { is: { username } } }],
+      },
+      include: {
+        profile: {
+          select: {
+            id: true,
+            username: true,
+          },
+        },
       },
     });
 
-    if (existingUserEmail) {
+    if (existingUser && existingUser.email === email) {
       throw new HttpException('Email already in use', HttpStatus.BAD_REQUEST);
     }
 
-    if (!existingUserEmail) {
-      const userProfile = await this.prisma.profile.findUnique({
-        where: {
-          username,
-        },
-      });
-
-      if (userProfile && userProfile.username === username) {
-        throw new HttpException(
-          'Username already in use',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
+    if (existingUser?.profile?.username === username) {
+      throw new HttpException(
+        'username already in use',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const hashedPassword: string = await bcrypt.hash(password, 10);
 
+    // 1. Create The New User
     const newUser = await this.prisma.user.create({
       data: {
         email,
@@ -57,10 +63,33 @@ export class AuthService {
           },
         },
       },
+      include: {
+        profile: true,
+      },
     });
 
+    // Send Welcoming email job
+    // console.log('Job start');
+    // if (newUser) {
+    //   const emailMeg = EmailTemplate(
+    //     {
+    //       first_name: newUser.profile.first_name,
+    //       last_name: newUser.profile.last_name,
+    //       username: newUser.profile.username,
+    //     },
+    //     'welcoming',
+    //   );
+
+    //   await this.emailService.sendWelcomeEmail(email, 'Hello There', emailMeg);
+    // }
+    // console.log('Job end');
+
     const userWallet = await this.walletService.initializeWallet(newUser.id);
-    if (!userWallet) throw new HttpException("Failed to create user wallet", HttpStatus.INTERNAL_SERVER_ERROR);
+    if (!userWallet)
+      throw new HttpException(
+        'Failed to create user wallet',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
 
     return {
       statusCode: 201,
@@ -83,7 +112,7 @@ export class AuthService {
             id: true,
             role: true,
             username: true,
-            verify: true
+            verify: true,
           },
         },
       },
@@ -103,7 +132,7 @@ export class AuthService {
         email: user.email,
         username: user.profile.username,
         role: user.profile.role,
-        verify: user.profile.verify
+        verify: user.profile.verify,
       },
       {
         expiresIn: '1h',
@@ -142,7 +171,7 @@ export class AuthService {
             select: {
               username: true,
               role: true,
-              verify: true
+              verify: true,
             },
           },
         },
@@ -154,7 +183,7 @@ export class AuthService {
           email: user.email,
           username: user.profile.username,
           role: user.profile.role,
-          verify: user.profile.verify
+          verify: user.profile.verify,
         },
         {
           expiresIn: '1h',
@@ -204,25 +233,16 @@ export class AuthService {
     }
 
     const newOtp = OtpGenerator();
-    const mailHTML = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
-          <h2 style="color: #333; text-align: center;">Verification Code</h2>
-          <p style="color: #666; font-size: 16px;">Hello, ${user.profile.first_name?.concat(user.profile.last_name) ? user.profile.first_name + user.profile.last_name : 'There'}</p>
-          <p style="color: #666; font-size: 16px;">Your verification code is:</p>
-          <div style="background-color: #f5f5f5; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; margin: 20px 0; border-radius: 5px;">
-            ${newOtp}
-          </div>
-          <p style="color: #666; font-size: 16px;">This code will expire in 10 minutes.</p>
-          <p style="color: #666; font-size: 16px;">If you didn't request this code, please ignore this email.</p>
-          <p style="color: #666; font-size: 14px; margin-top: 30px; text-align: center;">This is an automated email, please do not reply.</p>
-        </div>
-      `;
+    const mailHTML = EmailTemplate(user, 'otp', { newOtp });
 
-    try {
-      await SendMail(email, 'Your Verification Code', mailHTML);
-    } catch {
-      throw new HttpException('Failed to send OTP', HttpStatus.NOT_IMPLEMENTED);
-    }
+    // Background Job
+    await this.emailService.sendOtpEmail(email, mailHTML);
+    // try {
+    //   await SendMail(email, 'Your Verification Code', mailHTML);
+    // } catch (err) {
+    //   console.log(err);
+    //   throw new HttpException('Failed to send OTP', HttpStatus.NOT_IMPLEMENTED);
+    // }
 
     const otpToken: string = await this.jwtService.signAsync(
       { otp: newOtp },

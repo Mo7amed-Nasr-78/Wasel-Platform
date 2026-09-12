@@ -1,30 +1,46 @@
-import { 
-    WebSocketGateway, 
-    WebSocketServer,
-    OnGatewayConnection
+import {
+  WebSocketGateway,
+  WebSocketServer,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
 } from '@nestjs/websockets';
-import { Server, Socket } from "socket.io";
+import { Server, Socket } from 'socket.io';
+import { Injectable } from '@nestjs/common';
 
-@WebSocketGateway()
-export class NotificationGateway implements OnGatewayConnection {
-    @WebSocketServer()
-    private static server: Server;
+@WebSocketGateway({
+  cors: { origin: ['http://localhost:5173'], credentials: true },
+})
+@Injectable()
+export class NotificationGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
+  @WebSocketServer()
+  server: Server;
 
-    private static users = new Map<string, string>();
+  private users = new Map<string, string>();
 
-    handleConnection(socket: Socket) {
-        const userId = socket.handshake.query.userId as string;
+  handleConnection(socket: Socket) {
+    const userId = (socket.handshake.query.userId as string) ?? null;
 
-        if (userId) {
-            NotificationGateway.users.set(userId, socket.id);
-        }
+    if (userId) {
+      this.users.set(userId, socket.id);
     }
+  }
 
-    static sendToUser(userId: string, notification: any) {
-        const socketId = this.users.get(userId);
-
-        if (socketId) {
-            this.server.to(socketId).emit("notification", notification);
-        }
+  handleDisconnect(socket: Socket) {
+    for (const [userId, sockId] of this.users.entries()) {
+      if (sockId === socket.id) {
+        this.users.delete(userId);
+        break;
+      }
     }
+  }
+
+  sendToUser(userId: string, notification: any) {
+    const socketId = this.users.get(userId);
+
+    if (socketId) {
+      this.server.to(socketId).emit('notification', notification);
+    }
+  }
 }

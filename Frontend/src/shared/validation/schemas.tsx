@@ -26,14 +26,15 @@ export const newShipmentSchema = yup.object({
 	shipmentType: yup
 		.string()
 		.required("Shipment type is required")
-		.oneOf([
-			"شحنة عامة",
-			"مبردة / مجمدة",
-			"مواد خطر (ADR)",
-			"بضاعة سائبة",
-			"معدات ثقيلة",
-			"سيارات",
-		]),
+		// .oneOf([
+		// 	"شحنة عامة",
+		// 	"مبردة / مجمدة",
+		// 	"مواد خطر (ADR)",
+		// 	"بضاعة سائبة",
+		// 	"معدات ثقيلة",
+		// 	"سيارات",
+		// ])
+	,
 	packaging: yup
 		.string()
 		.required("Packaging type is required")

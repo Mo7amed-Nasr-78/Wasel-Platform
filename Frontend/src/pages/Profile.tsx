@@ -131,7 +131,7 @@ function Profile() {
 											</h1>
 											{config && (
 												<span
-													className={`inline-flex items-center gap-1.5 rounded-full ${config.color} px-3 py-1 text-xs font-semibold text-white`}
+													className={`inline-flex items-center gap-1.5 rounded-full ${config.color} px-3 py-1.5 text-xs font-semibold text-white`}
 												>
 													{config.icon}
 													{config.label}

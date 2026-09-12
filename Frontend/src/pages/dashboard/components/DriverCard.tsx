@@ -4,12 +4,8 @@ import { useDeleteDriver } from "@/api/hooks/drivers/useDeleteDriver";
 import { useUpdateDriver } from "@/api/hooks/drivers/useUpdateDriver";
 import { useVerifyDriver } from "@/api/hooks/drivers/useVerifyDriver";
 import { useCommentDriver } from "@/api/hooks/drivers/useCommentDriver";
-import { useAddVacation } from "@/api/hooks/drivers/useAddVacation";
-import { useReturnFromVacation } from "@/api/hooks/drivers/useReturnFromVacation";
-import { useExtendVacation } from "@/api/hooks/drivers/useExtendVacation";
 import { useProps } from "@/components/PropsProvider";
-import { Trash2, Edit, ArrowLeftToLine, ArrowRightToLine, CheckCircle } from "lucide-react";
-import { PiSuitcaseSimple } from "react-icons/pi";
+import { Trash2, Edit } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import {
 	Dialog,
@@ -26,6 +22,7 @@ import {
 import { Input } from "../../../components/ui/input";
 import FileUploadField from "../../../components/FileUploadField";
 import DeleteConfirmationDialog from "./DeleteConfirmationDialog";
+import VacationActions from "./VacationActions";
 
 interface DriverCardProps {
 	driver: Driver;
@@ -67,55 +64,7 @@ function DriverCard({ driver, onDelete }: DriverCardProps) {
 		useVerifyDriver();
 	const { mutate: commentDriver, isPending: isCommenting } =
 		useCommentDriver();
-	const { mutate: addVacation, isPending: isAddingVacation } =
-		useAddVacation();
-	const { mutate: returnFromVacation, isPending: isReturning } =
-		useReturnFromVacation();
-	const { mutate: extendVacation, isPending: isExtending } =
-		useExtendVacation();
 	const isAdmin = user?.role?.toUpperCase() === "ADMIN";
-
-	const [isVacationDialogOpen, setIsVacationDialogOpen] = useState(false);
-	const [vacationAction, setVacationAction] = useState<
-		"add" | "return" | "extend" | null
-	>(null);
-	const [vacationFromDate, setVacationFromDate] = useState("");
-	const [vacationToDate, setVacationToDate] = useState("");
-	const [vacationId, setVacationId] = useState("");
-
-	const openVacationDialog = (action: "add" | "return" | "extend") => {
-		setVacationAction(action);
-		setVacationFromDate("");
-		setVacationToDate("");
-		setVacationId(driver.vacations?.[0]?.id || "");
-		setIsVacationDialogOpen(true);
-	};
-
-	const handleVacationSubmit = () => {
-		if (vacationAction === "add") {
-			addVacation(
-				{
-					driverId: driver.id,
-					from_date: vacationFromDate,
-					to_date: vacationToDate,
-				},
-				{
-					onSuccess: () => setIsVacationDialogOpen(false),
-				},
-			);
-		} else if (vacationAction === "return") {
-			returnFromVacation(vacationId, {
-				onSuccess: () => setIsVacationDialogOpen(false),
-			});
-		} else if (vacationAction === "extend") {
-			extendVacation(
-				{ vacationId, data: { to_date: vacationToDate } },
-				{
-					onSuccess: () => setIsVacationDialogOpen(false),
-				},
-			);
-		}
-	};
 
 	const handleDeleteClick = () => {
 		setIsDeleteDialogOpen(true);
@@ -220,11 +169,13 @@ function DriverCard({ driver, onDelete }: DriverCardProps) {
 	};
 
 	return (
-		<div className={`col-span-6 md:col-span-4 rounded-20 p-4 shadow-lg shadow-black/10 bg-(--secondary-color) ${
+		<div
+			className={`col-span-6 md:col-span-4 rounded-20 p-4 shadow-lg shadow-black/10 bg-(--secondary-color) ${
 				driver.status === "IN_REST"
 					? "border border-red-300 bg-red-50 "
 					: "border border-(--primary-color)/25"
-			}`}>
+			}`}
+		>
 			{/* Header with profile */}
 			<div className="flex items-center gap-3 mb-2">
 				<img
@@ -269,7 +220,7 @@ function DriverCard({ driver, onDelete }: DriverCardProps) {
 								: driver.status === "IN_REST"
 									? "bg-red-100 text-red-700"
 									: driver.status ===
-										"AVAILABLE"
+										  "AVAILABLE"
 										? "bg-blue-100 text-blue-700"
 										: "bg-yellow-100 text-yellow-700"
 						}`}
@@ -283,26 +234,24 @@ function DriverCard({ driver, onDelete }: DriverCardProps) {
 									: "قيد الإنتظار"}
 					</span>
 				</div>
-				{isAdmin && (
-					<div className="flex justify-between">
-						<span className="text-gray-600">
-							حالة التوثيق:
-						</span>
-						<span
-							className={`font-medium px-2 py-1 rounded text-xs ${
-								driver.verificationStatus ===
-								"VERIFIED"
-									? "bg-green-100 text-green-700"
-									: "bg-yellow-100 text-yellow-700"
-							}`}
-						>
-							{driver.verificationStatus ===
+				<div className="flex justify-between">
+					<span className="text-gray-600">
+						حالة التوثيق:
+					</span>
+					<span
+						className={`font-medium px-2 py-1 rounded text-xs ${
+							driver.verificationStatus ===
 							"VERIFIED"
-								? "موافق عليه"
-								: "قيد الانتظار"}
-						</span>
-					</div>
-				)}
+								? "bg-green-100 text-green-700"
+								: "bg-yellow-100 text-yellow-700"
+						}`}
+					>
+						{driver.verificationStatus ===
+						"VERIFIED"
+							? "موافق عليه"
+							: "قيد الانتظار"}
+					</span>
+				</div>
 			</div>
 
 			{/* Document Images */}
@@ -314,18 +263,18 @@ function DriverCard({ driver, onDelete }: DriverCardProps) {
 							<Tooltip>
 								<TooltipTrigger asChild>
 									<div className="flex flex-col items-center cursor-pointer">
-									<img
-										src={`${driver.license_front}?v=${imageVersion}`}
-										alt="رخصة القيادة - الأمام"
-										className="w-full h-20 object-cover rounded transition-all duration-300 hover:scale-105 hover:shadow-lg"
-										onClick={() =>
-											setSelectedImage(
-												{
-													src: `${driver.license_front}?v=${imageVersion}`,
-													alt: "رخصة القيادة - الأمام",
-												},
-											)
-										}
+										<img
+											src={`${driver.license_front}?v=${imageVersion}`}
+											alt="رخصة القيادة - الأمام"
+											className="w-full h-20 object-cover rounded transition-all duration-300 hover:scale-105 hover:shadow-lg"
+											onClick={() =>
+												setSelectedImage(
+													{
+														src: `${driver.license_front}?v=${imageVersion}`,
+														alt: "رخصة القيادة - الأمام",
+													},
+												)
+											}
 										/>
 									</div>
 								</TooltipTrigger>
@@ -338,18 +287,18 @@ function DriverCard({ driver, onDelete }: DriverCardProps) {
 							<Tooltip>
 								<TooltipTrigger asChild>
 									<div className="flex flex-col items-center cursor-pointer">
-									<img
-										src={`${driver.license_back}?v=${imageVersion}`}
-										alt="رخصة القيادة - الخلف"
-										className="w-full h-20 object-cover rounded transition-all duration-300 hover:scale-105 hover:shadow-lg"
-										onClick={() =>
-											setSelectedImage(
-												{
-													src: `${driver.license_back}?v=${imageVersion}`,
-													alt: "رخصة القيادة - الخلف",
-												},
-											)
-										}
+										<img
+											src={`${driver.license_back}?v=${imageVersion}`}
+											alt="رخصة القيادة - الخلف"
+											className="w-full h-20 object-cover rounded transition-all duration-300 hover:scale-105 hover:shadow-lg"
+											onClick={() =>
+												setSelectedImage(
+													{
+														src: `${driver.license_back}?v=${imageVersion}`,
+														alt: "رخصة القيادة - الخلف",
+													},
+												)
+											}
 										/>
 									</div>
 								</TooltipTrigger>
@@ -362,18 +311,18 @@ function DriverCard({ driver, onDelete }: DriverCardProps) {
 							<Tooltip>
 								<TooltipTrigger asChild>
 									<div className="flex flex-col items-center cursor-pointer">
-									<img
-										src={`${driver.national_id_card_front}?v=${imageVersion}`}
-										alt="بطاقة الهوية - الأمام"
-										className="w-full h-20 object-cover rounded transition-all duration-300 hover:scale-105 hover:shadow-lg"
-										onClick={() =>
-											setSelectedImage(
-												{
-													src: `${driver.national_id_card_front}?v=${imageVersion}`,
-													alt: "بطاقة الهوية - الأمام",
-												},
-											)
-										}
+										<img
+											src={`${driver.national_id_card_front}?v=${imageVersion}`}
+											alt="بطاقة الهوية - الأمام"
+											className="w-full h-20 object-cover rounded transition-all duration-300 hover:scale-105 hover:shadow-lg"
+											onClick={() =>
+												setSelectedImage(
+													{
+														src: `${driver.national_id_card_front}?v=${imageVersion}`,
+														alt: "بطاقة الهوية - الأمام",
+													},
+												)
+											}
 										/>
 									</div>
 								</TooltipTrigger>
@@ -386,18 +335,18 @@ function DriverCard({ driver, onDelete }: DriverCardProps) {
 							<Tooltip>
 								<TooltipTrigger asChild>
 									<div className="flex flex-col items-center cursor-pointer">
-									<img
-										src={`${driver.national_id_card_back}?v=${imageVersion}`}
-										alt="بطاقة الهوية - الخلف"
-										className="w-full h-20 object-cover rounded transition-all duration-300 hover:scale-105 hover:shadow-lg"
-										onClick={() =>
-											setSelectedImage(
-												{
-													src: `${driver.national_id_card_back}?v=${imageVersion}`,
-													alt: "بطاقة الهوية - الخلف",
-												},
-											)
-										}
+										<img
+											src={`${driver.national_id_card_back}?v=${imageVersion}`}
+											alt="بطاقة الهوية - الخلف"
+											className="w-full h-20 object-cover rounded transition-all duration-300 hover:scale-105 hover:shadow-lg"
+											onClick={() =>
+												setSelectedImage(
+													{
+														src: `${driver.national_id_card_back}?v=${imageVersion}`,
+														alt: "بطاقة الهوية - الخلف",
+													},
+												)
+											}
 										/>
 									</div>
 								</TooltipTrigger>
@@ -430,68 +379,7 @@ function DriverCard({ driver, onDelete }: DriverCardProps) {
 								<p>تعديل السائق</p>
 							</TooltipContent>
 						</Tooltip>
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<Button
-									size="sm"
-									variant="ghost"
-									onClick={() =>
-										openVacationDialog(
-											"add",
-										)
-									}
-									disabled={
-										isAddingVacation
-									}
-									className="text-purple-500 hover:text-purple-600 hover:bg-purple-50"
-								>
-									<PiSuitcaseSimple className="w-4 h-4" />
-								</Button>
-							</TooltipTrigger>
-							<TooltipContent>
-								<p>إضافة إجازة</p>
-							</TooltipContent>
-						</Tooltip>
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<Button
-									size="sm"
-									variant="ghost"
-									onClick={() =>
-										openVacationDialog(
-											"return",
-										)
-									}
-									disabled={isReturning}
-									className="text-amber-500 hover:text-amber-600 hover:bg-amber-50"
-								>
-									<CheckCircle className="w-4 h-4" />
-								</Button>
-							</TooltipTrigger>
-							<TooltipContent>
-								<p>عودة من الإجازة</p>
-							</TooltipContent>
-						</Tooltip>
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<Button
-									size="sm"
-									variant="ghost"
-									onClick={() =>
-										openVacationDialog(
-											"extend",
-										)
-									}
-									disabled={isExtending}
-									className="text-cyan-500 hover:text-cyan-600 hover:bg-cyan-50"
-								>
-									<ArrowRightToLine className="w-4 h-4" />
-								</Button>
-							</TooltipTrigger>
-							<TooltipContent>
-								<p>تمديد الإجازة</p>
-							</TooltipContent>
-						</Tooltip>
+						<VacationActions driver={driver} />
 						<Tooltip>
 							<TooltipTrigger asChild>
 								<Button
@@ -511,181 +399,41 @@ function DriverCard({ driver, onDelete }: DriverCardProps) {
 							</TooltipContent>
 						</Tooltip>
 					</TooltipProvider>
-					{isAdmin && (
-						<>
-							<div className="w-px h-6 bg-(--tertiary-color) mx-1" />
-							<Button
-								size="sm"
-								type="button"
-								onClick={handleApprove}
-								disabled={
-									isApproving ||
-									driver.verificationStatus ===
-										"VERIFIED"
-								}
-								className="bg-green-600 text-white hover:bg-green-700"
-							>
-								{isApproving
-									? "جاري الموافقة..."
-									: "موافقة"}
-							</Button>
-							<Button
-								size="sm"
-								type="button"
-								onClick={() =>
-									setIsCommentDialogOpen(
-										true,
-									)
-								}
-								disabled={isCommenting}
-								className="bg-amber-500 text-white hover:bg-amber-600"
-							>
-								{isCommenting
-									? "جاري الإرسال..."
-									: "إرسال تعليق"}
-							</Button>
-						</>
-					)}
+					{isAdmin &&
+						driver.verificationStatus !==
+							"VERIFIED" && (
+							<>
+								<div className="w-px h-6 bg-(--tertiary-color) mx-1" />
+								<Button
+									size="sm"
+									type="button"
+									onClick={handleApprove}
+									disabled={isApproving}
+									className="bg-green-600 text-white hover:bg-green-700"
+								>
+									{isApproving
+										? "جاري الموافقة..."
+										: "موافقة"}
+								</Button>
+								<Button
+									size="sm"
+									type="button"
+									onClick={() =>
+										setIsCommentDialogOpen(
+											true,
+										)
+									}
+									disabled={isCommenting}
+									className="bg-amber-500 text-white hover:bg-amber-600"
+								>
+									{isCommenting
+										? "جاري الإرسال..."
+										: "إرسال تعليق"}
+								</Button>
+							</>
+						)}
 				</div>
 			</div>
-
-			{/* Vacation Dialog */}
-			<Dialog
-				open={isVacationDialogOpen}
-				onOpenChange={setIsVacationDialogOpen}
-			>
-				<DialogContent
-					className="max-w-md bg-(--bg-color) border-0"
-					dir="rtl"
-				>
-					<DialogHeader>
-						<DialogTitle className="text-(--primary-text) text-right">
-							{vacationAction === "add"
-								? "إضافة إجازة"
-								: vacationAction === "return"
-									? "عودة من الإجازة"
-									: "تمديد الإجازة"}
-						</DialogTitle>
-					</DialogHeader>
-
-					{vacationAction === "add" && (
-						<div className="space-y-4 py-2">
-							<div className="flex flex-col gap-1.5">
-								<label className="text-sm font-medium text-(--primary-text)">
-									من تاريخ
-								</label>
-								<Input
-									type="date"
-									value={
-										vacationFromDate
-									}
-									onChange={(e) =>
-										setVacationFromDate(
-											e.target
-												.value,
-										)
-									}
-									dir="rtl"
-								/>
-							</div>
-							<div className="flex flex-col gap-1.5">
-								<label className="text-sm font-medium text-(--primary-text)">
-									إلى تاريخ
-								</label>
-								<Input
-									type="date"
-									value={
-										vacationToDate
-									}
-									onChange={(e) =>
-										setVacationToDate(
-											e.target
-												.value,
-										)
-									}
-									dir="rtl"
-								/>
-							</div>
-							<Button
-								className="w-full"
-								onClick={
-									handleVacationSubmit
-								}
-								disabled={
-									isAddingVacation ||
-									!vacationFromDate ||
-									!vacationToDate
-								}
-							>
-								{isAddingVacation
-									? "جارِ الإضافة..."
-									: "إضافة إجازة"}
-							</Button>
-						</div>
-					)}
-
-					{vacationAction === "return" && (
-						<div className="space-y-4 py-2">
-							<p className="text-sm text-gray-500 text-right">
-								هل أنت متأكد من رغبتك في إرجاع
-								السائق من الإجازة؟
-							</p>
-							<Button
-								className="w-full"
-								onClick={
-									handleVacationSubmit
-								}
-								disabled={
-									isReturning ||
-									!vacationId
-								}
-							>
-								{isReturning
-									? "جارِ العودة..."
-									: "عودة من الإجازة"}
-							</Button>
-						</div>
-					)}
-
-					{vacationAction === "extend" && (
-						<div className="space-y-4 py-2">
-							<div className="flex flex-col gap-1.5">
-								<label className="text-sm font-medium text-(--primary-text)">
-									إلى تاريخ
-								</label>
-								<Input
-									type="date"
-									value={
-										vacationToDate
-									}
-									onChange={(e) =>
-										setVacationToDate(
-											e.target
-												.value,
-										)
-									}
-									dir="rtl"
-								/>
-							</div>
-							<Button
-								className="w-full"
-								onClick={
-									handleVacationSubmit
-								}
-								disabled={
-									isExtending ||
-									!vacationId ||
-									!vacationToDate
-								}
-							>
-								{isExtending
-									? "جارِ التمديد..."
-									: "تمديد الإجازة"}
-							</Button>
-						</div>
-					)}
-				</DialogContent>
-			</Dialog>
 
 			{/* Image Preview Modal */}
 			<Dialog

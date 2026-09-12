@@ -11,9 +11,13 @@ export function useSignup() {
 
     return useMutation({
         mutationKey: ["signup"],
-        mutationFn: (data: { role: string | null, username: string, email: string, password: string }) => authService.signup(data),
+        mutationFn: (data: { role: string | null, username: string, email: string, password: string }) => {
+            toast.loading(t("جاري إنشاء الحساب"));
+            return authService.signup(data)
+        },
 
         onSuccess: (res) => {
+            toast.dismiss();
             toast.success(t(res.data.message));
             setTimeout(() => {
                 navigate('/signin');

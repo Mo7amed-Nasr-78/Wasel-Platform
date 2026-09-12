@@ -41,6 +41,19 @@ export class ShipmentsService {
             },
           },
         },
+        assignedDriver: {
+          select: {
+            first_name: true,
+            last_name: true,
+          },
+        },
+        assignedTruck: {
+          select: {
+            truck_num: true,
+            truck_type: true,
+            truck_model: true,
+          },
+        },
       },
     });
 
@@ -59,7 +72,9 @@ export class ShipmentsService {
 
     const [shipments, total] = await this.prisma.$transaction([
       this.prisma.shipment.findMany({
-        where,
+        where: {
+          status: 'PENDING',
+        },
         skip,
         take,
         orderBy,
@@ -465,24 +480,11 @@ export class ShipmentsService {
   async deliverShipment(user, shipmentId: string) {
     const userId = user.sub;
 
-    const userProfile = await this.prisma.profile.findUnique({
-      where: { userId },
-      select: { id: true, role: true },
-    });
-
-    if (
-      !userProfile ||
-      (userProfile.role !== Role.CARRIER_COMPANY &&
-        userProfile.role !== Role.INDEPENDENT_CARRIER)
-    ) {
-      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    }
-
     const shipment = await this.prisma.shipment.findUnique({
       where: { id: shipmentId },
       include: {
         acceptedOffer: {
-          include: { profile: { select: { id: true } } },
+          include: { profile: { select: { id: true, userId: true } } },
         },
       },
     });
@@ -505,23 +507,59 @@ export class ShipmentsService {
       );
     }
 
-    const acceptedOfferProfileId = shipment.acceptedOffer.profile.id;
-    if (acceptedOfferProfileId !== userProfile.id) {
+    const acceptedOfferUserId = shipment.acceptedOffer.profile.userId;
+    if (acceptedOfferUserId !== userId) {
       throw new HttpException(
-        'You are not authorized to deliver this shipment',
+        'You are not authorized to confirm this shipment delivering',
         HttpStatus.FORBIDDEN,
       );
     }
 
-    const updatedShipment = await this.prisma.shipment.update({
-      where: { id: shipmentId },
-      data: { status: ShipmentStatus.DELIVERED },
-    });
+    const { updatedShipment, invoice } = await this.prisma.$transaction(
+      async (tx) => {
+        const updatedShipment = await tx.shipment.update({
+          where: { id: shipmentId },
+          data: { status: ShipmentStatus.DELIVERED },
+        });
+
+        if (shipment.assignedDriverId) {
+          await tx.driver.update({
+            where: { id: shipment.assignedDriverId },
+            data: { status: DriverStatus.AVAILABLE },
+          });
+        }
+
+        if (shipment.assignedTruckId) {
+          await tx.truck.update({
+            where: { id: shipment.assignedTruckId },
+            data: { status: TruckStatus.AVAILABLE },
+          });
+        }
+
+        const amount = shipment.acceptedOffer.price;
+        const platformFee = amount.mul(0.2);
+
+        const invoice = await tx.invoice.create({
+          data: {
+            shipmentId: updatedShipment.id,
+            companyId: updatedShipment.profileId,
+            carrierId: shipment.acceptedOffer.profile.id,
+            amount,
+            platformFee,
+            carrierAmount: amount.sub(platformFee),
+            paymentMethod: updatedShipment.paymentType,
+          },
+        });
+
+        return { updatedShipment, invoice };
+      },
+    );
 
     return {
       status: 200,
       message: 'Shipment delivered successfully',
       shipment: updatedShipment,
+      invoice,
     };
   }
 
@@ -623,7 +661,7 @@ export class ShipmentsService {
       throw new HttpException('Truck is not verified', HttpStatus.BAD_REQUEST);
     }
 
-    if (truck.status !== TruckStatus.ACTIVE) {
+    if (truck.status !== TruckStatus.AVAILABLE) {
       throw new HttpException('Truck is not available', HttpStatus.BAD_REQUEST);
     }
 

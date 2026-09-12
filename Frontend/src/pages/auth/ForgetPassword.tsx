@@ -1,7 +1,6 @@
 import { useRef, useState, type FormEvent } from "react";
 import { PiEnvelopeLight, PiCaretRight } from "react-icons/pi";
 import { useTranslation } from "react-i18next";
-import { useProps } from "@/components/PropsProvider";
 import { Link } from "react-router-dom";
 import Main from "@/components/Main";
 import { Spinner } from "@/components/ui/spinner";
@@ -12,8 +11,7 @@ function ForgetPassword() {
 	const resetBtn = useRef<HTMLButtonElement | null>(null);
 	const [email, setEmail] = useState<string>("");
 	const { t } = useTranslation();
-	const { isLoading, setIsLoading } = useProps();
-	const { mutate } = useForgetPassword();
+	const { mutate, isPending } = useForgetPassword();
 
 	const handlingSubmit = async (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -24,7 +22,6 @@ function ForgetPassword() {
 		}
 
 		try {
-			setIsLoading(true);
 			mutate({
 				email
 			});
@@ -33,7 +30,6 @@ function ForgetPassword() {
 			console.log(err);
 		} finally {
 			setEmail("");
-			setIsLoading(false);
 		}
 	};
 
@@ -70,7 +66,7 @@ function ForgetPassword() {
 							ref={resetBtn}
 							className="flex items-center justify-center gap-2 w-full h-13 bg-(--primary-color) font-main font-medium text-(--secondary-color) rounded-20 duration-300 hover:scale-95 cursor-pointer"
 						>
-							{!isLoading ? (
+							{!isPending ? (
 								<>
 									<PiCaretRight className="text-2xl" />
 									<span className="font-main text-base font-medium capitalize">

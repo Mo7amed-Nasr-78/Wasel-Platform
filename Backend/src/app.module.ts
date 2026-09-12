@@ -17,15 +17,19 @@ import { R2Service } from './shared/services/r2/r2.service';
 import { DashboardController } from './modules/dashboard/dashboard.controller';
 import { DashboardService } from './modules/dashboard/dashboard.service';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
-import { NotificationsService } from './modules/notifications/notifications.service';
-import { NotificationsModule } from './modules/notifications/notifications.module';
 import { WalletModule } from './modules/wallet';
 import { TrucksModule } from './modules/trucks/trucks.module';
 import { DriversModule } from './modules/drivers/drivers.module';
 import { StripeModule } from './modules/stripe';
+import { BullModule } from '@nestjs/bullmq';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { EmailModule } from './jobs/email/email.module';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     UserModule,
     AuthModule,
     JwtModule.register({
@@ -34,19 +38,49 @@ import { StripeModule } from './modules/stripe';
         expiresIn: '1d',
       },
     }),
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+
+      inject: [ConfigService],
+
+      useFactory: (configService: ConfigService) => ({
+        connection: {
+          host: configService.getOrThrow<string>('REDIS_HOST'),
+
+          port: Number(configService.getOrThrow<number>('REDIS_PORT')),
+
+          username: configService.getOrThrow<string>('REDIS_USERNAME'),
+
+          password: configService.getOrThrow<string>('REDIS_PASSWORD'),
+          connectTimeout: 10000,
+          maxRetriesPerRequest: null,
+        },
+      }),
+    }),
     ShipmentsModule,
     OffersModule,
     AddressModule,
     InvoiceModule,
     PrismaModule,
     DashboardModule,
-    // NotificationsModule,
     WalletModule,
     TrucksModule,
     DriversModule,
     StripeModule,
+    EmailModule,
   ],
-  controllers: [AppController, AddressController, R2Controller, DashboardController],
-  providers: [AppService, AuthGuard, AddressService, R2Service, DashboardService],
+  controllers: [
+    AppController,
+    AddressController,
+    R2Controller,
+    DashboardController,
+  ],
+  providers: [
+    AppService,
+    AuthGuard,
+    AddressService,
+    R2Service,
+    DashboardService,
+  ],
 })
 export class AppModule {}

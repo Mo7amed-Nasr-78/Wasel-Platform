@@ -22,13 +22,13 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 //     DropdownMenuCheckboxItem
 // } from '@/components/ui/dropdown-menu';
 import { useShipments } from '@/api/hooks/shipments/useShipments';
-import { useNotification } from '@/components/NotificationContext';
 import ShipmentCard from '@/components/ShipmentCard';
 import type { Shipment, ShipmentFilter } from '@/shared/interfaces/Interfaces';
 import { Switch } from '@/components/ui/switch';
 import axios from 'axios';
 import PageTitle from '@/components/PageTitle';
 import { shipmentTypesFilter } from '@/shared/data/data';
+import toast from 'react-hot-toast';
 
 function Shipments() {
 
@@ -36,7 +36,6 @@ function Shipments() {
         user,
     } = useProps();
     const { t } = useTranslation();
-    const { addNotification } = useNotification();
     
     // DropdownMenuCheckboxs' states
     // const [showLatest, setShowLatest] = useState(true);
@@ -58,12 +57,8 @@ function Shipments() {
     useEffect(() => {
         // Error case
         if (isError) {
-            const axiosMsg = axios.isAxiosError(error)? error.response?.data.message: "حدث خطأ ما";
-            addNotification(
-                t(axiosMsg),
-                "error",
-                5000
-            );
+            const axiosMsg = axios.isAxiosError(error) ? error.response?.data.message : "حدث خطأ ما";
+            toast.error(axiosMsg || "حدث خطأ ما");
         }
     }, [isError, error])
 

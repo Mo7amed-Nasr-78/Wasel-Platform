@@ -14,7 +14,7 @@ export interface Shipment {
 	length: number;
 	height: number;
 	width: number;
-	chunksCount: number,
+	chunksCount: number;
 	stacking?: boolean;
 	pickupAt: Date | undefined;
 	deliveryAt: Date | undefined;
@@ -49,6 +49,7 @@ export interface Shipment {
 	];
 
 	profile?: {
+		id: string;
 		userId: string;
 		first_name: string;
 		last_name: string;
@@ -68,6 +69,23 @@ export interface Shipment {
 			role: string;
 		};
 	};
+}
+
+export interface Invoice {
+	id: string;
+	shipmentId: string;
+	companyId: string;
+	carrierId: string;
+	amount: string;
+	platformFee: string;
+	carrierAmount: string;
+	status: string;
+	paymentMethod: string;
+	issuedAt: string;
+	paidAt: string | null;
+	releasedAt: string | null;
+	createdAt: string;
+	updatedAt: string;
 }
 
 export interface OfferResponse {
@@ -208,7 +226,7 @@ export interface Driver {
 	status: "PENDING" | "AVAILABLE" | "IN_WORK" | "IN_REST";
 	verificationStatus: "PENDING" | "VERIFIED";
 	profileId: string;
-	vacations?: Vacation[];
+	currentDriverVacation?: Vacation | null;
 }
 
 export interface CreateDriverForm {
@@ -233,7 +251,7 @@ export interface Truck {
 	truck_front: string;
 	truck_type: string;
 	truck_model: string;
-	status: "ACTIVE" | "INACTIVE" | "MAINTENANCE";
+	status: "AVAILABLE" | "INACTIVE" | "MAINTENANCE";
 	verificationStatus: "PENDING" | "VERIFIED";
 	createdAt: string;
 	updatedAt: string;

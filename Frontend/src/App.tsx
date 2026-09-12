@@ -26,7 +26,6 @@ import DashShipmentEdit from "./pages/dashboard/DashShipmentEdit";
 import DashOffers from "./pages/dashboard/DashOffers";
 // External Libraries
 import "./i18n";
-import { isAxiosError } from "axios";
 // Custom hooks
 import { useTranslation } from "react-i18next";
 import { useRefresh } from "./api/hooks/auth/useRefresh";
@@ -35,6 +34,7 @@ import DashDrivers from "./pages/dashboard/DashDrivers";
 import DashTrucks from "./pages/dashboard/DashTrucks";
 import DashBalance from "./pages/dashboard/DashBalance";
 import DashUsers from "./pages/dashboard/DashUsers";
+import DashInvoices from "./pages/dashboard/DashInvoices";
 import ProfileEdit from "./pages/ProfileEdit";
 import { useCurrentUser } from "./api/hooks/user/useCurrentUser";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -90,17 +90,15 @@ const dashboardRoutes = [
 	{ path: "trucks", element: <DashTrucks /> },
 	{ path: "balance", element: <DashBalance /> },
 	{ path: "users", element: <DashUsers /> },
+	{ path: "invoices", element: <DashInvoices /> },
 ];
 
 function App() {
-	const { i18n, t } = useTranslation();
-	const { setUser, setIsLoading } = useProps();
-	const { addNotification } = useNotification();
+	const { i18n } = useTranslation();
+	const { setIsLoading } = useProps();
 
 	// set signout into httpClient
-	const {
-		mutate: signout,
-	} = useSignout();
+	const { mutate: signout } = useSignout();
 	privateHttpClient.setLogoutCallback(signout);
 
 	const {
@@ -111,13 +109,11 @@ function App() {
 		isSuccess: isRefreshSuccess,
 	} = useRefresh();
 
-	const {
-		mutate: currentUser,
-	} = useCurrentUser();
+	const { mutate: currentUser } = useCurrentUser();
 
 	useEffect(() => {
 		i18n.changeLanguage("ar");
-		setIsLoading(true);
+		// setIsLoading(true);
 
 		const currentPath = window.location.pathname;
 		if (!noAuthPages.has(currentPath)) {

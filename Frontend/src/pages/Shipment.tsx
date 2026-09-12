@@ -34,9 +34,9 @@ import ShipmentMap from "@/components/ShipmentMap";
 import { useProps } from "@/components/PropsProvider";
 import { Dialog, DialogTrigger, DialogContent } from "@/components/ui/dialog";
 import toast from "react-hot-toast";
-import HasRole from "@/components/HasRole";
 import { useDeleteShipment } from "@/api/hooks/shipments/useDeleteShipment";
 import DeleteConfirmationDialog from "@/pages/dashboard/components/DeleteConfirmationDialog";
+import HasAccess from "@/components/HasAccess";
 dayjs.locale("ar");
 
 function Shipment() {
@@ -108,6 +108,9 @@ function Shipment() {
 	};
 
 	if (isShipmentLoading) return <Loader />;
+	console.log(user?.id === shipment.profile?.id
+	)
+	console.log(user?.role);
 
 	return (
 		<Main>
@@ -117,7 +120,7 @@ function Shipment() {
 						title={shipment.shipmentId}
 						subTitle="تصفح تفاصيل الحمولة كاملةً وقم بتقديم عرضك لنقلها بأمان وسرعة"
 					/>
-					<HasRole roles={["manufacturer", "admin"]}>
+					{(user?.id === shipment.profile?.id || user?.role === "ADMIN") && (
 						<Button
 							size={"default"}
 							variant={"destructive"}
@@ -131,7 +134,7 @@ function Shipment() {
 								? "جارٍ الحذف..."
 								: "حذف الشحنة"}
 						</Button>
-					</HasRole>
+					)}
 				</div>
 				<DeleteConfirmationDialog
 					isOpen={isDeleteDialogOpen}
@@ -224,142 +227,145 @@ function Shipment() {
 								</div>
 							</div>
 
-							{profile?.id !== user?.id &&
-								shipment.status ===
-									"PENDING" && (
-									<div className="w-full p-4 rounded-2xl bg-(--secondary-color)">
-										{shipment.suggestedBudget && (
-											<>
-												<h2 className="font-main text-lg text-(--secondary-text) font-normal capitalize mb-2">
-													الميزانية
-													المقترحة
-													من
-													الشاحن
-												</h2>
-												<h3 className="font-main text-3xl text-(--primary-text) font-bold capitalize mb-2">
-													{
-														shipment.suggestedBudget
-													}
-													<span className="text-sm font-light text-(--secondary-text)">
-														-
-														جنية
-														مصري
-													</span>
-												</h3>
-											</>
-										)}
-										{shipment.paymentType !==
-											"ON_DELIVER" && (
-											<h3 className="font-main text-sm text-green-400 font-light capitalize mb-3">
-												الدفع
-												عند
-												الإستلام
-												متاح
-											</h3>
-										)}
-
-										<label
-											htmlFor="price"
-											className="flex flex-col gap-1 mb-4"
-										>
-											<span className="font-main text-base text-(--primary-text) font-medium">
-												عرض
-												السعر
-												الخاص بك
-											</span>
-											<input
-												type="number"
-												onChange={(
-													e,
-												) => {
-													setOffer(
+							<HasAccess role={["CARRIER_COMPANY"]}>
+								{
+									shipment.status ===
+										"PENDING" && (
+										<div className="w-full p-4 rounded-2xl bg-(--secondary-color)">
+											{shipment.suggestedBudget && (
+												<>
+													<h2 className="font-main text-lg text-(--secondary-text) font-normal capitalize mb-2">
+														الميزانية
+														المقترحة
+														من
+														الشاحن
+													</h2>
+													<h3 className="font-main text-3xl text-(--primary-text) font-bold capitalize mb-2">
 														{
-															...offer,
-															[e
-																.target
-																.name]:
-																Number(
+															shipment.suggestedBudget
+														}
+														<span className="text-sm font-light text-(--secondary-text)">
+															-
+															جنية
+															مصري
+														</span>
+													</h3>
+												</>
+											)}
+											{shipment.paymentType !==
+												"ON_DELIVER" && (
+												<h3 className="font-main text-sm text-green-400 font-light capitalize mb-3">
+													الدفع
+													عند
+													الإستلام
+													متاح
+												</h3>
+											)}
+
+											<label
+												htmlFor="price"
+												className="flex flex-col gap-1 mb-4"
+											>
+												<span className="font-main text-base text-(--primary-text) font-medium">
+													عرض
+													السعر
+													الخاص بك
+												</span>
+												<input
+													type="number"
+													onChange={(
+														e,
+													) => {
+														setOffer(
+															{
+																...offer,
+																[e
+																	.target
+																	.name]:
+																	Number(
+																		e
+																			.target
+																			.value,
+																	),
+															},
+														);
+													}}
+													name="price"
+													id="price"
+													value={
+														offer.price
+													}
+													placeholder="0.00"
+													className="h-12 bg-(--tertiary-color)/25 font-main text-lg font-medium text-(--primary-text) rounded-xl px-3 focus:outline-0"
+												/>
+											</label>
+
+											<label
+												htmlFor="proposal"
+												className="flex flex-col gap-1 mb-6"
+											>
+												<span className="font-main text-base text-(--primary-text) font-medium">
+													ملاحظات
+													(
+													اختياري
+													)
+												</span>
+												<textarea
+													onChange={(
+														e,
+													) => {
+														setOffer(
+															{
+																...offer,
+																[e
+																	.target
+																	.name]:
 																	e
 																		.target
 																		.value,
-																),
-														},
-													);
-												}}
-												name="price"
-												id="price"
-												value={
-													offer.price
+															},
+														);
+													}}
+													name="proposal"
+													id="proposal"
+													value={
+														offer.proposal
+													}
+													placeholder="اكتب تفاصيل إضافية لعرضك..."
+													className="font-main bg-(--tertiary-color)/25 placeholder:text-base text-base font-medium text-(--primary-text) rounded-xl p-3 focus:outline-0"
+												/>
+											</label>
+
+											<Button
+												onClick={
+													handleClick
 												}
-												placeholder="0.00"
-												className="h-12 bg-(--tertiary-color)/25 font-main text-lg font-medium text-(--primary-text) rounded-xl px-3 focus:outline-0"
-											/>
-										</label>
-
-										<label
-											htmlFor="proposal"
-											className="flex flex-col gap-1 mb-6"
-										>
-											<span className="font-main text-base text-(--primary-text) font-medium">
-												ملاحظات
-												(
-												اختياري
-												)
-											</span>
-											<textarea
-												onChange={(
-													e,
-												) => {
-													setOffer(
-														{
-															...offer,
-															[e
-																.target
-																.name]:
-																e
-																	.target
-																	.value,
-														},
-													);
-												}}
-												name="proposal"
-												id="proposal"
-												value={
-													offer.proposal
+												disabled={
+													isOfferPending
 												}
-												placeholder="اكتب تفاصيل إضافية لعرضك..."
-												className="font-main bg-(--tertiary-color)/25 placeholder:text-base text-base font-medium text-(--primary-text) rounded-xl p-3 focus:outline-0"
-											/>
-										</label>
+												size={"lg"}
+												className="w-full text-sm rounded-20 mb-3"
+											>
+												{!isOfferPending ? (
+													<span>
+														{t(
+															"إرسال العرض",
+														)}
+													</span>
+												) : (
+													<Spinner />
+												)}
+											</Button>
 
-										<Button
-											onClick={
-												handleClick
-											}
-											disabled={
-												isOfferPending
-											}
-											size={"lg"}
-											className="w-full text-sm rounded-20 mb-3"
-										>
-											{!isOfferPending ? (
-												<span>
-													{t(
-														"إرسال العرض",
-													)}
-												</span>
-											) : (
-												<Spinner />
-											)}
-										</Button>
-
-										<h5 className="font-main text-xs font-medium text-(--secondary-text) text-center">
-											بإرسالك عرضك
-											انت توافق علي
-											شروط الخدمة
-										</h5>
-									</div>
-								)}
+											<h5 className="font-main text-xs font-medium text-(--secondary-text) text-center">
+												بإرسالك عرضك
+												انت توافق علي
+												شروط الخدمة
+											</h5>
+										</div>
+									)
+								}
+							</HasAccess>
 						</div>
 					</div>
 
@@ -370,9 +376,16 @@ function Shipment() {
 								<h2 className="font-main font-semibold text-2xl text-(--primary-text) capitalize">
 									مسار الرحلة
 								</h2>
-								<span className="font-main font-normal text-base text-(--secondary-text) capitalize">
-									منذ 4 ساعات
-								</span>
+								<div className="flex items-center gap-2">
+									<span className="font-main font-normal text-base text-(--secondary-text) capitalize">
+										منذ 4 ساعات
+									</span>
+									{shipment.status === "DELIVERED" && (
+										<span className="font-main font-normal text-sm text-green-700 bg-green-200 py-1 px-3 rounded-md capitalize"> 
+											تم التوصيل
+										</span>
+									)}
+								</div>
 							</div>
 							<div className="px-10">
 								<div className="relative flex justify-between before:absolute before:w-full before:top-7 before:z-1 before:h-px before:bg-[linear-gradient(to_right,gray_50%,transparent_50%)] before:bg-size-[30px_1px] before:bg-repeat-x">
